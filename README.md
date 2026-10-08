@@ -1,5 +1,11 @@
 # Who Owns the Air?
 
+Current iteration: minimal Earth view with city search and zoom. Natural-colour Earth imagery, terrain normal mapping, ocean specular mapping and a thin blue atmospheric rim. Imagery is static, lighting artistic. No live air-quality data, fictional concentrations or source paths are displayed in this iteration.
+
+The previous exploratory interface is retained in `src/prototype/previous-interface.jsx` for later reintroduction around real data.
+
+# Who Owns the Air?
+
 An exploratory 3D globe artwork, built with React, Three.js and Vite.
 
 ## Run locally
