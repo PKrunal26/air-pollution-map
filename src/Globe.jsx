@@ -7,22 +7,31 @@ import {cities,systems} from './data';
 import {createConcentrationPlume} from './ConcentrationPlume';
 const vec=(lat,lon,r=1)=>new THREE.Vector3(r*Math.cos(lat*Math.PI/180)*Math.cos(lon*Math.PI/180),r*Math.sin(lat*Math.PI/180),-r*Math.cos(lat*Math.PI/180)*Math.sin(lon*Math.PI/180));
 const vertex=`varying vec3 vNormal; varying vec3 vPosition; void main(){vNormal=normalize(normalMatrix*normal);vec4 p=modelViewMatrix*vec4(position,1.);vPosition=p.xyz;gl_Position=projectionMatrix*p;}`;
-const atmosphere=`varying vec3 vNormal;varying vec3 vPosition;void main(){float rim=pow(1.-abs(dot(normalize(vNormal),normalize(-vPosition))),3.6);gl_FragColor=vec4(vec3(.22,.48,.94),rim*.23);}`;
+const atmosphere=`varying vec3 vNormal;varying vec3 vPosition;void main(){float rim=pow(1.-abs(dot(normalize(vNormal),normalize(-vPosition))),3.6);gl_FragColor=vec4(vec3(.22,.48,.94),rim*.18);}`;
 export default function Globe({city,active,selected,mode,zoom,focus,year,month,scenario,onCity,onReady,clean=false,air=null}){
  const host=useRef(null),runtime=useRef(null),props=useRef({city,active,selected,mode,zoom,focus,year,month,scenario,onCity,air}),[error,setError]=useState(false);
  props.current={city,active,selected,mode,zoom,focus,year,month,scenario,onCity,air};
  useEffect(()=>{
   let renderer;try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});}catch(e){setError(true);return;}
-  const container=host.current; renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.75));renderer.setClearColor(0x000000,0);renderer.outputColorSpace=THREE.SRGBColorSpace;container.appendChild(renderer.domElement);
+  const container=host.current; renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setClearColor(0x000000,0);renderer.outputColorSpace=THREE.SRGBColorSpace;container.appendChild(renderer.domElement);
   const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(39,1,.01,100);camera.position.copy(vec(22,68,3.8));
   const controls=new OrbitControls(camera,renderer.domElement);controls.enablePan=false;controls.enableDamping=true;controls.dampingFactor=.075;controls.rotateSpeed=.55;controls.minDistance=1.65;controls.maxDistance=6;controls.enableZoom=true;
-  const earth=new THREE.Mesh(new THREE.SphereGeometry(1,96,64),new THREE.MeshPhongMaterial({color:0xffffff,shininess:22,specular:0x667c91}));scene.add(earth);
-  const loader=new THREE.TextureLoader();loader.load('/earth.jpg',texture=>{texture.colorSpace=THREE.SRGBColorSpace;earth.material.map=texture;earth.material.needsUpdate=true;});
-  loader.load('/earth-normal.jpg',texture=>{earth.material.normalMap=texture;earth.material.normalScale.set(.6,.6);earth.material.needsUpdate=true;});
-  loader.load('/earth-specular.jpg',texture=>{earth.material.specularMap=texture;earth.material.needsUpdate=true;});
+  const earth=new THREE.Mesh(new THREE.SphereGeometry(1,192,128),new THREE.MeshPhongMaterial({color:0xffffff,shininess:14,specular:0x465564}));scene.add(earth);
+  let disposed=false,textureTier=0;const textures=new Set();
+  const loader=new THREE.TextureLoader(),anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());
+  function loadEarth(url,tier){loader.load(url,texture=>{
+   if(disposed||tier<textureTier){texture.dispose();return;}
+   textureTier=tier;texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=anisotropy;
+   const previous=earth.material.map;earth.material.map=texture;textures.add(texture);
+   if(previous){previous.dispose();textures.delete(previous);}
+   earth.material.needsUpdate=true;renderer.domElement.dataset.earthResolution=String(texture.image.width);
+  });}
+  loadEarth('/earth.jpg',1);
+  loadEarth(renderer.capabilities.maxTextureSize>=8192?'/earth-8k.jpg':'/earth-4k.jpg',2);
+  loader.load('/earth-specular.jpg',texture=>{if(disposed){texture.dispose();return;}textures.add(texture);texture.anisotropy=anisotropy;earth.material.specularMap=texture;earth.material.needsUpdate=true;});
   scene.add(new THREE.AmbientLight(0xb7c8ee,.36));const sun=new THREE.DirectionalLight(0xffffff,2.25);scene.add(sun);const fill=new THREE.DirectionalLight(0x638ec5,.12);scene.add(fill);
-  const halo=new THREE.Mesh(new THREE.SphereGeometry(1.014,80,64),new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:atmosphere,side:THREE.FrontSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));scene.add(halo);
-  const outer=new THREE.Mesh(new THREE.SphereGeometry(1.035,64,48),new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:atmosphere,side:THREE.BackSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));scene.add(outer);
+  const halo=new THREE.Mesh(new THREE.SphereGeometry(1.002,96,64),new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:atmosphere,side:THREE.FrontSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));scene.add(halo);
+  const outer=new THREE.Mesh(new THREE.SphereGeometry(1.009,96,64),new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:atmosphere,side:THREE.BackSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));scene.add(outer);
   const outlines=[];const countries=feature(atlas,atlas.objects.countries);
   for(const f of countries.features){const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;for(const poly of polys)for(const ring of poly){for(let i=1;i<ring.length;i++){const a=ring[i-1],b=ring[i];if(Math.abs(a[0]-b[0])<180){outlines.push(...vec(a[1],a[0],1.003).toArray(),...vec(b[1],b[0],1.003).toArray());}}}}
   const outlineGeo=new THREE.BufferGeometry();outlineGeo.setAttribute('position',new THREE.Float32BufferAttribute(outlines,3));if(!clean)scene.add(new THREE.LineSegments(outlineGeo,new THREE.LineBasicMaterial({color:0x98c0b3,transparent:true,opacity:.13})));else outlineGeo.dispose();
@@ -62,31 +71,15 @@ void main(){vec2 uv=gl_PointCoord-.5;float d=length(uv);if(d>.49)discard;vec2 p=
   let frame,oldFocus=-1,oldSelected='',oldCity='',oldActive='',oldZoom=-1,tween=null;const timer=new THREE.Clock();const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function labelPosition(position,el){const facing=position.clone().normalize().dot(camera.position.clone().normalize());const screen=position.clone().project(camera);const visible=facing>1/camera.position.length()+.02&&Math.abs(screen.x)<.94&&Math.abs(screen.y)<.86;el.style.display=visible?'':'none';el.style.transform=`translate(${(screen.x*.5+.5)*dimensions.w}px,${(-screen.y*.5+.5)*dimensions.h}px)`;}
   const animate=()=>{frame=requestAnimationFrame(animate);const elapsed=timer.getElapsedTime();const p=props.current;
-   concentrationPlume.update({city:p.city,data:clean?p.air?.data:null,elapsed,reduced,height:renderer.domElement.height});
+   concentrationPlume.update({city:p.city,data:clean?p.air?.data:null,elapsed,reduced,camera});
    if(p.selected!==oldSelected||p.city.id!==oldCity||p.active.join()!==oldActive){rebuild();oldSelected=p.selected;oldCity=p.city.id;oldActive=p.active.join();}
    if(p.focus!==oldFocus||p.zoom!==oldZoom){const target=vec(p.city.lat,p.city.lon,p.zoom===1?2.3:3.8);tween={start:camera.position.clone(),end:target,t:elapsed};oldFocus=p.focus;oldZoom=p.zoom;}
    if(tween){let t=Math.min(1,(elapsed-tween.t)/(reduced?.02:1.5));const eased=t*t*(3-2*t);camera.position.lerpVectors(tween.start,tween.end,eased);if(t===1)tween=null;}
    controls.update();sun.position.copy(camera.position).applyAxisAngle(new THREE.Vector3(0,1,0),-.6).add(new THREE.Vector3(0,2,0));fill.position.copy(camera.position).negate();markers.children.forEach(m=>{m.visible=!clean;});particleGroups.forEach((g,i)=>{g.material.uniforms.tint.value.set(p.selected===systems[i].id?systems[i].color:'#d7b58a');g.visible=p.active.includes(systems[i].id)&&p.mode!=='terrain';g.material.uniforms.time.value=reduced?0:elapsed;const season=[1.22,1.16,1.04,.89,.83,.71,.68,.75,.92,1.10,1.31,1.26][p.month];const reduction=['energy','industry','transport'].includes(systems[i].id)?1-p.scenario*.01:1;g.material.uniforms.strength.value=(p.selected&&p.selected!==systems[i].id ? .18 : .74)*season*(1+(2024-p.year)*.027)*reduction;});cloudGroups.forEach((g,i)=>{g.visible=p.active.includes(systems[i].id)&&p.mode!=='terrain';g.material.uniforms.time.value=reduced?0:elapsed;const season=[1.22,1.16,1.04,.89,.83,.71,.68,.75,.92,1.10,1.31,1.26][p.month];const reduction=['energy','industry','transport'].includes(systems[i].id)?1-p.scenario*.01:1;g.material.uniforms.strength.value=(p.selected ? (p.selected===systems[i].id ? .78 : .12) : .40)*season*reduction;g.material.uniforms.tint.value.set(p.selected===systems[i].id?new THREE.Color(systems[i].color).lerp(new THREE.Color('#ada590'),.52):'#ada590');});hazeLines.visible=p.mode!=='terrain';paths.visible=p.mode!=='terrain';pathLabels.forEach(l=>{labelPosition(l.position,l.el);l.el.style.transform+=l.labelIndex===0?' translate(-70px,-76px)':' translate(38px,-20px)';if(p.mode==='terrain')l.el.style.display='none';});labels.forEach(l=>{labelPosition(l.position,l.label);if(clean&&l.city.id!==p.city.id)l.label.style.display='none';
-    if(clean&&l.city.id===p.city.id){
-     const data=p.air?.data,status=p.air?.status;
-     const key=[p.city.id,data?.pm25,status].join('|');
-     if(l.label.dataset.reading!==key){
-      l.label.dataset.reading=key;l.label.classList.add('air-marker');
-      const pin=document.createElement('span');pin.className='pin';
-      const detail=document.createElement('span');detail.className='marker-detail';
-      const name=document.createElement('span');name.className='marker-city';name.textContent=l.city.name;
-      const title=document.createElement('small');title.textContent='MODELED PM₂.₅';
-      const value=document.createElement('strong');value.textContent=data?data.pm25.toFixed(1):'—';
-      const unit=document.createElement('span');unit.className='marker-unit';unit.textContent=data?'µg/m³':status==='error'?'Data unavailable':'Loading…';
-      const reading=document.createElement('span');reading.className='marker-reading';reading.append(value,unit);
-      detail.append(name,title,reading);l.label.replaceChildren(pin,detail);
-      l.label.setAttribute('aria-label',`Explore ${l.city.name}. ${data?`Modeled PM2.5 ${data.pm25.toFixed(1)} micrograms per cubic metre`:status==='error'?'Air-quality data unavailable':'Air-quality data loading'}`);
-     }
-    }
     l.label.classList.toggle('selected',l.city.id===p.city.id);});traces.forEach(t=>t.bead.position.copy(t.curve.getPoint(((reduced?0:elapsed)*.08+t.offset)%1)));renderer.render(scene,camera);
   };animate();runtime.current={camera,controls};onReady?.();
   const cancelTween=()=>{tween=null;};renderer.domElement.addEventListener('pointerdown',cancelTween);const keyboard=e=>{if(e.target!==container)return;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-'].includes(e.key)){e.preventDefault();tween=null;const spherical=new THREE.Spherical().setFromVector3(camera.position);if(e.key==='ArrowLeft')spherical.theta-=.09;if(e.key==='ArrowRight')spherical.theta+=.09;if(e.key==='ArrowUp')spherical.phi=Math.max(.12,spherical.phi-.07);if(e.key==='ArrowDown')spherical.phi=Math.min(Math.PI-.12,spherical.phi+.07);if(e.key==='+')spherical.radius=Math.max(1.65,spherical.radius*.9);if(e.key==='-')spherical.radius=Math.min(6,spherical.radius*1.1);camera.position.setFromSpherical(spherical);}};container.addEventListener('keydown',keyboard);
-  return()=>{cancelAnimationFrame(frame);container.removeEventListener('keydown',keyboard);observer.disconnect();renderer.domElement.removeEventListener('pointerdown',cancelTween);controls.dispose();concentrationPlume.dispose();disposePaths();labels.forEach(l=>l.label.remove());scene.traverse(o=>{o.geometry?.dispose();if(o.material)o.material.dispose();});renderer.dispose();renderer.domElement.remove();};
+  return()=>{disposed=true;textures.forEach(t=>t.dispose());cancelAnimationFrame(frame);container.removeEventListener('keydown',keyboard);observer.disconnect();renderer.domElement.removeEventListener('pointerdown',cancelTween);controls.dispose();concentrationPlume.dispose();disposePaths();labels.forEach(l=>l.label.remove());scene.traverse(o=>{o.geometry?.dispose();if(o.material)o.material.dispose();});renderer.dispose();renderer.domElement.remove();};
  },[]);
  return <div ref={host} className="globe-host" tabIndex={0} role="region" aria-label="Interactive Earth. Drag or use arrow keys to rotate. Scroll or use plus and minus to zoom.">{error&&<div className="webgl-error">The 3D globe needs WebGL. Try opening this preview in a browser with graphics acceleration enabled. You can still explore the city and system controls.</div>}</div>;
 }
