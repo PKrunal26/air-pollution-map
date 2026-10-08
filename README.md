@@ -1,37 +1,37 @@
 # Who Owns the Air?
 
-Current iteration: minimal Earth view with city search and zoom. Natural-colour Earth imagery, terrain normal mapping, ocean specular mapping and a thin blue atmospheric rim. Imagery is static, lighting artistic. No live air-quality data, fictional concentrations or source paths are displayed in this iteration.
+A minimal, globe-first environmental artwork. Drag Earth, search one of twelve cities, and zoom closer.
 
-The previous exploratory interface is retained in `src/prototype/previous-interface.jsx` for later reintroduction around real data.
+## Real data, first layer
 
-# Who Owns the Air?
+The PM2.5 readout fetches current-time **modeled estimates** from CAMS global atmospheric composition forecasts through Open-Meteo. It uses `domains=cams_global` consistently for all cities, with roughly 45 km grid resolution. These are area estimates, not local sensor readings, source attribution, personal exposure estimates, or citywide averages.
 
-An exploratory 3D globe artwork, built with React, Three.js and Vite.
+The displayed time is the estimate’s valid time in UTC. The API is requested on city selection, manual refresh, and every 15 minutes while the page is visible; returning to an old tab also refreshes. A refresh failure labels any saved estimate. Invalid or missing data is never replaced with invented numbers. City changes abort in-flight requests and clear the previous city’s reading.
 
-## Run locally
+- [CAMS dataset](https://ads.atmosphere.copernicus.eu/datasets/cams-global-atmospheric-composition-forecasts)
+- [Open-Meteo API and source documentation](https://open-meteo.com/en/docs/air-quality-api)
+- [Open-Meteo terms](https://open-meteo.com/en/terms)
+- [CC BY 4.0 data licence](https://creativecommons.org/licenses/by/4.0/)
 
-`npm install`
+Attribution: Copernicus Atmosphere Monitoring Service / ECMWF, via Open-Meteo. This non-commercial artwork uses the free public API; no account, credential, geolocation permission, or scheduled background automation is needed. Only public city coordinates are sent to the feed.
 
-`npm run dev`
+The Earth image, terrain and ocean maps come from the official Three.js example assets. The lighting and atmospheric rim are visual treatments, not live satellite imagery or a pollution map.
 
-## Build
+## Run
 
-`npm run build`
+```sh
+npm install
+npm run dev
+npm test
+npm run build
+```
 
-The self-contained static output is in `dist/`. Serve it over HTTP rather than opening `index.html` as a local file.
-
-## What is illustrative
-
-All pollution concentrations, historical trends, source shares, reductions and geographic origin pathways are invented. They are not measurements, forecasts, verified attribution or personal exposure estimates. Atmospheric smoke is an artistic interpretation. The prototype uses 12 predefined cities; searching is local and does not call a geocoder.
-
-The geographic city positions and Natural Earth boundaries are genuine geographic context. The Earth texture is from the official three.js example assets. General pollution formation and health explanations link to EPA references in the About panel.
-
-## Exploration
-
-Drag the globe, pinch or scroll to zoom; when the globe is focused, arrow keys rotate and +/- change distance. Search a demo city to fly closer. Source name buttons select a trace; checkboxes independently toggle layers. The inspector has Atmosphere, Systems and Impact tabs. Compare places, scrub 2015–2024, choose a month or play the timeline. What if? changes only an illustrative intensity rule.
-
-Two WebMCP tools, when supported by the browser, mirror visible controls: `read_atlas_state` and `explore_atmosphere`. Invalid inputs are rejected before state changes.
+Deploy the existing Sites project declared in `.openai/hosting.json`; retain its current audience.
 
 ## Verification
 
-Production build completed. Local browser checks covered Earth rendering, city search/fly-to, chemistry traces, comparisons, timeline changes, mobile source and inspector controls, document bounds, and valid/invalid WebMCP calls. Mobile was inspected at 390 × 844. No external pollution services or credentials are used by this application.
+Four data-boundary tests cover units and UTC timestamps, missing/invalid values, upstream errors, abort signal propagation and preservation of the provider’s concentration. The live browser flow was checked for New Delhi and London, manual source attribution, and mobile layout. The browser’s displayed values matched the live feed: Delhi 71.0 and London 3.9 micrograms per cubic metre, valid 8 October 2026 at 10:00 UTC. Those values are verification evidence, not bundled fallback data.
+
+## Earlier exploration
+
+`src/prototype/previous-interface.jsx` and `src/data.js` retain the prior illustrative concept for future work. The current interface does not render its invented concentrations, source shares, pathways, timeline or scenarios. Future source attribution requires an appropriate dataset and methodology.
