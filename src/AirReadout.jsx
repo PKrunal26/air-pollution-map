@@ -6,9 +6,10 @@ const cache = new Map();
 const REFRESH_MS = 15 * 60 * 1000;
 const timeFormat = new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'UTC'});
 
-export default function AirQuality({city}) {
+export default function AirQuality({city,onUpdate}) {
  const [request,setRequest]=useState(0);
  const [state,setState]=useState({cityId:null,status:'loading',data:null});
+ useEffect(()=>{onUpdate?.(state.cityId===city.id?state:{cityId:city.id,status:'loading',data:null});},[state,city.id,onUpdate]);
  useEffect(()=>{
   const controller=new AbortController();
   let active=true;

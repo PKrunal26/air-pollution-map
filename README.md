@@ -6,7 +6,7 @@ A minimal, globe-first environmental artwork. Drag Earth, search one of twelve c
 
 The PM2.5 readout fetches current-time **modeled estimates** from CAMS global atmospheric composition forecasts through Open-Meteo. It uses `domains=cams_global` consistently for all cities, with roughly 45 km grid resolution. These are area estimates, not local sensor readings, source attribution, personal exposure estimates, or citywide averages.
 
-The displayed time is the estimate’s valid time in UTC. The API is requested on city selection, manual refresh, and every 15 minutes while the page is visible; returning to an old tab also refreshes. A refresh failure labels any saved estimate. Invalid or missing data is never replaced with invented numbers. City changes abort in-flight requests and clear the previous city’s reading.
+The selected city’s PM2.5 estimate is pinned directly to its location on the globe and repeated in the source readout. This is a point annotation, not a continuous pollution map. The displayed time is the estimate’s valid time in UTC. The API is requested on city selection, manual refresh, and every 15 minutes while the page is visible; returning to an old tab also refreshes. A refresh failure labels any saved estimate. Invalid or missing data is never replaced with invented numbers. City changes abort in-flight requests and clear the previous city’s reading.
 
 - [CAMS dataset](https://ads.atmosphere.copernicus.eu/datasets/cams-global-atmospheric-composition-forecasts)
 - [Open-Meteo API and source documentation](https://open-meteo.com/en/docs/air-quality-api)
