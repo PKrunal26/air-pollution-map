@@ -38,7 +38,7 @@ export default function AirQuality({city,onUpdate}) {
  const old=data && Date.now()-data.validAt>3*60*60*1000;
  return <section className="air-readout" aria-label={`Air quality around ${city.name}`}>
   <div className="air-place"><span>{city.name}</span><small>{city.country}</small></div>
-  <p className="plume-note">Concentration plume · artistic scale</p>
+  <p className="plume-note">Current city estimate</p>
   <div className="air-reading" aria-live="polite" aria-atomic="true">
    {data?<><div className="air-value"><span className="air-pollutant">PM₂.₅</span><strong>{data.pm25.toFixed(1)}</strong><span className="air-unit">µg/m³</span></div><p className="air-time">Modeled · {timeFormat.format(new Date(data.validAt))} UTC</p>{status==='error'?<p className="air-status">Refresh unavailable · saved estimate</p>:old?<p className="air-status">Older estimate · check the time above</p>:status==='loading'?<p className="air-status">Updating…</p>:null}</>:<p className="air-empty">{status==='error'?'Air-quality data unavailable':'Loading PM₂.₅…'}</p>}
   </div>

@@ -4,13 +4,13 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {feature} from 'topojson-client';
 import atlas from 'world-atlas/countries-110m.json';
 import {cities,systems} from './data';
-import {createConcentrationPlume} from './ConcentrationPlume';
+import {createGlobalAirLayer} from './GlobalAirLayer';
 const vec=(lat,lon,r=1)=>new THREE.Vector3(r*Math.cos(lat*Math.PI/180)*Math.cos(lon*Math.PI/180),r*Math.sin(lat*Math.PI/180),-r*Math.cos(lat*Math.PI/180)*Math.sin(lon*Math.PI/180));
 const vertex=`varying vec3 vNormal; varying vec3 vPosition; void main(){vNormal=normalize(normalMatrix*normal);vec4 p=modelViewMatrix*vec4(position,1.);vPosition=p.xyz;gl_Position=projectionMatrix*p;}`;
 const atmosphere=`varying vec3 vNormal;varying vec3 vPosition;void main(){float rim=pow(1.-abs(dot(normalize(vNormal),normalize(-vPosition))),3.6);gl_FragColor=vec4(vec3(.22,.48,.94),rim*.18);}`;
-export default function Globe({city,active,selected,mode,zoom,focus,year,month,scenario,onCity,onReady,clean=false,air=null}){
- const host=useRef(null),runtime=useRef(null),props=useRef({city,active,selected,mode,zoom,focus,year,month,scenario,onCity,air}),[error,setError]=useState(false);
- props.current={city,active,selected,mode,zoom,focus,year,month,scenario,onCity,air};
+export default function Globe({city,active,selected,mode,zoom,focus,year,month,scenario,onCity,onReady,clean=false,globalAir=null,showGlobalAir=true}){
+ const host=useRef(null),runtime=useRef(null),props=useRef({city,active,selected,mode,zoom,focus,year,month,scenario,onCity,globalAir,showGlobalAir}),[error,setError]=useState(false);
+ props.current={city,active,selected,mode,zoom,focus,year,month,scenario,onCity,globalAir,showGlobalAir};
  useEffect(()=>{
   let renderer;try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});}catch(e){setError(true);return;}
   const container=host.current; renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setClearColor(0x000000,0);renderer.outputColorSpace=THREE.SRGBColorSpace;container.appendChild(renderer.domElement);
@@ -57,7 +57,7 @@ void main(){vec2 uv=gl_PointCoord-.5;float d=length(uv);if(d>.49)discard;vec2 p=
    const cloud=new THREE.Points(cloudGeo,cloudMat);cloud.renderOrder=1;scene.add(cloud);cloudGroups.push(cloud);
   });
   const hazeLines=new THREE.Group();for(let j=0;j<(clean?0:35);j++){const pts=[];const c=cities[j%cities.length];for(let i=0;i<80;i++){const t=i/79;pts.push(vec(c.lat+(j%5-2)*1.2+Math.sin(t*3)*2,c.lon-13+t*26,1.025+Math.sin(t*Math.PI)*.035));}hazeLines.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0xd5aa72,transparent:true,opacity:.07})));}scene.add(hazeLines);
-  const concentrationPlume=createConcentrationPlume(scene);
+  const globalLayer=createGlobalAirLayer(scene);
   const markers=new THREE.Group();scene.add(markers);const labels=[];
   cities.forEach(c=>{const mesh=new THREE.Mesh(new THREE.SphereGeometry(.0075,10,8),new THREE.MeshBasicMaterial({color:0xd9c4a5}));mesh.position.copy(vec(c.lat,c.lon,1.035));mesh.userData.city=c;markers.add(mesh);const label=document.createElement('button');label.className='globe-label';label.innerHTML=`<span class="pin"></span><span>${c.name}</span>`;label.setAttribute('aria-label',`Explore ${c.name}`);label.onclick=()=>props.current.onCity(c);container.appendChild(label);labels.push({label,position:vec(c.lat,c.lon,1.042),city:c});});
   const paths=new THREE.Group();scene.add(paths);let traces=[],pathLabels=[];
@@ -71,7 +71,7 @@ void main(){vec2 uv=gl_PointCoord-.5;float d=length(uv);if(d>.49)discard;vec2 p=
   let frame,oldFocus=-1,oldSelected='',oldCity='',oldActive='',oldZoom=-1,tween=null;const timer=new THREE.Clock();const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function labelPosition(position,el){const facing=position.clone().normalize().dot(camera.position.clone().normalize());const screen=position.clone().project(camera);const visible=facing>1/camera.position.length()+.02&&Math.abs(screen.x)<.94&&Math.abs(screen.y)<.86;el.style.display=visible?'':'none';el.style.transform=`translate(${(screen.x*.5+.5)*dimensions.w}px,${(-screen.y*.5+.5)*dimensions.h}px)`;}
   const animate=()=>{frame=requestAnimationFrame(animate);const elapsed=timer.getElapsedTime();const p=props.current;
-   concentrationPlume.update({city:p.city,data:clean?p.air?.data:null,elapsed,reduced,camera});
+   globalLayer.update({data:p.globalAir,visible:clean&&p.showGlobalAir});
    if(p.selected!==oldSelected||p.city.id!==oldCity||p.active.join()!==oldActive){rebuild();oldSelected=p.selected;oldCity=p.city.id;oldActive=p.active.join();}
    if(p.focus!==oldFocus||p.zoom!==oldZoom){const target=vec(p.city.lat,p.city.lon,p.zoom===1?2.3:3.8);tween={start:camera.position.clone(),end:target,t:elapsed};oldFocus=p.focus;oldZoom=p.zoom;}
    if(tween){let t=Math.min(1,(elapsed-tween.t)/(reduced?.02:1.5));const eased=t*t*(3-2*t);camera.position.lerpVectors(tween.start,tween.end,eased);if(t===1)tween=null;}
@@ -79,7 +79,7 @@ void main(){vec2 uv=gl_PointCoord-.5;float d=length(uv);if(d>.49)discard;vec2 p=
     l.label.classList.toggle('selected',l.city.id===p.city.id);});traces.forEach(t=>t.bead.position.copy(t.curve.getPoint(((reduced?0:elapsed)*.08+t.offset)%1)));renderer.render(scene,camera);
   };animate();runtime.current={camera,controls};onReady?.();
   const cancelTween=()=>{tween=null;};renderer.domElement.addEventListener('pointerdown',cancelTween);const keyboard=e=>{if(e.target!==container)return;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-'].includes(e.key)){e.preventDefault();tween=null;const spherical=new THREE.Spherical().setFromVector3(camera.position);if(e.key==='ArrowLeft')spherical.theta-=.09;if(e.key==='ArrowRight')spherical.theta+=.09;if(e.key==='ArrowUp')spherical.phi=Math.max(.12,spherical.phi-.07);if(e.key==='ArrowDown')spherical.phi=Math.min(Math.PI-.12,spherical.phi+.07);if(e.key==='+')spherical.radius=Math.max(1.65,spherical.radius*.9);if(e.key==='-')spherical.radius=Math.min(6,spherical.radius*1.1);camera.position.setFromSpherical(spherical);}};container.addEventListener('keydown',keyboard);
-  return()=>{disposed=true;textures.forEach(t=>t.dispose());cancelAnimationFrame(frame);container.removeEventListener('keydown',keyboard);observer.disconnect();renderer.domElement.removeEventListener('pointerdown',cancelTween);controls.dispose();concentrationPlume.dispose();disposePaths();labels.forEach(l=>l.label.remove());scene.traverse(o=>{o.geometry?.dispose();if(o.material)o.material.dispose();});renderer.dispose();renderer.domElement.remove();};
+  return()=>{disposed=true;textures.forEach(t=>t.dispose());cancelAnimationFrame(frame);container.removeEventListener('keydown',keyboard);observer.disconnect();renderer.domElement.removeEventListener('pointerdown',cancelTween);controls.dispose();globalLayer.dispose();disposePaths();labels.forEach(l=>l.label.remove());scene.traverse(o=>{o.geometry?.dispose();if(o.material)o.material.dispose();});renderer.dispose();renderer.domElement.remove();};
  },[]);
  return <div ref={host} className="globe-host" tabIndex={0} role="region" aria-label="Interactive Earth. Drag or use arrow keys to rotate. Scroll or use plus and minus to zoom.">{error&&<div className="webgl-error">The 3D globe needs WebGL. Try opening this preview in a browser with graphics acceleration enabled. You can still explore the city and system controls.</div>}</div>;
 }

@@ -6,7 +6,13 @@ A minimal, globe-first environmental artwork. Drag Earth, search one of twelve c
 
 The PM2.5 readout fetches current-time **modeled estimates** from CAMS global atmospheric composition forecasts through Open-Meteo. It uses `domains=cams_global` consistently for all cities, with roughly 45 km grid resolution. These are area estimates, not local sensor readings, source attribution, personal exposure estimates, or citywide averages.
 
-A small geographic label anchors the selected city; the PM2.5 estimate appears in the edge readout. A continuous volumetric plume above that city responds to the same real PM2.5 value: higher concentrations create denser smoke. Its direction, envelope, height and geographic extent are artistic, not a wind, transport, source-attribution or continuous pollution model. It is hidden if no real estimate is available, and at zero concentration. Reduced-motion preference freezes the effect. The displayed time is the estimate’s valid time in UTC. The API is requested on city selection, manual refresh, and every 15 minutes while the page is visible; returning to an old tab also refreshes. A refresh failure labels any saved estimate. Invalid or missing data is never replaced with invented numbers. City changes abort in-flight requests and clear the previous city’s reading.
+The globe now shows a global PM2.5 concentration layer, sampled at 2,664 real locations on a 5-degree grid including land, oceans and poles. A single UTC valid time is requested for every sample from `domains=cams_global` using nearest-cell selection. The bundled snapshot records provider model coordinates, retrieval time, units and all sample values. The timestamp is always visible; this is a saved snapshot, not an automatically refreshed global feed.
+
+The coloured shell smoothly interpolates between samples. Its display grid is much coarser than CAMS's native roughly 45 km grid: do not read local boundaries or fine details from this layer. Colour and opacity encode concentration with a fixed numerical legend, not health categories. Slight shell height is exaggerated and is not a plume-altitude or wind model. The single-city decorative plume has been replaced by this worldwide field.
+
+The separate city estimate refreshes on selection, manually and every 15 minutes while visible. It can differ from the global layer because its time and sample location differ. City changes abort requests; missing data never becomes a fabricated zero.
+
+Regenerate a snapshot with `node scripts/fetch-global-air.mjs YYYY-MM-DDTHH:00 /absolute/cache/path` from the site directory. The downloader spaces requests to respect rate limits, caches raw responses for resuming, validates one common UTC timestamp, and refuses incomplete or invalid grids before writing the public asset. No automation was scheduled.
 
 - [CAMS dataset](https://ads.atmosphere.copernicus.eu/datasets/cams-global-atmospheric-composition-forecasts)
 - [Open-Meteo API and source documentation](https://open-meteo.com/en/docs/air-quality-api)
@@ -17,7 +23,7 @@ Attribution: Copernicus Atmosphere Monitoring Service / ECMWF, via Open-Meteo. T
 
 Earth uses NASA Blue Marble Next Generation (July 2004), resampled from the 21600×10800 global composite to 8192×4096 with a 4096×2048 fallback for limited graphics hardware. Anisotropic filtering preserves oblique detail; the coarse normal map was removed. The initial low-resolution map and ocean specular map come from Three.js example assets. Imagery is static, separate from the modeled concentration. Source: https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/
 
-The plume is ray-marched in a bounded 3D volume, with Earth occlusion and frozen drift for reduced motion. Only its density responds to PM2.5; geographic extent remains illustrative.
+The global layer follows the Earth surface, occludes on the far side, and has no invented animated drift. The previous single-city volume is retained as unused reference code.
 
 ## Run
 
