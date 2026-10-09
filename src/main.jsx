@@ -45,7 +45,7 @@ function App(){
   const trap=e=>{
    if(e.key==='Escape'){e.stopPropagation();setPanel(null);return;}
    if(e.key!=='Tab')return;
-   const items=[...dialog.querySelectorAll('button,a[href]')],first=items[0],last=items[items.length-1];
+   const items=[...dialog.querySelectorAll('button,a[href],iframe')],first=items[0],last=items[items.length-1];
    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
   };

@@ -62,6 +62,8 @@ npm test
 npm run build
 ```
 
+The About button opens `public/study.html`, a data study of spatial correlations between all fields plus the data sources, limits and credits. Regenerate it with `uv run --with numpy --with scipy --with pillow python analysis/correlations.py . analysis/results.json` then `python3 analysis/build_study.py`.
+
 Every push to `main` is tested, built and deployed to GitHub Pages by `.github/workflows/pages.yml` (https://pkrunal26.github.io/air-pollution-map/). Asset paths are relative (`base: './'`), so the build also works from any subpath or static host.
 
 ## Verification

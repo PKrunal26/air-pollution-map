@@ -1,20 +1,16 @@
-import React from 'react';
+import React,{useEffect,useRef,useState} from 'react';
 import {X} from '@phosphor-icons/react';
-import {AIR_SOURCE} from './airQuality';
 import './styles/search-about.css';
+// About opens the data study page (public/study.html) in place, so the globe stays loaded behind it.
 export default function AboutData({open,onClose,closeRef}){
- return <div className={`modal-backdrop${open?' is-open':''}`} aria-hidden={!open} inert={!open?true:undefined} onClick={onClose}><section className="minimal-about" role="dialog" aria-modal="true" aria-label="About Air Atlas and its data" onClick={e=>e.stopPropagation()}>
-  <button ref={closeRef} className="modal-close" aria-label="Close about" onClick={onClose}><X size={22} weight="light"/></button>
-  <p className="section-kicker">Behind Air Atlas</p><h2>The invisible,<br/>made visible.</h2>
-  <div className="about-section"><h3>What you’re seeing</h3><p>A globe of modelled air composition. Each dot is a point on Earth, tinted by the concentration of the layers you switch on: fine particles (PM₂.₅), ozone, nitrogen dioxide, dust and more. Only PM₂.₅ is on at first; open Layers to add others. Hover or tap anywhere to read the values underneath (switch Readout off to hide this), or search for a city to see its separate estimate.</p></div>
-  <div className="about-section"><h3>The data</h3>
-   <ul><li><b>Global:</b> <a href={AIR_SOURCE.url} target="_blank" rel="noreferrer">CAMS global atmospheric composition forecasts</a>, 15 fields on a 0.4° grid (about 45 km).</li><li><b>Europe:</b> the CAMS European ensemble on a 0.1° grid (about 11 km) with 25 fields, 13 of them Europe-only. It replaces the global dots when you zoom in over Europe.</li><li><b>Weather:</b> temperature, humidity and wind from ECMWF IFS at 0.25°, for the same hour.</li></ul>
-   <p className="about-callout"><b>This is a saved snapshot, not live.</b> Every field on the globe is valid at 9 October 2026, 03:00 UTC. It does not refresh and gets older each day.</p>
-   <p>The city card is a separate live estimate from <a href={AIR_SOURCE.apiDocumentation} target="_blank" rel="noreferrer">Open-Meteo</a>. It updates when you choose a place and every 15 minutes while the page is visible, so it can differ from the globe. Search uses a built-in list of cities, so what you type never leaves your device; only a chosen place’s coordinates are sent for its live estimate.</p></div>
-  <div className="about-section"><h3>How to read the colours</h3><p>Each layer has its own fixed pigment colour, and colours mix where layers overlap. A layer’s display range is a visual scale chosen for legibility; the paint-strength slider changes only how strongly it is drawn, never the data.</p><p>Mixed colours are an artistic encoding, not a combined index, and nothing here is a health index. WHO 2021 guideline values appear beside readouts as context only.</p></div>
-  <div className="about-section"><h3>Limits</h3><ul><li>Values are modelled estimates, not sensor readings. Each stands for a grid cell, not street-level air or personal exposure.</li><li>Dots interpolate the source fields; they are not monitoring stations.</li><li>PM₁₀ includes PM₂.₅, and dust and other aerosols overlap, so do not add layers together.</li><li>Aerosol optical depth describes the whole atmospheric column at 550 nm, not air at ground level.</li><li>The global and European models are separate and can disagree. Europe-only fields are blank elsewhere, and seasonal pollen can be zero.</li></ul></div>
-  <div className="about-section"><h3>Credits &amp; licence</h3>
-   <p className="data-license">Earth: <a href="https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/" target="_blank" rel="noreferrer">NASA Blue Marble Next Generation</a>, July 2004 composite. Static imagery, not current satellite conditions.</p>
-   <p className="data-license">Data: Copernicus Atmosphere Monitoring Service / ECMWF, via Open-Meteo. <a href={AIR_SOURCE.licence} target="_blank" rel="noreferrer">CC BY 4.0</a>. Weather: ECMWF IFS via Open-Meteo AWS Open Data, CC BY 4.0. This prototype uses Open-Meteo’s non-commercial API.</p></div>
+ const [loaded,setLoaded]=useState(false),frame=useRef(null);
+ useEffect(()=>{if(open)setLoaded(true);},[open]);
+ useEffect(()=>{
+  const close=e=>{if(e.source===frame.current?.contentWindow&&e.data?.type==='air-atlas:close-about')onClose();};
+  window.addEventListener('message',close);return()=>window.removeEventListener('message',close);
+ },[onClose]);
+ return <div className={`modal-backdrop${open?' is-open':''}`} aria-hidden={!open} inert={!open?true:undefined} onClick={onClose}><section className="minimal-about about-study" role="dialog" aria-modal="true" aria-label="About Air Atlas and its data" onClick={e=>e.stopPropagation()}>
+  <button ref={closeRef} className="modal-close" aria-label="Close about" onClick={onClose}><X size={20} weight="light"/></button>
+  {loaded&&<iframe ref={frame} src="study.html" title="Air Atlas data study"/>}
  </section></div>;
 }

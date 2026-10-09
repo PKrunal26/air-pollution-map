@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0e0d">
+<title>Air Atlas Data Study</title>
+<meta name="description" content="What moves together in the air: spatial correlations across the CAMS and ECMWF fields behind Air Atlas, plus data sources, limits and credits.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+/* Layout: one 68ch reading column; figures break out to 1040px. Dark only, like the globe. */
+:root{
+ color-scheme:dark;
+ --bg:#0b0e0d;--panel:#121815;--panel-2:#161d19;--line:#e1e7d51f;--line-2:#e1e7d533;
+ --text:#e4ebd9;--soft:#b4c1a4;--muted:#8f9f7d;--sage:#a9bb8d;
+ --pos:oklch(.76 .12 68);--neg:oklch(.72 .11 228);--land:oklch(.76 .1 135);--ocean:oklch(.7 .1 252);
+ --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+ --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+ --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.65 var(--sans);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+*{scrollbar-width:none}*::-webkit-scrollbar{display:none}
+a{color:#cdd9bb;text-decoration:underline;text-decoration-color:#cdd9bb55;text-underline-offset:3px}
+a:hover{text-decoration-color:currentColor}
+:focus-visible{outline:2px solid #d5ddc4;outline-offset:3px;border-radius:4px}
+h1,h2,h3,p{margin:0}
+h1,h2{font-weight:400;text-wrap:balance}
+h1{font-size:clamp(38px,6.4vw,64px);line-height:1.04;letter-spacing:-.045em}
+h2{font-size:clamp(26px,3.6vw,34px);line-height:1.12;letter-spacing:-.03em}
+h3{font-size:15px;font-weight:500;line-height:1.4;letter-spacing:-.005em}
+.kicker{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:#9fa796}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:clamp(16px,4vw,40px)}
+.col{max-width:68ch}
+.lede{font-size:17px;line-height:1.6;color:var(--soft)}
+.muted{color:var(--muted)}
+.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* top bar */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:#0b0e0de6;backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;align-items:center;gap:20px;min-height:56px}
+.brand{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:var(--text);text-decoration:none;white-space:nowrap}
+.brand svg{flex-shrink:0}
+.toc{display:flex;gap:4px;overflow-x:auto;flex:1;min-width:0;mask-image:linear-gradient(90deg,#000 90%,transparent)}
+.toc a{font-size:12.5px;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:999px;white-space:nowrap}
+.toc a:hover{color:var(--text);background:#e1ead314}
+.back{font-size:12.5px;color:var(--soft);text-decoration:none;white-space:nowrap;border:1px solid var(--line-2);padding:6px 12px;border-radius:999px}
+.back:hover{color:#fff;border-color:var(--sage)}
+.embedded .back{display:none}
+.embedded .bar .wrap{padding-right:64px}
+
+section{padding-block:72px 0}
+section>.wrap>*+*{margin-top:16px}
+.hero{padding-block:64px 8px}
+.hero .wrap>*+*{margin-top:20px}
+.callout{border-left:2px solid var(--sage);background:#c7d6ac0f;border-radius:4px 10px 10px 4px;padding:12px 16px;color:#d3dec2;font-size:14px}
+.facts{display:flex;flex-wrap:wrap;gap:8px 28px;font-size:13px;color:var(--muted)}
+.facts b{display:block;font:500 20px/1.2 var(--mono);color:var(--text);letter-spacing:-.02em}
+
+/* lessons */
+.lessons{list-style:none;padding:0;margin:28px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.lessons li{background:var(--panel);padding:22px 22px 20px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.lessons .glyph{display:flex;align-items:center;gap:10px;font:500 13px var(--mono);color:var(--soft)}
+.lessons p{font-size:14px;color:var(--soft)}
+.lessons a{font-size:12.5px;color:var(--muted);margin-top:auto}
+@media(min-width:1000px){.lessons li:last-child:nth-child(3n+1){grid-column:1/-1}.lessons li:last-child:nth-child(3n+1) p{max-width:72ch}}
+
+/* figures */
+figure{margin:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:clamp(14px,2.4vw,24px)}
+.cap{font-size:13px;color:var(--muted);max-width:68ch}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pills button{font:inherit;font-size:12.5px;color:var(--soft);background:none;border:1px solid var(--line-2);border-radius:999px;padding:6px 13px;cursor:pointer;transition:color .3s var(--ease),background .3s var(--ease),border-color .3s var(--ease)}
+.pills button:hover{color:#fff}
+.pills button[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.key{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;font-size:12px;color:var(--muted)}
+.key svg{vertical-align:middle}
+.scroll-x{overflow-x:auto}
+svg text{font-family:var(--sans)}
+.readout{font:12.5px/1.5 var(--mono);color:var(--soft);min-height:40px}
+.tip{position:fixed;z-index:9;pointer-events:none;background:#141a16f5;border:1px solid var(--line-2);border-radius:10px;padding:8px 11px;font:12px/1.5 var(--mono);color:var(--text);max-width:280px;opacity:0;transition:opacity .15s}
+.tip.on{opacity:1}
+.map-title{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 16px}
+.map-title p{font-size:14px;color:var(--soft);max-width:62ch}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
+.plot{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.plot header{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.plot header span{font:12px var(--mono);color:var(--muted)}
+.plot canvas{width:100%;height:auto;display:block}
+.plot p{font-size:13px;color:var(--muted)}
+
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11px;font-weight:450;letter-spacing:.9px;text-transform:uppercase;color:var(--muted);vertical-align:bottom}
+td:first-child,th:first-child{text-align:left}
+td{color:var(--soft)}
+td:first-child{color:var(--text)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:#e1ead308}
+.tablewrap{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow-x:auto}
+
+.about{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:28px 40px;margin-top:28px}
+.about div{min-width:0}
+.about h3{margin-bottom:8px}
+.about p,.about li{font-size:14px;color:var(--soft)}
+.about p+p{margin-top:10px}
+.about ul{margin:0;padding-left:18px}.about li+li{margin-top:6px}.about li::marker{color:#6f7f5f}
+footer{padding-block:72px 64px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header class="bar">
+ <div class="wrap">
+  <a class="brand" href="./" aria-label="Air Atlas, back to globe"><svg width="22" height="22" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><circle cx="16" cy="16" r="12"/><ellipse cx="16" cy="16" rx="5.5" ry="12"/><path d="M4.5 12.5h23M4.5 19.5h23"/></svg>Air Atlas</a>
+  <nav class="toc" aria-label="Sections"><a href="#lessons">Lessons</a><a href="#maps">Maps</a><a href="#matrix">Matrix</a><a href="#shapes">Distributions</a><a href="#regions">Regions</a><a href="#clock">Time of day</a><a href="#europe">Europe</a><a href="#models">Models</a><a href="#about">About the data</a></nav>
+  <a class="back" href="./">Back to globe</a>
+ </div>
+</header>
+
+<main>
+<div class="hero wrap">
+ <p class="kicker">Behind Air Atlas</p>
+ <h1>What moves together in the air</h1>
+ <p class="lede col">Air Atlas paints 28 modelled pollution fields and 3 weather fields on the globe. This study asks which of them rise and fall in the same places, and what that says about where the air's contents come from.</p>
+ <div class="facts" id="facts"></div>
+ <p class="callout col"><b>One saved moment.</b> Every number here comes from the snapshot valid at <span id="when"></span>. It is daytime over Asia and Australia, night over Europe, Africa and the Americas. Correlations are across space, not over time.</p>
+</div>
+
+<section id="lessons"><div class="wrap">
+ <p class="kicker">Lessons</p>
+ <h2>What we learned</h2>
+ <ol class="lessons" id="lessonList"></ol>
+</div></section>
+
+<section id="maps"><div class="wrap">
+ <p class="kicker">Where links hold</p>
+ <h2>The same pair, mapped</h2>
+ <p class="col muted">Each dot is a 5° tile with about 150 grid cells. Its area shows how strongly the two fields rank together inside that tile; amber means they rise together, blue means one rises as the other falls. Faint dots are land.</p>
+ <div class="pills" role="group" aria-label="Choose map" id="mapPills"></div>
+ <figure class="panel" style="display:flex;flex-direction:column;gap:14px">
+  <div class="map-title"><h3 id="mapHead"></h3><p id="mapNote"></p></div>
+  <div class="scroll-x"><svg id="map" viewBox="0 0 720 360" style="width:100%;min-width:560px;display:block" role="img"></svg></div>
+  <div class="key" id="mapKey"></div>
+ </figure>
+</div></section>
+
+<section id="matrix"><div class="wrap">
+ <p class="kicker">Every pair</p>
+ <h2>The global matrix</h2>
+ <p class="col muted">Rank correlation (Spearman ρ) between every pair of the 15 global fields and 3 weather fields, weighted by area. Rows are ordered by clustering, so related fields sit together. Dot area is |ρ|; hover or focus a dot for the numbers.</p>
+ <div class="pills" role="group" aria-label="Matrix view" id="gPills"></div>
+ <figure class="panel">
+  <div class="scroll-x" id="gmat"></div>
+  <div class="key" style="margin-top:10px" id="dotKey"></div>
+  <p class="readout" id="gRead" aria-live="polite"></p>
+ </figure>
+ <div class="tablewrap" style="margin-top:20px"><table id="pairs"></table></div>
+ <p class="cap">Strongest 16 pairs. The interval is a 95% block bootstrap (312 tiles of 15°, 300 resamples), which allows for neighbouring cells being alike. Partial correlation holds every other field fixed.</p>
+</div></section>
+
+<section id="shapes"><div class="wrap">
+ <p class="kicker">Shape of the relationship</p>
+ <h2>Two populations, one planet</h2>
+ <p class="col muted">Joint distributions, weighted by area. Each dot is a bin; its size shows how much of Earth's surface falls there, its colour whether that surface is <span style="color:var(--land)">land</span> or <span style="color:var(--ocean)">ocean</span>. Concentration axes are logarithmic.</p>
+ <div class="grid" id="scatters"></div>
+</div></section>
+
+<section id="regions"><div class="wrap">
+ <p class="kicker">Continents</p>
+ <h2>A global number hides regional stories</h2>
+ <p class="col muted">Spearman ρ on land cells inside each region box. The same pair can be strong in one place and absent in another, because different sources dominate.</p>
+ <figure class="panel scroll-x"><svg id="regionPlot" role="img" aria-label="Regional correlations"></svg></figure>
+</div></section>
+
+<section id="clock"><div class="wrap">
+ <p class="kicker">Time of day</p>
+ <h2>The clock is part of the data</h2>
+ <p class="col muted">Land cells split by local solar time at the snapshot. Daylight drives photochemistry, so some links flip sign across the terminator.</p>
+ <figure class="panel"><svg id="dayNight" role="img" aria-label="Day versus night correlations" style="width:100%;display:block"></svg></figure>
+ <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px;margin-top:20px">
+  <figure class="panel"><h3>How fine is the particulate matter?</h3><p class="cap" style="margin:6px 0 10px">PM2.5 as a share of PM10, area-weighted 10th–90th percentile, cells with PM10 above 0.5 µg/m³.</p><svg id="ratioPlot" role="img" aria-label="PM2.5 to PM10 ratio" style="width:100%;display:block"></svg></figure>
+  <figure class="panel"><h3>Which fields vary at all?</h3><p class="cap" style="margin:6px 0 10px">Coefficient of variation (σ / mean), log scale. Below 0.5 the globe mutes a field because it looks uniform.</p><svg id="cvPlot" role="img" aria-label="Field variability" style="width:100%;display:block"></svg></figure>
+ </div>
+</div></section>
+
+<section id="europe"><div class="wrap">
+ <p class="kicker">Europe at 0.1°</p>
+ <h2>Carbon travels in a pack</h2>
+ <p class="col muted">The European ensemble adds ammonia, VOCs, carbon fractions, wildfire smoke and pollen. Land cells only. Alder, birch, olive and ragweed pollen are left out because they are zero everywhere in October.</p>
+ <figure class="panel">
+  <div class="scroll-x" id="emat"></div>
+  <p class="readout" id="eRead" aria-live="polite"></p>
+ </figure>
+</div></section>
+
+<section id="models"><div class="wrap">
+ <p class="kicker">Two models</p>
+ <h2>Same places, different amounts</h2>
+ <p class="col muted">Zooming into Europe swaps the global model for the European ensemble. Rank agreement shows whether they put pollution in the same places; the ratio shows whether they agree on how much.</p>
+ <figure class="panel scroll-x"><svg id="agreePlot" role="img" aria-label="Model agreement"></svg></figure>
+</div></section>
+
+<section id="about"><div class="wrap">
+ <p class="kicker">About the data</p>
+ <h2>The invisible, made visible</h2>
+ <div class="about">
+  <div><h3>What the globe shows</h3><p>A globe of modelled air composition. Each dot is a point on Earth, sized by the concentration of the layers you switch on: fine particles (PM₂.₅), ozone, nitrogen dioxide, dust and more. Only PM₂.₅ is on at first; open Layers to add others. Hover or tap anywhere to read the values underneath, or search for a city to see its separate estimate.</p></div>
+  <div><h3>The data</h3><ul><li><b>Global:</b> <a href="https://ads.atmosphere.copernicus.eu/datasets/cams-global-atmospheric-composition-forecasts" target="_blank" rel="noreferrer">CAMS global atmospheric composition forecasts</a>, 15 fields on a 0.4° grid (about 45 km).</li><li><b>Europe:</b> the CAMS European ensemble on a 0.1° grid (about 11 km) with 25 fields, 13 of them Europe-only. It replaces the global dots when you zoom in over Europe.</li><li><b>Weather:</b> temperature, humidity and wind from ECMWF IFS at 0.25°, for the same hour.</li></ul></div>
+  <div><h3>Live city estimates</h3><p>The city card is a separate live estimate from <a href="https://open-meteo.com/en/docs/air-quality-api" target="_blank" rel="noreferrer">Open-Meteo</a>. It updates when you choose a place and every 15 minutes while the page is visible, so it can differ from the globe. Search uses a built-in list of cities, so what you type never leaves your device; only a chosen place's coordinates are sent for its live estimate.</p></div>
+  <div><h3>How to read the colours</h3><p>Each layer has its own pigment, all at the same perceived lightness, and colours mix where layers overlap. Dot size encodes the value. The strength slider changes only how strongly a layer is drawn, never the data.</p><p>Mixed colours are an artistic encoding, not a combined index, and nothing here is a health index. WHO 2021 guideline values appear beside readouts as context only.</p></div>
+  <div><h3>Limits</h3><ul><li>Values are modelled estimates, not sensor readings. Each stands for a grid cell, not street-level air or personal exposure.</li><li>PM₁₀ includes PM₂.₅, and dust and other aerosols overlap, so do not add layers together.</li><li>Aerosol optical depth describes the whole atmospheric column at 550 nm, not air at ground level.</li><li>Correlations in this study come from shared model inventories and chemistry as well as the real atmosphere. They show co-location, not cause.</li><li>Values are stored at fixed precision (0.1 µg/m³ for most gases), so the lowest bins are coarse.</li></ul></div>
+  <div><h3>Method</h3><p>405,900 global cells at 0.4°, weighted by cos(latitude); weather resampled to the same grid. Spearman ρ is the headline because concentrations span orders of magnitude; Pearson on log₁₀ values and partial correlations come from the same cells. Land and ocean use the globe's own water mask. The analysis script is <span class="mono">analysis/correlations.py</span> in the project repository.</p></div>
+  <div><h3>Credits &amp; licence</h3><p>Earth: <a href="https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/" target="_blank" rel="noreferrer">NASA Blue Marble Next Generation</a>, July 2004 composite. Static imagery, not current satellite conditions.</p><p>Data: Copernicus Atmosphere Monitoring Service / ECMWF, via Open-Meteo, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>. Weather: ECMWF IFS via Open-Meteo AWS Open Data, CC BY 4.0.</p></div>
+ </div>
+</div></section>
+</main>
+<footer class="wrap" id="sources"></footer>
+<div class="tip" id="tip" role="presentation"></div>
+
+<script>
+/*DATA*/
+const $=s=>document.querySelector(s),NS='http://www.w3.org/2000/svg';
+const L=k=>D.labels[k]||k,sgn=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(2);
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const POS=css('--pos'),NEG=css('--neg');
+const col=r=>r>=0?'var(--pos)':'var(--neg)';
+if(window.parent!==window)document.documentElement.classList.add('embedded');
+addEventListener('keydown',e=>{if(e.key==='Escape'&&window.parent!==window)parent.postMessage({type:'air-atlas:close-about'},'*');});
+
+// tooltip
+const tip=$('#tip');
+function showTip(e,html){tip.innerHTML=html;tip.classList.add('on');const r=e.target.getBoundingClientRect?.()||{left:0,top:0,width:0};const x=e.clientX??(r.left+r.width/2),y=e.clientY??r.top;tip.style.left=Math.min(innerWidth-tip.offsetWidth-10,x+14)+'px';tip.style.top=Math.max(8,y-tip.offsetHeight-10)+'px';}
+const hideTip=()=>tip.classList.remove('on');
+
+// hero
+const when=new Date(D.meta.validAt).toLocaleString('en-GB',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC';
+$('#when').textContent=when;
+$('#facts').innerHTML=[[D.meta.globalCells.toLocaleString('en'),'global grid cells'],[Math.round(D.meta.landShare*100)+'%','of the surface is land'],['171','field pairs tested'],[D.meta.europeCells.toLocaleString('en'),'European land cells']].map(([b,t])=>`<span><b>${b}</b>${t}</span>`).join('');
+$('#sources').innerHTML=`Sources for this snapshot: <a href="${D.meta.globalSource}">CAMS global</a> · <a href="${D.meta.europeSource}">CAMS Europe</a> · <a href="${D.meta.weatherSource}">ECMWF IFS</a>, all via Open-Meteo AWS Open Data.`;
+
+// lookups
+const G=D.global,gi=k=>G.keys.indexOf(k),g=(m,a,b)=>G[m][gi(a)][gi(b)];
+const dot=(r,R=6)=>`<svg width="${2*R+2}" height="${2*R+2}" aria-hidden="true"><circle cx="${R+1}" cy="${R+1}" r="${Math.max(.8,R*Math.sqrt(Math.abs(r)))}" fill="${r>=0?POS:NEG}"/></svg>`;
+
+// lessons
+const agree=Object.fromEntries(D.agreement.map(a=>[a.id,a]));
+const lessons=[
+ [g('spearman','pm2_5','pm10'),'Two layers, one story','PM2.5 and PM10 rank almost identically, as do UV index and clear-sky UV. The extra information is the coarse dust that PM10 carries on top.','#shapes'],
+ [g('ocean','pm2_5','sea_salt_aerosol'),'Ocean particles are sea spray',`Over water, PM2.5 follows sea salt (ρ ${g('ocean','pm2_5','sea_salt_aerosol').toFixed(2)}) and sea salt follows wind (ρ ${g('ocean','sea_salt_aerosol','wind_speed_10m').toFixed(2)}). Particles over open ocean are not pollution.`,'#maps'],
+ [g('land','pm2_5','carbon_monoxide'),'Smoke and soot share a source',`On land PM2.5 rises with carbon monoxide, strongly in South and Southeast Asia (ρ ≈ 0.86) where both come from burning. In Africa and the Middle East desert dust breaks the link.`,'#regions'],
+ [g('partial','pm2_5','dust'),'PM10 is two different things',`Holding everything else fixed, more dust means less PM2.5 (partial ${sgn(g('partial','pm2_5','dust'))}) and more PM10 (${sgn(g('partial','dust','pm10'))}). Over deserts fine particles are under a third of PM10.`,'#clock'],
+ [D.regional.find(r=>r.region==='Europe')['nitrogen_dioxide|ozone'],'Traffic eats ozone at night',`Over night-time Europe NO₂ and ozone run opposite (ρ ${sgn(D.regional.find(r=>r.region==='Europe')['nitrogen_dioxide|ozone'])}): exhaust NO consumes ozone. On the daylit side the sign flips.`,'#clock'],
+ [g('partial','formaldehyde','temperature_2m'),'Warm forests make formaldehyde',`Formaldehyde tracks temperature even with all else held fixed (partial ${sgn(g('partial','formaldehyde','temperature_2m'))}). Warm vegetation emits isoprene, which oxidises to formaldehyde and glyoxal.`,'#maps'],
+ [agree.dust.spearman,'Models agree on where, not how much',`At the Europe zoom switch, dust drops to ${agree.dust.medianRatio.toFixed(2)}× and SO₂ to ${agree.sulphur_dioxide.medianRatio.toFixed(2)}× the global value, though both models put them in the same places. Nitric oxide does not agree at all.`,'#models'],
+];
+$('#lessonList').innerHTML=lessons.map(([r,h,p,href])=>`<li><span class="glyph">${dot(r,9)}ρ ${sgn(r)}</span><h3>${h}</h3><p>${p}</p><a href="${href}">See the evidence</a></li>`).join('');
+$('#dotKey').innerHTML=`<span>${dot(.25)} ${dot(.5)} ${dot(1)} |ρ| 0.25 · 0.5 · 1</span><span>${dot(.7)} rise together</span><span>${dot(-.7)} move opposite</span>`;
+
+// maps
+const M=D.maps,T=M.tile,sunLon=135,dec=-6.3*Math.PI/180;
+const MAPS=[
+ ['pmsalt','PM2.5 × sea salt','Ocean tiles light up: over water, fine particles are spray. Inland the link disappears.',null],
+ ['pmco','PM2.5 × carbon monoxide','Strong over South and East Asia, Central Africa and South America, where both come from burning.',null],
+ ['no2o3','NO₂ × ozone','Blue where exhaust NO consumes ozone, mostly on the night side. The line marks the day–night terminator at the snapshot.','term'],
+ ['hchot','Formaldehyde × temperature','Amber across warm forested land, where heat drives isoprene emissions.',null],
+ ['ratio','Fine share of PM10','Colour shows PM2.5 ÷ PM10, from coarse dust to fine smoke; dot area shows PM10.','ratio'],
+];
+let mapView='pmsalt';
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e;}
+function drawMap(){
+ const svg=$('#map');svg.innerHTML='';const [id,title,note,extra]=MAPS.find(m=>m[0]===mapView);
+ $('#mapHead').textContent=title;$('#mapNote').textContent=note;svg.setAttribute('aria-label',title+' map');
+ el('rect',{x:0,y:0,width:720,height:360,fill:'var(--panel-2)',rx:8},svg);
+ const back=el('g',{fill:'#e4ebd9','fill-opacity':.3},svg);
+ M.land.forEach((row,i)=>row.forEach((f,j)=>{if(f>.45)el('circle',{cx:j*4+2,cy:360-(i*4+2),r:1.15},back);}));
+ const g2=el('g',{},svg),cell=T*2;
+ const data=M[id];
+ data.forEach((row,i)=>row.forEach((v,j)=>{
+  if(v==null)return;const cx=j*cell+cell/2,cy=360-(i*cell+cell/2);let r,fill,label;
+  if(extra==='ratio'){const p=M.pm10[i][j];r=Math.min(cell*.48,cell*.12+Math.sqrt(p/120)*cell*.5);fill=`color-mix(in oklch, var(--pos) ${Math.round(Math.min(1,Math.max(0,(v-.2)/.7))*100)}%, oklch(.74 .11 300))`;label=`PM2.5/PM10 ${v.toFixed(2)} · PM10 ${p} µg/m³`;}
+  else{r=cell*.44*Math.sqrt(Math.abs(v));fill=v>=0?'var(--pos)':'var(--neg)';label=`ρ ${sgn(v)}`;}
+  if(r<.5)return;
+  const c=el('circle',{cx,cy,r:r.toFixed(2),fill},g2);c.dataset.t=`${(i*T-90)}°…${i*T-90+T}° lat, ${j*T-180}°…${j*T-180+T}° lon<br>${label}`;
+ }));
+ if(extra==='term'){let d='';for(let lon=-180;lon<=180;lon+=2){const lat=Math.atan(-Math.cos((lon-sunLon)*Math.PI/180)/Math.tan(dec))*180/Math.PI;d+=(lon===-180?'M':'L')+((lon+180)*2).toFixed(1)+','+((90-lat)*2).toFixed(1);}
+  el('path',{d,fill:'none',stroke:'#e4ebd9','stroke-opacity':.55,'stroke-width':1.2,'stroke-dasharray':'4 4'},svg);
+  const t1=el('text',{x:(sunLon+180)*2,y:22,'text-anchor':'middle','font-size':12,fill:'#e4ebd9','fill-opacity':.7},svg);t1.textContent='day';
+  const t2=el('text',{x:((sunLon-180+180)%360)*2+40,y:22,'text-anchor':'middle','font-size':12,fill:'#e4ebd9','fill-opacity':.7},svg);t2.textContent='night';}
+ $('#mapKey').innerHTML=extra==='ratio'?`<span><svg width="120" height="10" aria-hidden="true"><defs><linearGradient id="rg"><stop offset="0" stop-color="oklch(.74 .11 300)"/><stop offset="1" stop-color="${POS}"/></linearGradient></defs><rect width="120" height="10" rx="2" fill="url(#rg)"/></svg> coarse (≤ 0.2) → fine (≥ 0.9)</span>`:`<span>${dot(.25)} ${dot(.5)} ${dot(1)} |ρ| 0.25 · 0.5 · 1</span><span>${dot(.7)} rise together</span><span>${dot(-.7)} move opposite</span><span>Tiles with fewer than 40 cells or a constant field are blank.</span>`;
+ $('#mapPills').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===mapView));
+}
+$('#mapPills').innerHTML=MAPS.map(m=>`<button type="button" data-v="${m[0]}">${m[1]}</button>`).join('');
+$('#mapPills').onclick=e=>{const b=e.target.closest('button');if(b){mapView=b.dataset.v;drawMap();}};
+$('#map').addEventListener('mousemove',e=>{const t=e.target.dataset?.t;t?showTip(e,t):hideTip();});
+$('#map').addEventListener('mouseleave',hideTip);
+
+// dot matrix (lower triangle)
+function matrix(host,read,keys,order,Mx,extra){
+ const n=keys.length,c=n>18?26:32,lab=132,top=10,w=lab+n*c+10,h=top+n*c+118;
+ const svg=el('svg',{width:w,height:h,viewBox:`0 0 ${w} ${h}`,role:'img','aria-label':'Correlation matrix'});
+ order.forEach((a,i)=>{
+  const t=el('text',{x:lab-10,y:top+i*c+c/2+4,'text-anchor':'end','font-size':12,fill:'#b4c1a4'},svg);t.textContent=L(keys[a]);
+  const b=el('text',{transform:`translate(${lab+i*c+c/2+4},${top+n*c+8}) rotate(-58)`,'text-anchor':'end','font-size':12,fill:'#b4c1a4'},svg);b.textContent=L(keys[a]);
+  for(let j=0;j<=i;j++){
+   const bIdx=order[j],x=lab+j*c+c/2,y=top+i*c+c/2;
+   el('rect',{x:x-c/2+.5,y:y-c/2+.5,width:c-1,height:c-1,rx:4,fill:'#e1ead3','fill-opacity':i===j?0:.035},svg);
+   if(i===j)continue;
+   const r=Mx[a][bIdx],gEl=el('g',{tabindex:0,class:'cell'},svg);
+   el('rect',{x:x-c/2,y:y-c/2,width:c,height:c,fill:'transparent'},gEl);
+   el('circle',{cx:x,cy:y,r:Math.max(.9,(c/2-2)*Math.sqrt(Math.abs(r))).toFixed(2),fill:r>=0?POS:NEG},gEl);
+   const text=`${L(keys[a])} × ${L(keys[bIdx])}<br>ρ ${sgn(r)}${extra?extra(a,bIdx):''}`;
+   gEl.addEventListener('mouseenter',e=>{showTip(e,text);read.innerHTML=text.replace('<br>',' · ');});
+   gEl.addEventListener('mousemove',e=>showTip(e,text));
+   gEl.addEventListener('mouseleave',hideTip);
+   gEl.addEventListener('focus',e=>{read.innerHTML=text.replace(/<br>/g,' · ');});
+  }
+ });
+ host.replaceChildren(svg);
+}
+const ci={};D.pairs.forEach(p=>{ci[p.a+'|'+p.b]=ci[p.b+'|'+p.a]=p.ci;});
+const VIEWS=[['spearman','All cells'],['land','Land'],['ocean','Ocean'],['partial','Partial']];let gView='spearman';
+function drawG(){
+ matrix($('#gmat'),$('#gRead'),G.keys,G.order,G[gView],(a,b)=>{const c=ci[G.keys[a]+'|'+G.keys[b]];return `<br>land ${sgn(G.land[a][b])} · ocean ${sgn(G.ocean[a][b])}<br>partial ${sgn(G.partial[a][b])}`+(c?`<br>95% CI ${c[0].toFixed(2)} to ${c[1].toFixed(2)}`:'');});
+ $('#gRead').textContent='Hover or focus a dot for its values.';
+ $('#gPills').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===gView));
+}
+$('#gPills').innerHTML=VIEWS.map(([v,t])=>`<button type="button" data-v="${v}">${t}</button>`).join('');
+$('#gPills').onclick=e=>{const b=e.target.closest('button');if(b){gView=b.dataset.v;drawG();}};
+const E=D.europe;matrix($('#emat'),$('#eRead'),E.keys,E.order,E.spearman);$('#eRead').textContent='Hover or focus a dot for its values.';
+
+// pairs table
+$('#pairs').innerHTML='<thead><tr><th>Pair</th><th>ρ</th><th>95% CI</th><th>Land</th><th>Ocean</th><th>Partial</th></tr></thead><tbody>'+D.pairs.slice(0,16).map(p=>`<tr><td>${dot(p.spearman,6)} ${L(p.a)} × ${L(p.b)}</td><td class="num" style="color:${col(p.spearman)}">${sgn(p.spearman)}</td><td class="num">${p.ci[0].toFixed(2)} to ${p.ci[1].toFixed(2)}</td><td class="num">${sgn(p.land)}</td><td class="num">${sgn(p.ocean)}</td><td class="num">${sgn(p.partial)}</td></tr>`).join('')+'</tbody>';
+
+// halftone density plots
+const notes={
+ 'pm2_5|pm10':'One tight band. At high PM10 the cloud bends right: coarse dust adds mass that PM2.5 does not see.',
+ 'pm2_5|carbon_monoxide':'Two populations. Ocean bins spread flat (PM from sea salt over background CO); land bins climb together.',
+ 'pm2_5|aerosol_optical_depth':'AOD is the whole column. Surface PM2.5 explains it well on land (ρ 0.84), less well over the ocean.',
+ 'nitrogen_dioxide|ozone':'Ozone barely moves across four decades of NO₂, and dips at the polluted end where NO consumes it.',
+ 'formaldehyde|glyoxal':'Both are VOC oxidation products. Land bins form one tight ridge; ocean values sit at the storage floor.',
+ 'sea_salt_aerosol|wind_speed_10m':'Stronger wind, more spray: the ocean branch rises steadily with wind speed.',
+};
+const SC=D.scatters.filter(s=>notes[s.x+'|'+s.y]);
+function ticks(lo,hi,log){if(log){const t=[];for(let e=Math.ceil(lo);e<=Math.floor(hi);e++)t.push([e,e<0?String(+Math.pow(10,e).toPrecision(1)):String(Math.pow(10,e))]);return t;}
+ const s=[1,2,5,10,20,50].find(s=>(hi-lo)/s<=6)||100,t=[];for(let v=Math.ceil(lo/s)*s;v<=hi;v+=s)t.push([v,String(v)]);return t;}
+const unit=k=>D.units[k]?` (${D.units[k]})`:'';
+function rgb(c){const x=document.createElement('canvas').getContext('2d');x.fillStyle=c;x.fillRect(0,0,1,1);return x.getImageData(0,0,1,1).data;}
+const LAND=rgb(css('--land')),OCEAN=rgb(css('--ocean'));
+function drawScatter(cv,s){
+ const dpr=Math.min(2,devicePixelRatio||1),W=320,H=270,m={l:44,r:8,t:6,b:38};cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext('2d');c.scale(dpr,dpr);
+ const pw=W-m.l-m.r,ph=H-m.t-m.b,n=s.h.length,X=v=>m.l+(v-s.xr[0])/(s.xr[1]-s.xr[0])*pw,Y=v=>m.t+ph-(v-s.yr[0])/(s.yr[1]-s.yr[0])*ph;
+ c.font='10.5px ui-monospace,Menlo,monospace';c.fillStyle='#8f9f7d';c.strokeStyle='#e1e7d514';
+ ticks(s.xr[0],s.xr[1],s.xlog).forEach(([v,t])=>{const x=X(v);c.beginPath();c.moveTo(x,m.t);c.lineTo(x,m.t+ph);c.stroke();c.textAlign='center';c.fillText(t,x,m.t+ph+14);});
+ ticks(s.yr[0],s.yr[1],s.ylog).forEach(([v,t])=>{const y=Y(v);c.beginPath();c.moveTo(m.l,y);c.lineTo(m.l+pw,y);c.stroke();c.textAlign='right';c.fillText(t,m.l-6,y+3.5);});
+ const bw=pw/n,bh=ph/n,R=Math.min(bw,bh)*.6;
+ for(let i=0;i<n;i++)for(let j=0;j<n;j++){const v=s.h[i][j];if(v<=0)continue;const f=s.land[i][j],r=R*Math.min(1,.18+Math.pow(v,.3));
+  c.fillStyle=`rgb(${LAND[0]*f+OCEAN[0]*(1-f)|0},${LAND[1]*f+OCEAN[1]*(1-f)|0},${LAND[2]*f+OCEAN[2]*(1-f)|0})`;c.beginPath();c.arc(m.l+(i+.5)*bw,m.t+ph-(j+.5)*bh,r,0,7);c.fill();}
+ c.fillStyle='#b4c1a4';c.font='11.5px -apple-system,system-ui,sans-serif';c.textAlign='center';c.fillText(L(s.x)+unit(s.x),m.l+pw/2,H-4);
+ c.save();c.translate(11,m.t+ph/2);c.rotate(-Math.PI/2);c.fillText(L(s.y)+unit(s.y),0,0);c.restore();
+}
+$('#scatters').innerHTML=SC.map((s,i)=>`<figure class="plot"><header><h3>${L(s.x)} × ${L(s.y)}</h3><span>ρ ${sgn(s.rs)}</span></header><canvas id="sc${i}" width="320" height="270" role="img" aria-label="Joint distribution of ${L(s.x)} and ${L(s.y)}"></canvas><p>${notes[s.x+'|'+s.y]}</p></figure>`).join('');
+const drawS=()=>SC.forEach((s,i)=>drawScatter($('#sc'+i),s));drawS();
+
+// regional dot grid
+(function(){
+ const RP=D.regionalPairs,R=D.regional,lab=196,c=64,top=54,w=lab+(R.length+1)*c,h=top+RP.length*34+6,svg=$('#regionPlot');
+ svg.setAttribute('viewBox',`0 0 ${w} ${h}`);svg.setAttribute('width',w);svg.setAttribute('height',h);
+ [...R.map(r=>r.region),'All land'].forEach((name,j)=>{const t=el('text',{x:lab+j*c+c/2,y:top-14,'text-anchor':'middle','font-size':11,fill:'#8f9f7d'},svg);name.split(' ').forEach((w_,k,arr)=>{const s=el('tspan',{x:lab+j*c+c/2,dy:k?13:(arr.length>1?-13:0)},t);s.textContent=w_;});});
+ RP.forEach((p,i)=>{const [a,b]=p.split('|'),y=top+i*34+17;
+  if(i%2===0)el('rect',{x:0,y:y-17,width:w,height:34,fill:'#e1ead3','fill-opacity':.025},svg);
+  const t=el('text',{x:0,y:y+4,'font-size':12.5,fill:'#e4ebd9'},svg);t.textContent=`${L(a)} × ${L(b)}`;
+  [...R.map(r=>r[p]),D.pairsGlobal[p].land].forEach((v,j)=>{const x=lab+j*c+c/2;
+   el('circle',{cx:x-12,cy:y,r:Math.max(.9,11*Math.sqrt(Math.abs(v))).toFixed(2),fill:v>=0?POS:NEG},svg);
+   const n=el('text',{x:x+18,y:y+4,'text-anchor':'end','font-size':10.5,'font-family':'ui-monospace,Menlo,monospace',fill:'#8f9f7d'},svg);n.textContent=(v<0?'−':'')+Math.abs(v).toFixed(2).replace(/^0/,'');});
+ });
+})();
+
+// dumbbell: day vs night
+function axis(svg,x0,x1,y,lo,hi,ticksArr,fmt){ticksArr.forEach(v=>{const x=x0+(v-lo)/(hi-lo)*(x1-x0);el('line',{x1:x,x2:x,y1:y-6,y2:6,stroke:'#e1e7d5','stroke-opacity':v===0?.35:.1},svg);const t=el('text',{x,y:y+8,'text-anchor':'middle','font-size':10.5,fill:'#8f9f7d','font-family':'ui-monospace,Menlo,monospace'},svg);t.textContent=fmt(v);});}
+(function(){
+ const svg=$('#dayNight'),rows=Object.entries(D.dayNight),W=720,lab=210,x0=lab+10,x1=W-20,H=rows.length*42+70;
+ svg.setAttribute('viewBox',`0 0 ${W} ${H}`);const X=v=>x0+(v+1)/2*(x1-x0);
+ axis(svg,x0,x1,H-18,-1,1,[-1,-.5,0,.5,1],v=>v===0?'0':sgn(v).replace('.00',''));
+ rows.forEach(([p,v],i)=>{const [a,b]=p.split('|'),y=40+i*42;const t=el('text',{x:0,y:y+4,'font-size':12.5,fill:'#e4ebd9'},svg);t.textContent=`${L(a)} × ${L(b)}`;
+  el('line',{x1:X(v.night),x2:X(v.day),y1:y,y2:y,stroke:'#e1e7d5','stroke-opacity':.3,'stroke-width':2},svg);
+  el('circle',{cx:X(v.night),cy:y,r:6,fill:'var(--bg)',stroke:'#b4c1a4','stroke-width':1.5},svg);
+  el('circle',{cx:X(v.day),cy:y,r:6,fill:'oklch(.86 .1 95)'},svg);});
+ const k=el('text',{x:x1,y:14,'text-anchor':'end','font-size':11,fill:'#8f9f7d'},svg);k.textContent='● daylit land   ○ night land';
+})();
+
+// ratio range plot
+(function(){
+ const svg=$('#ratioPlot'),rows=Object.entries(D.ratio),W=420,lab=128,x0=lab,x1=W-14,H=rows.length*38+40,X=v=>x0+v*(x1-x0);
+ svg.setAttribute('viewBox',`0 0 ${W} ${H}`);axis(svg,x0,x1,H-14,0,1,[0,.25,.5,.75,1],v=>String(v));
+ const names={'land':'Land','ocean':'Ocean','dusty land (dust>50)':'Dusty land'};
+ rows.forEach(([k,q],i)=>{const y=20+i*38;const t=el('text',{x:0,y:y+4,'font-size':12.5,fill:'#e4ebd9'},svg);t.textContent=names[k]||k;
+  el('line',{x1:X(q[0]),x2:X(q[4]),y1:y,y2:y,stroke:'#e1e7d5','stroke-opacity':.25,'stroke-width':2},svg);
+  el('rect',{x:X(q[1]),y:y-5,width:Math.max(2,X(q[3])-X(q[1])),height:10,rx:5,fill:'oklch(.74 .11 300)','fill-opacity':.55},svg);
+  el('circle',{cx:X(q[2]),cy:y,r:5.5,fill:POS},svg);
+  const m=el('text',{x:Math.min(x1,X(q[4])+8),y:y+4,'font-size':10.5,fill:'#8f9f7d','font-family':'ui-monospace,Menlo,monospace'},svg);m.textContent=X(q[4])+40<x1?q[2].toFixed(2):'';});
+})();
+
+// CV dot plot
+(function(){
+ const svg=$('#cvPlot'),V=D.variability.slice().sort((a,b)=>b.cv-a.cv),W=420,lab=128,x0=lab,x1=W-14,H=V.length*21+34,lo=Math.log10(.3),hi=Math.log10(20),X=v=>x0+(Math.log10(v)-lo)/(hi-lo)*(x1-x0);
+ svg.setAttribute('viewBox',`0 0 ${W} ${H}`);axis(svg,x0,x1,H-12,lo,hi,[.5,1,2,5,10].map(Math.log10),v=>String(+Math.pow(10,v).toFixed(1)));
+ el('rect',{x:x0,y:4,width:X(.5)-x0,height:H-28,fill:'#e1ead3','fill-opacity':.04},svg);
+ V.forEach((v,i)=>{const y=14+i*21;const t=el('text',{x:0,y:y+4,'font-size':12,fill:'#e4ebd9'},svg);t.textContent=L(v.id);
+  el('line',{x1:x0,x2:X(v.cv),y1:y,y2:y,stroke:'#e1e7d5','stroke-opacity':.12},svg);
+  el('circle',{cx:X(v.cv),cy:y,r:4.5,fill:v.cv<.5?'#8f9f7d':'var(--sage)'},svg);});
+})();
+
+// model agreement: rank agreement dot + ratio on log axis
+(function(){
+ const A=D.agreement.slice().sort((a,b)=>b.spearman-a.spearman),lab=170,W=760,H=A.length*30+64,svg=$('#agreePlot');
+ svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('width',W);svg.setAttribute('height',H);
+ const ax0=lab,ax1=lab+250,bx0=ax1+60,bx1=W-16,XA=v=>ax0+v*(ax1-ax0),lr=v=>Math.log10(Math.max(.05,Math.min(20,v))),XB=v=>bx0+(lr(v)+1.3)/(2.6)*(bx1-bx0);
+ const head=(x,t)=>{const e=el('text',{x,y:14,'font-size':11,fill:'#8f9f7d'},svg);e.textContent=t;};
+ head(ax0,'RANK AGREEMENT ρ');head(bx0,'EUROPE ÷ GLOBAL, MEDIAN (LOG)');
+ axis(svg,ax0,ax1,H-14,0,1,[0,.5,1],v=>String(v));
+ [.1,.25,.5,1,2,4].forEach(v=>{const x=XB(v);el('line',{x1:x,x2:x,y1:26,y2:H-20,stroke:'#e1e7d5','stroke-opacity':v===1?.35:.1},svg);const t=el('text',{x,y:H-6,'text-anchor':'middle','font-size':10.5,fill:'#8f9f7d','font-family':'ui-monospace,Menlo,monospace'},svg);t.textContent=v+'×';});
+ A.forEach((a,i)=>{const y=40+i*30;const t=el('text',{x:0,y:y+4,'font-size':12.5,fill:'#e4ebd9'},svg);t.textContent=L(a.id);
+  el('line',{x1:ax0,x2:XA(Math.max(0,a.spearman)),y1:y,y2:y,stroke:'var(--sage)','stroke-opacity':.35,'stroke-width':2},svg);
+  el('circle',{cx:XA(Math.max(0,a.spearman)),cy:y,r:5,fill:'var(--sage)'},svg);
+  const n=el('text',{x:ax1+30,y:y+4,'text-anchor':'end','font-size':10.5,fill:'#8f9f7d','font-family':'ui-monospace,Menlo,monospace'},svg);n.textContent=a.spearman.toFixed(2);
+  if(a.medianRatio>0){el('line',{x1:XB(1),x2:XB(a.medianRatio),y1:y,y2:y,stroke:a.medianRatio>=1?POS:NEG,'stroke-opacity':.4,'stroke-width':2},svg);el('circle',{cx:XB(a.medianRatio),cy:y,r:5,fill:a.medianRatio>=1?POS:NEG},svg);}
+  else{const z=el('text',{x:XB(.1)-4,y:y+4,'text-anchor':'end','font-size':10.5,fill:'#8f9f7d'},svg);z.textContent='≈ 0';}
+ });
+})();
+drawMap();drawG();
+</script>
+</body>
+</html>
