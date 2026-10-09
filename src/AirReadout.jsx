@@ -1,12 +1,12 @@
 import React,{useEffect,useState} from 'react';
-import {ArrowClockwise} from '@phosphor-icons/react';
+import {ArrowClockwise,X} from '@phosphor-icons/react';
 import {AIR_SOURCE,fetchAirQuality} from './airQuality';
 
 const cache = new Map();
 const REFRESH_MS = 15 * 60 * 1000;
 const timeFormat = new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'UTC'});
 
-export default function AirQuality({city,onUpdate}) {
+export default function AirQuality({city,onUpdate,onClear}) {
  const [request,setRequest]=useState(0);
  const [state,setState]=useState({cityId:null,status:'loading',data:null});
  useEffect(()=>{onUpdate?.(state.cityId===city.id?state:{cityId:city.id,status:'loading',data:null});},[state,city.id,onUpdate]);
@@ -37,6 +37,7 @@ export default function AirQuality({city,onUpdate}) {
  const {data,status}=current;
  const old=data && Date.now()-data.validAt>3*60*60*1000;
  return <section className="air-readout" aria-label={`Air quality around ${city.name}`}>
+  <button className="air-clear" aria-label="Clear selected place" onClick={onClear}><X size={16}/></button>
   <div className="air-place"><span>{city.name}</span><small>{city.country}</small></div>
   <p className="plume-note">Current city estimate</p>
   <div className="air-reading" aria-live="polite" aria-atomic="true">

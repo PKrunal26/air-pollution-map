@@ -40,3 +40,4 @@
 .minimal-header h1,.minimal-hint{background:#05070ae8;padding:4px 6px;margin-left:-6px}
 .minimal-search,.globe-surface,.air-readout{background:#05070ae8;padding:8px;margin-left:-8px}
 @media(min-width:601px){.paint-palette{background:#05070ae8;padding:12px;right:20px;width:269px}}
+.air-clear{position:absolute;right:12px;top:12px;display:grid;place-items:center;width:28px;height:28px;border:0;background:transparent;color:inherit;opacity:.65;cursor:pointer}.air-clear:hover{opacity:1}.air-clear:focus-visible{outline:1px solid currentColor;outline-offset:2px}

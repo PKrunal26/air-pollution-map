@@ -45,3 +45,26 @@ export async function fetchNativeLayers(signal) {
  if(!response.ok)throw new Error('Native field unavailable');
  return decodeNativeLayers(metadata,await response.arrayBuffer());
 }
+
+export async function decodeEuropeLayers(metadata,buffer) {
+ const g=metadata?.grid,count=700*420,order=PAINT_LAYERS.map(p=>p.id);
+ if(metadata?.schema!==4||metadata.domain!=='cams_europe'||metadata.unit!=='μg/m³'||metadata.kind!=='modeled'||!Number.isFinite(metadata.validAt)||metadata.validAt<=0||g?.width!==700||g.height!==420||g.step!==.1||g.latStart!==30.05||g.lonStart!==-24.95||g.order!=='south-to-north, west-to-east'||metadata.encoding!=='float32-le, layer-major'||metadata.dataFile!=='europe-air-native.bin'||JSON.stringify(metadata.fieldOrder)!==JSON.stringify(order)||metadata.byteLength!==count*16||!(buffer instanceof ArrayBuffer)||buffer.byteLength!==metadata.byteLength)throw new Error('Invalid regional data encoding');
+ const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)),b=>b.toString(16).padStart(2,'0')).join('');
+ if(hash!==metadata.sha256)throw new Error('Regional data checksum mismatch');
+ const fields={},view=new DataView(buffer);
+ order.forEach((id,layer)=>{
+  const values=new Float32Array(count);
+  for(let i=0;i<count;i++){const v=view.getFloat32((layer*count+i)*4,true);if(!Number.isFinite(v)||v<0)throw new Error('Invalid regional value');values[i]=v;}
+  fields[id]=values;
+ });
+ return {...metadata,fields};
+}
+
+export async function fetchEuropeLayers(signal) {
+ const response=await fetch('/data/europe-air-native.json',{signal});
+ if(!response.ok)throw new Error('Regional metadata unavailable');
+ const metadata=await response.json();
+ const binary=await fetch('/data/europe-air-native.bin',{signal});
+ if(!binary.ok)throw new Error('Regional field unavailable');
+ return decodeEuropeLayers(metadata,await binary.arrayBuffer());
+}
