@@ -8,9 +8,9 @@ import {createGlobalAirLayer} from './GlobalAirLayer';
 const vec=(lat,lon,r=1)=>new THREE.Vector3(r*Math.cos(lat*Math.PI/180)*Math.cos(lon*Math.PI/180),r*Math.sin(lat*Math.PI/180),-r*Math.cos(lat*Math.PI/180)*Math.sin(lon*Math.PI/180));
 const vertex=`varying vec3 vNormal; varying vec3 vPosition; void main(){vNormal=normalize(normalMatrix*normal);vec4 p=modelViewMatrix*vec4(position,1.);vPosition=p.xyz;gl_Position=projectionMatrix*p;}`;
 const atmosphere=`varying vec3 vNormal;varying vec3 vPosition;void main(){float rim=pow(1.-abs(dot(normalize(vNormal),normalize(-vPosition))),3.6);gl_FragColor=vec4(vec3(.22,.48,.94),rim*.18);}`;
-export default function Globe({city,active,selected,mode,zoom,focus,year,month,scenario,onCity,onReady,clean=false,globalAir=null,showGlobalAir=true}){
- const host=useRef(null),runtime=useRef(null),props=useRef({city,active,selected,mode,zoom,focus,year,month,scenario,onCity,globalAir,showGlobalAir}),[error,setError]=useState(false);
- props.current={city,active,selected,mode,zoom,focus,year,month,scenario,onCity,globalAir,showGlobalAir};
+export default function Globe({city,active,selected,mode,zoom,focus,year,month,scenario,onCity,onReady,clean=false,globalAir=null,paint=null}){
+ const host=useRef(null),runtime=useRef(null),props=useRef({city,active,selected,mode,zoom,focus,year,month,scenario,onCity,globalAir,paint}),[error,setError]=useState(false);
+ props.current={city,active,selected,mode,zoom,focus,year,month,scenario,onCity,globalAir,paint};
  useEffect(()=>{
   let renderer;try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});}catch(e){setError(true);return;}
   const container=host.current; renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setClearColor(0x000000,0);renderer.outputColorSpace=THREE.SRGBColorSpace;container.appendChild(renderer.domElement);
@@ -71,7 +71,7 @@ void main(){vec2 uv=gl_PointCoord-.5;float d=length(uv);if(d>.49)discard;vec2 p=
   let frame,oldFocus=-1,oldSelected='',oldCity='',oldActive='',oldZoom=-1,tween=null;const timer=new THREE.Clock();const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function labelPosition(position,el){const facing=position.clone().normalize().dot(camera.position.clone().normalize());const screen=position.clone().project(camera);const visible=facing>1/camera.position.length()+.02&&Math.abs(screen.x)<.94&&Math.abs(screen.y)<.86;el.style.display=visible?'':'none';el.style.transform=`translate(${(screen.x*.5+.5)*dimensions.w}px,${(-screen.y*.5+.5)*dimensions.h}px)`;}
   const animate=()=>{frame=requestAnimationFrame(animate);const elapsed=timer.getElapsedTime();const p=props.current;
-   globalLayer.update({data:p.globalAir,visible:clean&&p.showGlobalAir});
+   globalLayer.update({data:clean?p.globalAir:null,paint:p.paint});
    if(p.selected!==oldSelected||p.city.id!==oldCity||p.active.join()!==oldActive){rebuild();oldSelected=p.selected;oldCity=p.city.id;oldActive=p.active.join();}
    if(p.focus!==oldFocus||p.zoom!==oldZoom){const target=vec(p.city.lat,p.city.lon,p.zoom===1?2.3:3.8);tween={start:camera.position.clone(),end:target,t:elapsed};oldFocus=p.focus;oldZoom=p.zoom;}
    if(tween){let t=Math.min(1,(elapsed-tween.t)/(reduced?.02:1.5));const eased=t*t*(3-2*t);camera.position.lerpVectors(tween.start,tween.end,eased);if(t===1)tween=null;}

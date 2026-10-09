@@ -1,9 +1,14 @@
 import React from 'react';
+import {PAINT_LAYERS} from './paintLayers';
 const format=new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'UTC'});
-export default function GlobalAirLegend({state,visible,onToggle}) {
+export default function GlobalAirLegend({state,paint,onChange}) {
  const data=state.data;
- return <section className="global-air-legend" aria-label="Global PM2.5 layer">
-  <div className="global-layer-title"><button aria-pressed={visible} onClick={onToggle} disabled={!data}><span className={visible?'layer-indicator on':'layer-indicator'}/>Global PM₂.₅</button><span>µg/m³</span></div>
-  {data?<><div className={`global-colour-scale${visible?'':' hidden-scale'}`} aria-hidden="true"/><div className="global-scale-values"><span>0</span><span>10</span><span>35</span><span>100+</span></div><p>Modeled snapshot · {format.format(new Date(data.validAt))} UTC</p><p>5° samples · interpolated display</p></>:<p role="status">{state.status==='error'?'Global layer unavailable':'Loading global layer…'}</p>}
+ return <section className="paint-palette" aria-label="Pollution paint layers">
+  <div className="paint-heading"><span>Atmosphere</span><span>µg/m³</span></div>
+  {PAINT_LAYERS.map(layer=>{const setting=paint[layer.id];return <div className={`paint-row pigment-${layer.id}${setting.enabled?' is-on':''}`} key={layer.id}>
+   <div className="paint-row-top"><button aria-label={`Toggle ${layer.name} layer`} aria-pressed={setting.enabled} disabled={!data} onClick={()=>onChange(layer.id,{enabled:!setting.enabled})}><span className="paint-swatch" aria-hidden="true"/><span>{layer.label}</span></button><span className="paint-scale">0 — {layer.range}+</span></div>
+   <label className="paint-strength"><span>Paint strength</span><input type="range" min="0" max="100" step="5" value={setting.strength} disabled={!data||!setting.enabled} aria-label={`${layer.name} paint strength`} onChange={e=>onChange(layer.id,{strength:Number(e.target.value)})}/><output>{setting.strength}%</output></label>
+  </div>;})}
+  {data?<><p className="paint-meta">Modeled · {format.format(new Date(data.validAt))} UTC</p><p className="paint-note">5° samples · colours mix on overlap</p></>:<p className="paint-meta" role="status">{state.status==='error'?'Global layers unavailable':'Loading global layers…'}</p>}
  </section>;
 }

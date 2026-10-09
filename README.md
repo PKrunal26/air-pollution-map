@@ -6,13 +6,15 @@ A minimal, globe-first environmental artwork. Drag Earth, search one of twelve c
 
 The PM2.5 readout fetches current-time **modeled estimates** from CAMS global atmospheric composition forecasts through Open-Meteo. It uses `domains=cams_global` consistently for all cities, with roughly 45 km grid resolution. These are area estimates, not local sensor readings, source attribution, personal exposure estimates, or citywide averages.
 
-The globe now shows a global PM2.5 concentration layer, sampled at 2,664 real locations on a 5-degree grid including land, oceans and poles. A single UTC valid time is requested for every sample from `domains=cams_global` using nearest-cell selection. The bundled snapshot records provider model coordinates, retrieval time, units and all sample values. The timestamp is always visible; this is a saved snapshot, not an automatically refreshed global feed.
+The globe shows four global pollutant fields: PM2.5, nitrogen dioxide, ozone and dust. Each is sampled at 2,664 real locations on a 5-degree grid across land, oceans and poles. A single UTC valid time is requested for all four in every batch using `domains=cams_global` and nearest-cell selection. The bundled `global-air-layers.json` records provider model coordinates, retrieval time, units and all original values. Its timestamp is visible; global data is a saved snapshot rather than an automatically refreshing feed.
 
-The coloured shell smoothly interpolates between samples. Its display grid is much coarser than CAMS's native roughly 45 km grid: do not read local boundaries or fine details from this layer. Colour and opacity encode concentration with a fixed numerical legend, not health categories. Slight shell height is exaggerated and is not a plume-altitude or wind model. The single-city decorative plume has been replaced by this worldwide field.
+Each layer has a fixed pigment colour and a separate fixed visual concentration range: PM2.5 0–100, NO2 0–20, ozone 0–120, dust 0–100 µg/m³. Concentration sets the local pigment weight; the paint-strength slider scales only that visual weight. A single shader combines pigment absorption in logarithmic colour space and increases coverage with accumulated display weight. Mixing is independent of toggle order. This is an artistic pigment model, not a physical aerosol colour simulation, combined health index or chemical reaction. Dust overlaps particulate matter and is not an additional independent source contribution.
 
-The separate city estimate refreshes on selection, manually and every 15 minutes while visible. It can differ from the global layer because its time and sample location differ. City changes abort requests; missing data never becomes a fabricated zero.
+The coloured shell interpolates between the samples; the display is much coarser than the source's native roughly 45 km grid. Each raw array is preserved unchanged. Only a quantised, clamped visual weight enters the display texture. Slight shell height is exaggerated for visibility and does not show real altitude, wind or source attribution.
 
-Regenerate a snapshot with `node scripts/fetch-global-air.mjs YYYY-MM-DDTHH:00 /absolute/cache/path` from the site directory. The downloader spaces requests to respect rate limits, caches raw responses for resuming, validates one common UTC timestamp, and refuses incomplete or invalid grids before writing the public asset. No automation was scheduled.
+The separate current city PM2.5 estimate continues to refresh on selection, manually and every 15 minutes while visible. It may differ from the global snapshot because its time and sample location differ. Missing data never becomes an invented zero.
+
+Regenerate the four-layer snapshot with `node scripts/fetch-global-air.mjs YYYY-MM-DDTHH:00 /absolute/cache/path`. The downloader spaces requests, caches raw responses for resuming, retries transient interruptions, checks units, coordinates and a common UTC timestamp, and refuses incomplete fields before writing the public asset. No automation was scheduled. The previous single-field snapshot is retained as a reference, not displayed.
 
 - [CAMS dataset](https://ads.atmosphere.copernicus.eu/datasets/cams-global-atmospheric-composition-forecasts)
 - [Open-Meteo API and source documentation](https://open-meteo.com/en/docs/air-quality-api)
@@ -38,7 +40,7 @@ Deploy the existing Sites project declared in `.openai/hosting.json`; retain its
 
 ## Verification
 
-Four data-boundary tests cover units and UTC timestamps, missing/invalid values, upstream errors, abort signal propagation and preservation of the provider’s concentration. The live browser flow was checked for New Delhi and London, manual source attribution, and mobile layout. The browser’s displayed values matched the live feed: Delhi 71.0 and London 3.9 micrograms per cubic metre, valid 8 October 2026 at 10:00 UTC. Those values are verification evidence, not bundled fallback data.
+Data-boundary tests cover units and UTC timestamps, missing/invalid values, upstream errors, abort signal propagation and preservation of provider values. Global tests check complete sampled fields and longitude wrapping. Paint tests check a green yellow/cyan mixture, neutral zero-strength/all-off states, bounded results and mixing independence from control order. The renderer and numerical controls are checked in the browser before publishing.
 
 ## Earlier exploration
 
