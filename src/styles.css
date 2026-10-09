@@ -66,3 +66,45 @@
 .sliders-collapsed .paint-row{padding:7px 0}
 @media(max-width:600px){.paint-collapse{min-height:36px}.paint-strength input{height:32px}.paint-scale small{display:none}.sliders-collapsed .paint-row{padding:3px 0}}
 @media(forced-colors:active){.paint-strength input{appearance:auto;background:Canvas;accent-color:auto}}
+
+/* The globe keeps the whole viewport. Controls open above it when needed. */
+.layers-launcher{position:absolute;left:32px;bottom:26px;z-index:6;min-height:44px;padding:0 15px;gap:9px;border:1px solid #ffffff25;border-radius:30px;background:#0b1016dc;backdrop-filter:blur(12px);font-size:13px;color:#e2e8ed}
+.paint-palette.panel-closed{display:none}
+.paint-palette{max-height:calc(100dvh - 170px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#ffffff30 transparent}
+.paint-heading{position:relative}
+.layers-close{width:28px;min-height:36px;color:#acb9c5;flex-shrink:0}
+.weather-heading{font-size:12px;letter-spacing:.03em;color:#bdc9d4;margin:22px 0 8px}
+.paint-palette .paint-row-top button:disabled{opacity:.45;cursor:default}
+.paint-palette .paint-note{font-size:11px;line-height:1.5}
+.paint-palette .paint-meta a,.paint-palette .paint-note a{color:#b9cad8}
+.layers-clear{min-height:40px;margin-top:14px;padding:0;font-size:12px;color:#adb8c3;text-decoration:underline;text-underline-offset:4px}
+.weather-key{height:3px;border-radius:2px;margin:0 0 6px}
+.key-temperature{background:linear-gradient(90deg,#3d64d9,#b0a8d4,#f55c3b)}
+.key-humidity{background:linear-gradient(90deg,#1c4a4f,#59e6c7)}
+.weather-evidence{font-size:11px;color:#adbbc8;margin-top:10px;line-height:1.5}
+.weather-evidence summary{cursor:pointer;min-height:24px}
+@media(max-width:600px){
+ .minimal-atlas .globe-host{inset:0}
+ .minimal-header{top:max(18px,env(safe-area-inset-top));left:20px;right:14px}
+ .minimal-search{top:70px;left:20px;width:180px}
+ .globe-surface{top:122px;left:20px}
+ .globe-surface button{min-height:36px}
+ .minimal-atlas .minimal-zoom{bottom:max(20px,env(safe-area-inset-bottom));right:14px}
+ .minimal-zoom button{width:44px;height:44px}
+ .layers-launcher{left:16px;bottom:max(20px,env(safe-area-inset-bottom));min-height:44px}
+ .paint-palette,.surface-view-white .paint-palette,.surface-view-charcoal .paint-palette{display:block;top:auto;bottom:78px;left:12px;right:12px;width:auto;max-height:48dvh;padding:14px 16px;border:1px solid #ffffff1c;border-radius:16px;background:#0b1016f5;backdrop-filter:blur(16px);box-shadow:0 8px 30px #0005}
+ .paint-palette.panel-closed{display:none}
+ .surface-view-charcoal .paint-palette:before{display:none}
+ .paint-palette .paint-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 4px}
+ .paint-heading>span{font-size:14px;color:#d6e0e7}
+ .layer-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:20px}
+ .weather-heading+.layer-grid{grid-template-columns:1fr}
+ .paint-palette .paint-row{padding:6px 0}
+ .paint-row-top button{font-size:13px;min-height:36px}
+ .paint-scale{font-size:10px}
+ .paint-strength{margin-top:0}
+ .paint-strength input{height:30px}
+ .paint-palette .paint-meta{font-size:11px;margin-top:10px}
+ .paint-palette .paint-note{font-size:11px}
+ .air-readout{bottom:82px;max-width:calc(100% - 40px)}
+}

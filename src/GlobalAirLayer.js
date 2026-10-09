@@ -47,7 +47,7 @@ export function createGlobalAirLayer(scene) {
   geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));geometry.setAttribute('sampleWeights',new THREE.BufferAttribute(weights,4));geometry.setAttribute('location',new THREE.BufferAttribute(locations,2));geometry.computeBoundingSphere();return geometry;
  }
  return {
-  update({data,regional,paint,surface,camera,height,pixelRatio,onDetail}) {
+  update({data,regional,paint,surface,camera,width,height,pixelRatio,onDetail}) {
    const strengths=PAINT_LAYERS.map(layer=>{const setting=paint?.[layer.id];return setting?.enabled?setting.strength/100:0;});
    const distance=camera.position.length();
    if(data!==current){geometries.forEach(g=>g.dispose());geometries.clear();current=data;}
@@ -64,7 +64,8 @@ export function createGlobalAirLayer(scene) {
     m.uniforms.contrast.value=surface==='white'?1.8:surface==='charcoal'?.85:1;
     m.uniforms.densityGain.value=surface==='white'?2.1:surface==='charcoal'?1.9:1.2;
     m.uniforms.amount.value.fromArray(strengths);m.uniforms.regionMix.value=regionMix;
-    m.uniforms.pointPixels.value=5.4*pixelRatio;
+    // Fixed screen size throughout zoom; only viewport size determines the baseline.
+    m.uniforms.pointPixels.value=THREE.MathUtils.clamp(Math.min(width,height)*5.4/1173,1.8,5.4)*pixelRatio;
     if(bounds)m.uniforms.regionBounds.value.set(bounds.west,bounds.south,bounds.east,bounds.north);
    });
    marks.visible=!!data&&strengths.some(s=>s>0);regionalMarks.visible=marks.visible&&regionMix>0&&!!regionalGeometry;

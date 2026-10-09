@@ -4,12 +4,12 @@ Usage: /path/to/om-venv/bin/python scripts/prepare-weather.py 2026-10-09T03:00
 import argparse,datetime as dt,hashlib,json,pathlib,urllib.request,time
 import numpy as np
 from omfiles import OmFileReader
-p=argparse.ArgumentParser();p.add_argument('hour');args=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('hour');p.add_argument('--file');p.add_argument('--run');args=p.parse_args()
 valid=dt.datetime.fromisoformat(args.hour).replace(tzinfo=dt.timezone.utc)
 base='https://openmeteo.s3.amazonaws.com/data_spatial/ecmwf_ifs025/'
 m=json.loads(urllib.request.urlopen(base+'latest.json',timeout=30).read())
 assert m['completed'] and valid.strftime('%Y-%m-%dT%H:%MZ') in m['valid_times']
-run=dt.datetime.fromisoformat(m['reference_time'].replace('Z','+00:00'))
+run=dt.datetime.fromisoformat((args.run or m['reference_time']).replace('Z','+00:00'))
 url=base+run.strftime('%Y/%m/%d/%H%MZ/')+valid.strftime('%Y-%m-%dT%H%M.om')
 class Remote:
  def __init__(self):self.memo={}
@@ -31,7 +31,7 @@ class Remote:
   return self.memo[key]
 names=['temperature_2m','relative_humidity_2m','wind_u_component_10m','wind_v_component_10m']
 units=['°C','%','m/s','m/s'];arrays=[];stats={}
-with OmFileReader.from_fsspec(Remote(),url) as root:
+with (OmFileReader(args.file) if args.file else OmFileReader.from_fsspec(Remote(),url)) as root:
  assert root.get_child_by_name('valid_time').read_scalar()==int(valid.timestamp())
  assert root.get_child_by_name('forecast_reference_time').read_scalar()==int(run.timestamp())
  assert root.get_child_by_name('coordinates').read_scalar()=='lat lon'
