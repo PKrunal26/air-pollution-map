@@ -8,9 +8,9 @@ The PM2.5 readout fetches current-time **modeled estimates** from CAMS global at
 
 The globe shows four global pollutant fields: PM2.5, nitrogen dioxide, ozone and dust. Each is sampled at 2,664 real locations on a 5-degree grid across land, oceans and poles. A single UTC valid time is requested for all four in every batch using `domains=cams_global` and nearest-cell selection. The bundled `global-air-layers.json` records provider model coordinates, retrieval time, units and all original values. Its timestamp is visible; global data is a saved snapshot rather than an automatically refreshing feed.
 
-Each layer has a fixed pigment colour and a separate fixed visual concentration range: PM2.5 0–100, NO2 0–20, ozone 0–120, dust 0–100 µg/m³. Concentration sets the local pigment weight; the paint-strength slider scales only that visual weight. A single shader combines pigment absorption in logarithmic colour space and increases coverage with accumulated display weight. Mixing is independent of toggle order. This is an artistic pigment model, not a physical aerosol colour simulation, combined health index or chemical reaction. Dust overlaps particulate matter and is not an additional independent source contribution.
+Each layer has a fixed pigment colour and a separate fixed visual concentration range: PM2.5 0–100, NO2 0–20, ozone 0–120, dust 0–100 µg/m³. Concentration sets the local pigment weight; the paint-strength slider scales only that visual weight. A single shader combines pigment absorption in logarithmic colour space. Crisp circular marks at each sample location use size and opacity to indicate accumulated display weight. Mixing is independent of toggle order. This is an artistic pigment model, not a physical aerosol colour simulation, combined health index or chemical reaction. Dust overlaps particulate matter and is not an additional independent source contribution.
 
-The coloured shell interpolates between the samples; the display is much coarser than the source's native roughly 45 km grid. Each raw array is preserved unchanged. Only a quantised, clamped visual weight enters the display texture. Slight shell height is exaggerated for visibility and does not show real altitude, wind or source attribution.
+The sample marks replace the soft interpolated shell. Their colours come directly from the sampled fields, with clamped visual weights kept separate from the unchanged raw arrays. This display is much coarser than the source's native roughly 45 km grid. Dot size does not show plume extent, altitude, wind or source attribution. Samples coinciding at each pole are drawn once. Charcoal uses neutral graphite land, nearly black oceans and stronger, clearer point colours.
 
 The separate current city PM2.5 estimate continues to refresh on selection, manually and every 15 minutes while visible. It may differ from the global snapshot because its time and sample location differ. Missing data never becomes an invented zero.
 
@@ -25,7 +25,7 @@ Attribution: Copernicus Atmosphere Monitoring Service / ECMWF, via Open-Meteo. T
 
 Earth uses NASA Blue Marble Next Generation (July 2004), resampled from the 21600×10800 global composite to 8192×4096 with a 4096×2048 fallback for limited graphics hardware. Anisotropic filtering preserves oblique detail; the coarse normal map was removed. The initial low-resolution map and ocean specular map come from Three.js example assets. Imagery is static, separate from the modeled concentration. Source: https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/
 
-The global layer follows the Earth surface, occludes on the far side, and has no invented animated drift. The previous single-city volume is retained as unused reference code.
+The global sample marks follow the Earth surface, hide on the far side, and have no invented animated drift. The previous single-city volume is retained as unused reference code.
 
 ## Run
 

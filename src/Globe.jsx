@@ -22,7 +22,7 @@ export default function Globe({city,active,selected,mode,zoom,focus,year,month,s
    vertexShader:`varying vec2 surfaceUv;varying vec3 vNormal;varying vec3 vPosition;void main(){surfaceUv=uv;vNormal=normalize(normalMatrix*normal);vec4 p=modelViewMatrix*vec4(position,1.);vPosition=p.xyz;gl_Position=projectionMatrix*p;}`,
    fragmentShader:`uniform vec3 base;uniform vec3 ocean;uniform sampler2D waterMask;uniform float hasMask;varying vec2 surfaceUv;varying vec3 vNormal;varying vec3 vPosition;void main(){vec3 n=normalize(vNormal);float face=max(0.,dot(n,normalize(-vPosition)));float light=.90+.10*max(0.,dot(n,normalize(vec3(-.4,.5,1.))));float edge=1.-pow(1.-face,3.)*.08;float water=smoothstep(.25,.75,texture2D(waterMask,surfaceUv).r)*hasMask;gl_FragColor=vec4(mix(base,ocean,water)*light*edge,1.);}`,
   });}
-  const surfaceMaterials={satellite:satelliteMaterial,white:neutralMaterial([.97,.97,.95],[.66,.73,.79]),charcoal:neutralMaterial([.13,.15,.18],[.13,.15,.18])};
+  const surfaceMaterials={satellite:satelliteMaterial,white:neutralMaterial([.97,.97,.95],[.66,.73,.79]),charcoal:neutralMaterial([.12,.12,.125],[.055,.055,.065])};
   const earth=new THREE.Mesh(new THREE.SphereGeometry(1,192,128),satelliteMaterial);scene.add(earth);
 
   let disposed=false,textureTier=0;const textures=new Set();
@@ -43,7 +43,7 @@ export default function Globe({city,active,selected,mode,zoom,focus,year,month,s
   const outlines=[];const countries=feature(atlas,atlas.objects.countries);
   for(const f of countries.features){const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;for(const poly of polys)for(const ring of poly){for(let i=1;i<ring.length;i++){const a=ring[i-1],b=ring[i];if(Math.abs(a[0]-b[0])<180){outlines.push(...vec(a[1],a[0],1.003).toArray(),...vec(b[1],b[0],1.003).toArray());}}}}
   const outlineGeo=new THREE.BufferGeometry();outlineGeo.setAttribute('position',new THREE.Float32BufferAttribute(outlines,3));
-  const countryLines=new THREE.LineSegments(outlineGeo,new THREE.LineBasicMaterial({color:0x98c0b3,transparent:true,opacity:.13}));scene.add(countryLines);
+  const countryLines=new THREE.LineSegments(outlineGeo,new THREE.LineBasicMaterial({color:0x98c0b3,transparent:true,opacity:.13}));countryLines.renderOrder=3;scene.add(countryLines);
   const grid=new THREE.Group();for(let lat=-60;lat<=60;lat+=30){const p=[];for(let lon=-180;lon<=180;lon+=2)p.push(vec(lat,lon,1.005));grid.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p),new THREE.LineBasicMaterial({color:0x749b92,transparent:true,opacity:.10})));}for(let lon=0;lon<360;lon+=30){const p=[];for(let lat=-90;lat<=90;lat+=2)p.push(vec(lat,lon,1.005));grid.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p),new THREE.LineBasicMaterial({color:0x749b92,transparent:true,opacity:.10})));}if(!clean)scene.add(grid);else grid.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
   let seed=717;const random=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646;};const normal=()=>Math.sqrt(-2*Math.log(Math.max(.0001,random())))*Math.cos(6.283*random());
   const particleGroups=[],cloudGroups=[];
@@ -82,7 +82,7 @@ void main(){vec2 uv=gl_PointCoord-.5;float d=length(uv);if(d>.49)discard;vec2 p=
   const animate=()=>{frame=requestAnimationFrame(animate);const elapsed=timer.getElapsedTime();const p=props.current;
    if(oldSurface!==p.surface){
     oldSurface=p.surface;earth.material=surfaceMaterials[p.surface]??satelliteMaterial;
-    countryLines.visible=!clean||p.surface!=='satellite';countryLines.material.color.set(p.surface==='white'?0x717b83:0x8693a1);countryLines.material.opacity=p.surface==='white'?.24:.22;
+    countryLines.visible=!clean||p.surface!=='satellite';countryLines.material.color.set(p.surface==='white'?0x717b83:0x90908c);countryLines.material.opacity=p.surface==='white'?.24:.26;
     halo.visible=outer.visible=p.surface==='satellite';renderer.domElement.dataset.globeSurface=p.surface;
    }
    globalLayer.update({data:clean?p.globalAir:null,paint:p.paint,surface:p.surface});
