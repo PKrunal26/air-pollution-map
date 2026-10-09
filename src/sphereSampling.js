@@ -1,6 +1,7 @@
 const DEG=Math.PI/180;
 const GOLDEN_ANGLE=Math.PI*(3-Math.sqrt(5));
-export const DOT_COUNTS=[32000,96000,256000];
+// Keep the overview richly inked; zoom adds display samples, not new observations.
+export const DOT_COUNTS=[256000,512000,1024000];
 export const REGIONAL_DOT_COUNT=4096000;
 
 // Equal surface area per point, with no longitude convergence or repeated poles.

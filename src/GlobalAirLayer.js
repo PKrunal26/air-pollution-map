@@ -6,19 +6,28 @@ export function createGlobalAirLayer(scene) {
  const material=new THREE.ShaderMaterial({
   uniforms:{amount:{value:new THREE.Vector4()},contrast:{value:1},densityGain:{value:1.2},focalPixels:{value:1000},spacing:{value:.02},regionMix:{value:0},isRegion:{value:0},regionBounds:{value:new THREE.Vector4(-25,30,45,72)},pigment0:{value:new THREE.Vector3(...PAINT_LAYERS[0].rgb)},pigment1:{value:new THREE.Vector3(...PAINT_LAYERS[1].rgb)},pigment2:{value:new THREE.Vector3(...PAINT_LAYERS[2].rgb)},pigment3:{value:new THREE.Vector3(...PAINT_LAYERS[3].rgb)}},
   vertexShader:`attribute vec4 sampleWeights;attribute vec2 location;uniform vec4 amount;uniform float contrast;uniform float densityGain;uniform float focalPixels;uniform float spacing;uniform float regionMix;uniform float isRegion;uniform vec4 regionBounds;
-   uniform vec3 pigment0;uniform vec3 pigment1;uniform vec3 pigment2;uniform vec3 pigment3;varying vec3 colour;varying float opacity;
+   varying vec4 inkWeights;varying float visibility;
    void main(){vec4 weights=sampleWeights*amount;float total=dot(weights,vec4(1.));
-    vec3 absorption=-log(pigment0)*weights.x-log(pigment1)*weights.y-log(pigment2)*weights.z-log(pigment3)*weights.w;
-    colour=exp(-absorption/max(total,.0001)*contrast);
+    inkWeights=weights;
     vec4 mv=modelViewMatrix*vec4(position,1.);float facing=dot(normalize(normalMatrix*position),normalize(-mv.xyz));
     float edge=min(min(location.x-regionBounds.x,regionBounds.z-location.x),min(location.y-regionBounds.y,regionBounds.w-location.y));
     float inside=smoothstep(0.,1.5,edge);
-    float visibility=mix(1.-inside*regionMix,inside*regionMix,isRegion);
-    opacity=visibility*(total>.001?(.65+.35*(1.-exp(-total*densityGain)))*smoothstep(0.,.08,facing):0.);
-    gl_PointSize=clamp(spacing*focalPixels*.66*(.8+.2*(1.-exp(-total*1.7)))/max(-mv.z,.05),1.,12.);
+    visibility=mix(1.-inside*regionMix,inside*regionMix,isRegion)*smoothstep(0.,.08,facing);
+    gl_PointSize=clamp(spacing*focalPixels*1.08*(.8+.2*(1.-exp(-total*1.7)))/max(-mv.z,.05),1.5,24.);
     gl_Position=projectionMatrix*mv;
    }`,
-  fragmentShader:`varying vec3 colour;varying float opacity;void main(){float r=length(gl_PointCoord-.5);if(r>.5||opacity<.001)discard;gl_FragColor=vec4(colour,opacity*(1.-smoothstep(.40,.5,r)));}`,
+  // Four slightly offset ink plates within each point keep the effect in screen space.
+  // Sample coordinates and source concentrations never move.
+  fragmentShader:`uniform float contrast;uniform float densityGain;uniform vec3 pigment0;uniform vec3 pigment1;uniform vec3 pigment2;uniform vec3 pigment3;varying vec4 inkWeights;varying float visibility;
+   float ink(vec2 p,vec2 offset){float r=length(p-offset);float aa=max(fwidth(r)*.55,.012);return 1.-smoothstep(.345-aa,.345+aa,r);}
+   void main(){if(visibility<.001)discard;vec2 p=gl_PointCoord-.5;
+    vec4 coverage=vec4(ink(p,vec2(-.095,-.045)),ink(p,vec2(.10,.055)),ink(p,vec2(-.025,.105)),ink(p,vec2(.055,-.105)));
+    vec4 weights=inkWeights*coverage;float total=dot(weights,vec4(1.));if(total<.001)discard;
+    vec3 absorption=-log(pigment0)*weights.x-log(pigment1)*weights.y-log(pigment2)*weights.z-log(pigment3)*weights.w;
+    vec3 colour=exp(-absorption/max(total,.0001)*contrast);
+    float opacity=(1.-exp(-total*densityGain*2.4))*visibility;
+    gl_FragColor=vec4(colour,opacity);
+   }`,
   transparent:true,depthWrite:false,depthTest:false,
  });
  const marks=new THREE.Points(new THREE.BufferGeometry(),material);
