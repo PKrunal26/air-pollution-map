@@ -2,7 +2,7 @@
 export const PAINT_LAYERS=[
  {id:'pm2_5',label:'PM₂.₅',name:'Fine particles',colour:'#edc65b',rgb:[.93,.78,.36],range:100,defaultStrength:100},
  {id:'nitrogen_dioxide',label:'NO₂',name:'Nitrogen dioxide',colour:'#54c7d6',rgb:[.33,.78,.84],range:20,defaultStrength:100},
- {id:'ozone',label:'O₃',name:'Ozone',colour:'#d780b9',rgb:[.84,.50,.73],range:120,defaultStrength:35},
+ {id:'ozone',label:'O₃',name:'Ozone',colour:'#9975f0',rgb:[.60,.46,.94],range:120,defaultStrength:35},
  {id:'dust',label:'Dust',name:'Dust',colour:'#d57d50',rgb:[.84,.49,.31],range:100,defaultStrength:75},
 ];
 export const initialPaint=()=>Object.fromEntries(PAINT_LAYERS.map(p=>[p.id,{enabled:true,strength:p.defaultStrength}]));
