@@ -4,8 +4,8 @@ import {DOT_COUNTS,REGIONAL_DOT_COUNT,sphereSamples,gridBounds,sampleField,detai
 
 export function createGlobalAirLayer(scene) {
  const material=new THREE.ShaderMaterial({
-  uniforms:{amount:{value:new THREE.Vector4()},contrast:{value:1},densityGain:{value:1.2},focalPixels:{value:1000},spacing:{value:.02},regionMix:{value:0},isRegion:{value:0},regionBounds:{value:new THREE.Vector4(-25,30,45,72)},pigment0:{value:new THREE.Vector3(...PAINT_LAYERS[0].rgb)},pigment1:{value:new THREE.Vector3(...PAINT_LAYERS[1].rgb)},pigment2:{value:new THREE.Vector3(...PAINT_LAYERS[2].rgb)},pigment3:{value:new THREE.Vector3(...PAINT_LAYERS[3].rgb)}},
-  vertexShader:`attribute vec4 sampleWeights;attribute vec2 location;uniform vec4 amount;uniform float contrast;uniform float densityGain;uniform float focalPixels;uniform float spacing;uniform float regionMix;uniform float isRegion;uniform vec4 regionBounds;
+  uniforms:{amount:{value:new THREE.Vector4()},contrast:{value:1},densityGain:{value:1.2},pointPixels:{value:5.4},regionMix:{value:0},isRegion:{value:0},regionBounds:{value:new THREE.Vector4(-25,30,45,72)},pigment0:{value:new THREE.Vector3(...PAINT_LAYERS[0].rgb)},pigment1:{value:new THREE.Vector3(...PAINT_LAYERS[1].rgb)},pigment2:{value:new THREE.Vector3(...PAINT_LAYERS[2].rgb)},pigment3:{value:new THREE.Vector3(...PAINT_LAYERS[3].rgb)}},
+  vertexShader:`attribute vec4 sampleWeights;attribute vec2 location;uniform vec4 amount;uniform float contrast;uniform float densityGain;uniform float pointPixels;uniform float regionMix;uniform float isRegion;uniform vec4 regionBounds;
    varying vec4 inkWeights;varying float visibility;
    void main(){vec4 weights=sampleWeights*amount;float total=dot(weights,vec4(1.));
     inkWeights=weights;
@@ -13,7 +13,7 @@ export function createGlobalAirLayer(scene) {
     float edge=min(min(location.x-regionBounds.x,regionBounds.z-location.x),min(location.y-regionBounds.y,regionBounds.w-location.y));
     float inside=smoothstep(0.,1.5,edge);
     visibility=mix(1.-inside*regionMix,inside*regionMix,isRegion)*smoothstep(0.,.08,facing);
-    gl_PointSize=clamp(spacing*focalPixels*1.62*(.8+.2*(1.-exp(-total*1.7)))/max(-mv.z,.05),2.25,36.);
+    gl_PointSize=pointPixels;
     gl_Position=projectionMatrix*mv;
    }`,
   // Expanded sprites preserve ink size while allowing 2.5x print misregistration without clipping.
@@ -64,8 +64,7 @@ export function createGlobalAirLayer(scene) {
     m.uniforms.contrast.value=surface==='white'?1.8:surface==='charcoal'?.85:1;
     m.uniforms.densityGain.value=surface==='white'?2.1:surface==='charcoal'?1.9:1.2;
     m.uniforms.amount.value.fromArray(strengths);m.uniforms.regionMix.value=regionMix;
-    m.uniforms.focalPixels.value=height*pixelRatio/(2*Math.tan(camera.fov*Math.PI/360));
-    m.uniforms.spacing.value=Math.sqrt(4*Math.PI/(i===1?REGIONAL_DOT_COUNT:DOT_COUNTS[level]));
+    m.uniforms.pointPixels.value=5.4*pixelRatio;
     if(bounds)m.uniforms.regionBounds.value.set(bounds.west,bounds.south,bounds.east,bounds.north);
    });
    marks.visible=!!data&&strengths.some(s=>s>0);regionalMarks.visible=marks.visible&&regionMix>0&&!!regionalGeometry;
