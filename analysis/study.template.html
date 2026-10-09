@@ -31,7 +31,6 @@ h1,h2{font-weight:400;text-wrap:balance}
 h1{font-size:clamp(38px,6.4vw,64px);line-height:1.04;letter-spacing:-.045em}
 h2{font-size:clamp(26px,3.6vw,34px);line-height:1.12;letter-spacing:-.03em}
 h3{font-size:15px;font-weight:500;line-height:1.4;letter-spacing:-.005em}
-.kicker{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:#9fa796}
 .wrap{max-width:1040px;margin:0 auto;padding-inline:clamp(16px,4vw,40px)}
 .col{max-width:68ch}
 .lede{font-size:17px;line-height:1.6;color:var(--soft)}
@@ -122,7 +121,6 @@ footer{padding-block:72px 64px;color:var(--muted);font-size:12px}
 
 <main>
 <div class="hero wrap">
- <p class="kicker">Behind Air Atlas</p>
  <h1>What moves together in the air</h1>
  <p class="lede col">Air Atlas paints 28 modelled pollution fields and 3 weather fields on the globe. This study asks which of them rise and fall in the same places, and what that says about where the air's contents come from.</p>
  <div class="facts" id="facts"></div>
@@ -130,15 +128,13 @@ footer{padding-block:72px 64px;color:var(--muted);font-size:12px}
 </div>
 
 <section id="lessons"><div class="wrap">
- <p class="kicker">Lessons</p>
  <h2>What we learned</h2>
  <ol class="lessons" id="lessonList"></ol>
 </div></section>
 
 <section id="maps"><div class="wrap">
- <p class="kicker">Where links hold</p>
  <h2>The same pair, mapped</h2>
- <p class="col muted">Each dot is a 5° tile with about 150 grid cells. Its area shows how strongly the two fields rank together inside that tile; amber means they rise together, blue means one rises as the other falls. Faint dots are land.</p>
+ <p class="col muted">Each dot is a 5° tile with about 150 grid cells. Its area and colour show how strongly the two fields rank together inside that tile, from violet (one rises as the other falls) through grey to red (they rise together). Faint dots are land.</p>
  <div class="pills" role="group" aria-label="Choose map" id="mapPills"></div>
  <figure class="panel" style="display:flex;flex-direction:column;gap:14px">
   <div class="map-title"><h3 id="mapHead"></h3><p id="mapNote"></p></div>
@@ -148,9 +144,8 @@ footer{padding-block:72px 64px;color:var(--muted);font-size:12px}
 </div></section>
 
 <section id="matrix"><div class="wrap">
- <p class="kicker">Every pair</p>
  <h2>The global matrix</h2>
- <p class="col muted">Rank correlation (Spearman ρ) between every pair of the 15 global fields and 3 weather fields, weighted by area. Rows are ordered by clustering, so related fields sit together. Dot area is |ρ|; hover or focus a dot for the numbers.</p>
+ <p class="col muted">Rank correlation (Spearman ρ) between every pair of the 15 global fields and 3 weather fields, weighted by area. Rows are ordered by clustering, so related fields sit together; each label carries the field's globe colour. Dot area and colour show ρ; hover or focus a dot for the numbers.</p>
  <div class="pills" role="group" aria-label="Matrix view" id="gPills"></div>
  <figure class="panel">
   <div class="scroll-x" id="gmat"></div>
@@ -162,21 +157,18 @@ footer{padding-block:72px 64px;color:var(--muted);font-size:12px}
 </div></section>
 
 <section id="shapes"><div class="wrap">
- <p class="kicker">Shape of the relationship</p>
  <h2>Two populations, one planet</h2>
  <p class="col muted">Joint distributions, weighted by area. Each dot is a bin; its size shows how much of Earth's surface falls there, its colour whether that surface is <span style="color:var(--land)">land</span> or <span style="color:var(--ocean)">ocean</span>. Concentration axes are logarithmic.</p>
  <div class="grid" id="scatters"></div>
 </div></section>
 
 <section id="regions"><div class="wrap">
- <p class="kicker">Continents</p>
  <h2>A global number hides regional stories</h2>
  <p class="col muted">Spearman ρ on land cells inside each region box. The same pair can be strong in one place and absent in another, because different sources dominate.</p>
  <figure class="panel scroll-x"><svg id="regionPlot" role="img" aria-label="Regional correlations"></svg></figure>
 </div></section>
 
 <section id="clock"><div class="wrap">
- <p class="kicker">Time of day</p>
  <h2>The clock is part of the data</h2>
  <p class="col muted">Land cells split by local solar time at the snapshot. Daylight drives photochemistry, so some links flip sign across the terminator.</p>
  <figure class="panel"><svg id="dayNight" role="img" aria-label="Day versus night correlations" style="width:100%;display:block"></svg></figure>
@@ -187,7 +179,6 @@ footer{padding-block:72px 64px;color:var(--muted);font-size:12px}
 </div></section>
 
 <section id="europe"><div class="wrap">
- <p class="kicker">Europe at 0.1°</p>
  <h2>Carbon travels in a pack</h2>
  <p class="col muted">The European ensemble adds ammonia, VOCs, carbon fractions, wildfire smoke and pollen. Land cells only. Alder, birch, olive and ragweed pollen are left out because they are zero everywhere in October.</p>
  <figure class="panel">
@@ -197,14 +188,12 @@ footer{padding-block:72px 64px;color:var(--muted);font-size:12px}
 </div></section>
 
 <section id="models"><div class="wrap">
- <p class="kicker">Two models</p>
  <h2>Same places, different amounts</h2>
  <p class="col muted">Zooming into Europe swaps the global model for the European ensemble. Rank agreement shows whether they put pollution in the same places; the ratio shows whether they agree on how much.</p>
  <figure class="panel scroll-x"><svg id="agreePlot" role="img" aria-label="Model agreement"></svg></figure>
 </div></section>
 
 <section id="about"><div class="wrap">
- <p class="kicker">About the data</p>
  <h2>The invisible, made visible</h2>
  <div class="about">
   <div><h3>What the globe shows</h3><p>A globe of modelled air composition. Each dot is a point on Earth, sized by the concentration of the layers you switch on: fine particles (PM₂.₅), ozone, nitrogen dioxide, dust and more. Only PM₂.₅ is on at first; open Layers to add others. Hover or tap anywhere to read the values underneath, or search for a city to see its separate estimate.</p></div>
@@ -225,8 +214,11 @@ footer{padding-block:72px 64px;color:var(--muted);font-size:12px}
 const $=s=>document.querySelector(s),NS='http://www.w3.org/2000/svg';
 const L=k=>D.labels[k]||k,sgn=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(2);
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-const POS=css('--pos'),NEG=css('--neg');
-const col=r=>r>=0?'var(--pos)':'var(--neg)';
+// diverging ramp: violet → blue → grey → amber → red, equal-ish lightness so size still reads
+const RAMP=[[-1,.62,.16,295],[-.6,.68,.13,255],[-.25,.71,.07,215],[0,.72,.01,150],[.25,.75,.07,100],[.6,.76,.13,70],[1,.69,.17,35]];
+function ramp(r){r=Math.max(-1,Math.min(1,r));for(let i=1;i<RAMP.length;i++)if(r<=RAMP[i][0]){const a=RAMP[i-1],b=RAMP[i],f=(r-a[0])/(b[0]-a[0]);return `oklch(${(a[1]+(b[1]-a[1])*f).toFixed(3)} ${(a[2]+(b[2]-a[2])*f).toFixed(3)} ${(a[3]+(b[3]-a[3])*f).toFixed(1)})`;}}
+const col=ramp,pig=k=>D.pigments[k]||'#b4c1a4',sw=k=>`<svg width="9" height="9" aria-hidden="true" style="vertical-align:0"><circle cx="4.5" cy="4.5" r="4" fill="${pig(k)}"/></svg>`;
+const rampBar=`<svg width="150" height="10" aria-hidden="true"><defs><linearGradient id="rampG">${RAMP.map(s=>`<stop offset="${(s[0]+1)/2}" stop-color="oklch(${s[1]} ${s[2]} ${s[3]})"/>`).join('')}</linearGradient></defs><rect width="150" height="10" rx="2" fill="url(#rampG)"/></svg>`;
 if(window.parent!==window)document.documentElement.classList.add('embedded');
 addEventListener('keydown',e=>{if(e.key==='Escape'&&window.parent!==window)parent.postMessage({type:'air-atlas:close-about'},'*');});
 
@@ -243,7 +235,7 @@ $('#sources').innerHTML=`Sources for this snapshot: <a href="${D.meta.globalSour
 
 // lookups
 const G=D.global,gi=k=>G.keys.indexOf(k),g=(m,a,b)=>G[m][gi(a)][gi(b)];
-const dot=(r,R=6)=>`<svg width="${2*R+2}" height="${2*R+2}" aria-hidden="true"><circle cx="${R+1}" cy="${R+1}" r="${Math.max(.8,R*Math.sqrt(Math.abs(r)))}" fill="${r>=0?POS:NEG}"/></svg>`;
+const dot=(r,R=6)=>`<svg width="${2*R+2}" height="${2*R+2}" aria-hidden="true"><circle cx="${R+1}" cy="${R+1}" r="${Math.max(.8,R*Math.sqrt(Math.abs(r)))}" fill="${ramp(r)}"/></svg>`;
 
 // lessons
 const agree=Object.fromEntries(D.agreement.map(a=>[a.id,a]));
@@ -257,15 +249,15 @@ const lessons=[
  [agree.dust.spearman,'Models agree on where, not how much',`At the Europe zoom switch, dust drops to ${agree.dust.medianRatio.toFixed(2)}× and SO₂ to ${agree.sulphur_dioxide.medianRatio.toFixed(2)}× the global value, though both models put them in the same places. Nitric oxide does not agree at all.`,'#models'],
 ];
 $('#lessonList').innerHTML=lessons.map(([r,h,p,href])=>`<li><span class="glyph">${dot(r,9)}ρ ${sgn(r)}</span><h3>${h}</h3><p>${p}</p><a href="${href}">See the evidence</a></li>`).join('');
-$('#dotKey').innerHTML=`<span>${dot(.25)} ${dot(.5)} ${dot(1)} |ρ| 0.25 · 0.5 · 1</span><span>${dot(.7)} rise together</span><span>${dot(-.7)} move opposite</span>`;
+$('#dotKey').innerHTML=`<span>${dot(.25)} ${dot(.5)} ${dot(1)} dot area: |ρ| 0.25 · 0.5 · 1</span><span>−1 ${rampBar} +1 &nbsp;opposite → together</span>`;
 
 // maps
 const M=D.maps,T=M.tile,sunLon=135,dec=-6.3*Math.PI/180;
 const MAPS=[
- ['pmsalt','PM2.5 × sea salt','Ocean tiles light up: over water, fine particles are spray. Inland the link disappears.',null],
+ ['pmsalt','PM2.5 × sea salt','Ocean tiles run red: over water, fine particles are spray. Inland the link disappears.',null],
  ['pmco','PM2.5 × carbon monoxide','Strong over South and East Asia, Central Africa and South America, where both come from burning.',null],
- ['no2o3','NO₂ × ozone','Blue where exhaust NO consumes ozone, mostly on the night side. The line marks the day–night terminator at the snapshot.','term'],
- ['hchot','Formaldehyde × temperature','Amber across warm forested land, where heat drives isoprene emissions.',null],
+ ['no2o3','NO₂ × ozone','Violet where exhaust NO consumes ozone, mostly on the night side. The line marks the day–night terminator at the snapshot.','term'],
+ ['hchot','Formaldehyde × temperature','Warm colours across forested land, where heat drives isoprene emissions.',null],
  ['ratio','Fine share of PM10','Colour shows PM2.5 ÷ PM10, from coarse dust to fine smoke; dot area shows PM10.','ratio'],
 ];
 let mapView='pmsalt';
@@ -280,8 +272,8 @@ function drawMap(){
  const data=M[id];
  data.forEach((row,i)=>row.forEach((v,j)=>{
   if(v==null)return;const cx=j*cell+cell/2,cy=360-(i*cell+cell/2);let r,fill,label;
-  if(extra==='ratio'){const p=M.pm10[i][j];r=Math.min(cell*.48,cell*.12+Math.sqrt(p/120)*cell*.5);fill=`color-mix(in oklch, var(--pos) ${Math.round(Math.min(1,Math.max(0,(v-.2)/.7))*100)}%, oklch(.74 .11 300))`;label=`PM2.5/PM10 ${v.toFixed(2)} · PM10 ${p} µg/m³`;}
-  else{r=cell*.44*Math.sqrt(Math.abs(v));fill=v>=0?'var(--pos)':'var(--neg)';label=`ρ ${sgn(v)}`;}
+  if(extra==='ratio'){const p=M.pm10[i][j];r=Math.min(cell*.48,cell*.12+Math.sqrt(p/120)*cell*.5);fill=`color-mix(in oklch, ${pig('pm2_5_total_organic_matter')} ${Math.round(Math.min(1,Math.max(0,(v-.2)/.7))*100)}%, ${pig('dust')})`;label=`PM2.5/PM10 ${v.toFixed(2)} · PM10 ${p} µg/m³`;}
+  else{r=cell*.44*Math.sqrt(Math.abs(v));fill=ramp(v);label=`ρ ${sgn(v)}`;}
   if(r<.5)return;
   const c=el('circle',{cx,cy,r:r.toFixed(2),fill},g2);c.dataset.t=`${(i*T-90)}°…${i*T-90+T}° lat, ${j*T-180}°…${j*T-180+T}° lon<br>${label}`;
  }));
@@ -289,7 +281,7 @@ function drawMap(){
   el('path',{d,fill:'none',stroke:'#e4ebd9','stroke-opacity':.55,'stroke-width':1.2,'stroke-dasharray':'4 4'},svg);
   const t1=el('text',{x:(sunLon+180)*2,y:22,'text-anchor':'middle','font-size':12,fill:'#e4ebd9','fill-opacity':.7},svg);t1.textContent='day';
   const t2=el('text',{x:((sunLon-180+180)%360)*2+40,y:22,'text-anchor':'middle','font-size':12,fill:'#e4ebd9','fill-opacity':.7},svg);t2.textContent='night';}
- $('#mapKey').innerHTML=extra==='ratio'?`<span><svg width="120" height="10" aria-hidden="true"><defs><linearGradient id="rg"><stop offset="0" stop-color="oklch(.74 .11 300)"/><stop offset="1" stop-color="${POS}"/></linearGradient></defs><rect width="120" height="10" rx="2" fill="url(#rg)"/></svg> coarse (≤ 0.2) → fine (≥ 0.9)</span>`:`<span>${dot(.25)} ${dot(.5)} ${dot(1)} |ρ| 0.25 · 0.5 · 1</span><span>${dot(.7)} rise together</span><span>${dot(-.7)} move opposite</span><span>Tiles with fewer than 40 cells or a constant field are blank.</span>`;
+ $('#mapKey').innerHTML=extra==='ratio'?`<span><svg width="120" height="10" aria-hidden="true"><defs><linearGradient id="rg"><stop offset="0" stop-color="${pig('dust')}"/><stop offset="1" stop-color="${pig('pm2_5_total_organic_matter')}"/></linearGradient></defs><rect width="120" height="10" rx="2" fill="url(#rg)"/></svg> coarse (≤ 0.2) → fine (≥ 0.9)</span>`:`<span>${dot(.25)} ${dot(.5)} ${dot(1)} dot area: |ρ| 0.25 · 0.5 · 1</span><span>−1 ${rampBar} +1 &nbsp;opposite → together</span><span>Tiles with fewer than 40 cells or a constant field are blank.</span>`;
  $('#mapPills').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===mapView));
 }
 $('#mapPills').innerHTML=MAPS.map(m=>`<button type="button" data-v="${m[0]}">${m[1]}</button>`).join('');
@@ -302,7 +294,7 @@ function matrix(host,read,keys,order,Mx,extra){
  const n=keys.length,c=n>18?26:32,lab=132,top=10,w=lab+n*c+10,h=top+n*c+118;
  const svg=el('svg',{width:w,height:h,viewBox:`0 0 ${w} ${h}`,role:'img','aria-label':'Correlation matrix'});
  order.forEach((a,i)=>{
-  const t=el('text',{x:lab-10,y:top+i*c+c/2+4,'text-anchor':'end','font-size':12,fill:'#b4c1a4'},svg);t.textContent=L(keys[a]);
+  const t=el('text',{x:lab-18,y:top+i*c+c/2+4,'text-anchor':'end','font-size':12,fill:'#b4c1a4'},svg);t.textContent=L(keys[a]);el('circle',{cx:lab-9,cy:top+i*c+c/2,r:3.5,fill:pig(keys[a])},svg);
   const b=el('text',{transform:`translate(${lab+i*c+c/2+4},${top+n*c+8}) rotate(-58)`,'text-anchor':'end','font-size':12,fill:'#b4c1a4'},svg);b.textContent=L(keys[a]);
   for(let j=0;j<=i;j++){
    const bIdx=order[j],x=lab+j*c+c/2,y=top+i*c+c/2;
@@ -310,7 +302,7 @@ function matrix(host,read,keys,order,Mx,extra){
    if(i===j)continue;
    const r=Mx[a][bIdx],gEl=el('g',{tabindex:0,class:'cell'},svg);
    el('rect',{x:x-c/2,y:y-c/2,width:c,height:c,fill:'transparent'},gEl);
-   el('circle',{cx:x,cy:y,r:Math.max(.9,(c/2-2)*Math.sqrt(Math.abs(r))).toFixed(2),fill:r>=0?POS:NEG},gEl);
+   el('circle',{cx:x,cy:y,r:Math.max(.9,(c/2-2)*Math.sqrt(Math.abs(r))).toFixed(2),fill:ramp(r)},gEl);
    const text=`${L(keys[a])} × ${L(keys[bIdx])}<br>ρ ${sgn(r)}${extra?extra(a,bIdx):''}`;
    gEl.addEventListener('mouseenter',e=>{showTip(e,text);read.innerHTML=text.replace('<br>',' · ');});
    gEl.addEventListener('mousemove',e=>showTip(e,text));
@@ -332,7 +324,7 @@ $('#gPills').onclick=e=>{const b=e.target.closest('button');if(b){gView=b.datase
 const E=D.europe;matrix($('#emat'),$('#eRead'),E.keys,E.order,E.spearman);$('#eRead').textContent='Hover or focus a dot for its values.';
 
 // pairs table
-$('#pairs').innerHTML='<thead><tr><th>Pair</th><th>ρ</th><th>95% CI</th><th>Land</th><th>Ocean</th><th>Partial</th></tr></thead><tbody>'+D.pairs.slice(0,16).map(p=>`<tr><td>${dot(p.spearman,6)} ${L(p.a)} × ${L(p.b)}</td><td class="num" style="color:${col(p.spearman)}">${sgn(p.spearman)}</td><td class="num">${p.ci[0].toFixed(2)} to ${p.ci[1].toFixed(2)}</td><td class="num">${sgn(p.land)}</td><td class="num">${sgn(p.ocean)}</td><td class="num">${sgn(p.partial)}</td></tr>`).join('')+'</tbody>';
+$('#pairs').innerHTML='<thead><tr><th>Pair</th><th>ρ</th><th>95% CI</th><th>Land</th><th>Ocean</th><th>Partial</th></tr></thead><tbody>'+D.pairs.slice(0,16).map(p=>`<tr><td>${sw(p.a)} ${L(p.a)} × ${sw(p.b)} ${L(p.b)}</td><td class="num" style="color:${col(p.spearman)}">${sgn(p.spearman)}</td><td class="num">${p.ci[0].toFixed(2)} to ${p.ci[1].toFixed(2)}</td><td class="num">${sgn(p.land)}</td><td class="num">${sgn(p.ocean)}</td><td class="num">${sgn(p.partial)}</td></tr>`).join('')+'</tbody>';
 
 // halftone density plots
 const notes={
@@ -371,9 +363,9 @@ const drawS=()=>SC.forEach((s,i)=>drawScatter($('#sc'+i),s));drawS();
  [...R.map(r=>r.region),'All land'].forEach((name,j)=>{const t=el('text',{x:lab+j*c+c/2,y:top-14,'text-anchor':'middle','font-size':11,fill:'#8f9f7d'},svg);name.split(' ').forEach((w_,k,arr)=>{const s=el('tspan',{x:lab+j*c+c/2,dy:k?13:(arr.length>1?-13:0)},t);s.textContent=w_;});});
  RP.forEach((p,i)=>{const [a,b]=p.split('|'),y=top+i*34+17;
   if(i%2===0)el('rect',{x:0,y:y-17,width:w,height:34,fill:'#e1ead3','fill-opacity':.025},svg);
-  const t=el('text',{x:0,y:y+4,'font-size':12.5,fill:'#e4ebd9'},svg);t.textContent=`${L(a)} × ${L(b)}`;
+  el('circle',{cx:4,cy:y,r:3.5,fill:pig(a)},svg);el('circle',{cx:13,cy:y,r:3.5,fill:pig(b)},svg);const t=el('text',{x:24,y:y+4,'font-size':12.5,fill:'#e4ebd9'},svg);t.textContent=`${L(a)} × ${L(b)}`;
   [...R.map(r=>r[p]),D.pairsGlobal[p].land].forEach((v,j)=>{const x=lab+j*c+c/2;
-   el('circle',{cx:x-12,cy:y,r:Math.max(.9,11*Math.sqrt(Math.abs(v))).toFixed(2),fill:v>=0?POS:NEG},svg);
+   el('circle',{cx:x-12,cy:y,r:Math.max(.9,11*Math.sqrt(Math.abs(v))).toFixed(2),fill:ramp(v)},svg);
    const n=el('text',{x:x+18,y:y+4,'text-anchor':'end','font-size':10.5,'font-family':'ui-monospace,Menlo,monospace',fill:'#8f9f7d'},svg);n.textContent=(v<0?'−':'')+Math.abs(v).toFixed(2).replace(/^0/,'');});
  });
 })();
@@ -384,7 +376,7 @@ function axis(svg,x0,x1,y,lo,hi,ticksArr,fmt){ticksArr.forEach(v=>{const x=x0+(v
  const svg=$('#dayNight'),rows=Object.entries(D.dayNight),W=720,lab=210,x0=lab+10,x1=W-20,H=rows.length*42+70;
  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);const X=v=>x0+(v+1)/2*(x1-x0);
  axis(svg,x0,x1,H-18,-1,1,[-1,-.5,0,.5,1],v=>v===0?'0':sgn(v).replace('.00',''));
- rows.forEach(([p,v],i)=>{const [a,b]=p.split('|'),y=40+i*42;const t=el('text',{x:0,y:y+4,'font-size':12.5,fill:'#e4ebd9'},svg);t.textContent=`${L(a)} × ${L(b)}`;
+ rows.forEach(([p,v],i)=>{const [a,b]=p.split('|'),y=40+i*42;el('circle',{cx:4,cy:y,r:3.5,fill:pig(a)},svg);el('circle',{cx:13,cy:y,r:3.5,fill:pig(b)},svg);const t=el('text',{x:24,y:y+4,'font-size':12.5,fill:'#e4ebd9'},svg);t.textContent=`${L(a)} × ${L(b)}`;
   el('line',{x1:X(v.night),x2:X(v.day),y1:y,y2:y,stroke:'#e1e7d5','stroke-opacity':.3,'stroke-width':2},svg);
   el('circle',{cx:X(v.night),cy:y,r:6,fill:'var(--bg)',stroke:'#b4c1a4','stroke-width':1.5},svg);
   el('circle',{cx:X(v.day),cy:y,r:6,fill:'oklch(.86 .1 95)'},svg);});
@@ -398,8 +390,8 @@ function axis(svg,x0,x1,y,lo,hi,ticksArr,fmt){ticksArr.forEach(v=>{const x=x0+(v
  const names={'land':'Land','ocean':'Ocean','dusty land (dust>50)':'Dusty land'};
  rows.forEach(([k,q],i)=>{const y=20+i*38;const t=el('text',{x:0,y:y+4,'font-size':12.5,fill:'#e4ebd9'},svg);t.textContent=names[k]||k;
   el('line',{x1:X(q[0]),x2:X(q[4]),y1:y,y2:y,stroke:'#e1e7d5','stroke-opacity':.25,'stroke-width':2},svg);
-  el('rect',{x:X(q[1]),y:y-5,width:Math.max(2,X(q[3])-X(q[1])),height:10,rx:5,fill:'oklch(.74 .11 300)','fill-opacity':.55},svg);
-  el('circle',{cx:X(q[2]),cy:y,r:5.5,fill:POS},svg);
+  el('rect',{x:X(q[1]),y:y-5,width:Math.max(2,X(q[3])-X(q[1])),height:10,rx:5,fill:{land:css('--land'),ocean:css('--ocean')}[k]||pig('dust'),'fill-opacity':.35},svg);
+  el('circle',{cx:X(q[2]),cy:y,r:5.5,fill:{land:css('--land'),ocean:css('--ocean')}[k]||pig('dust')},svg);
   const m=el('text',{x:Math.min(x1,X(q[4])+8),y:y+4,'font-size':10.5,fill:'#8f9f7d','font-family':'ui-monospace,Menlo,monospace'},svg);m.textContent=X(q[4])+40<x1?q[2].toFixed(2):'';});
 })();
 
@@ -410,7 +402,7 @@ function axis(svg,x0,x1,y,lo,hi,ticksArr,fmt){ticksArr.forEach(v=>{const x=x0+(v
  el('rect',{x:x0,y:4,width:X(.5)-x0,height:H-28,fill:'#e1ead3','fill-opacity':.04},svg);
  V.forEach((v,i)=>{const y=14+i*21;const t=el('text',{x:0,y:y+4,'font-size':12,fill:'#e4ebd9'},svg);t.textContent=L(v.id);
   el('line',{x1:x0,x2:X(v.cv),y1:y,y2:y,stroke:'#e1e7d5','stroke-opacity':.12},svg);
-  el('circle',{cx:X(v.cv),cy:y,r:4.5,fill:v.cv<.5?'#8f9f7d':'var(--sage)'},svg);});
+  el('circle',{cx:X(v.cv),cy:y,r:4.5,fill:pig(v.id),'fill-opacity':v.cv<.5?.45:1},svg);});
 })();
 
 // model agreement: rank agreement dot + ratio on log axis
@@ -423,10 +415,10 @@ function axis(svg,x0,x1,y,lo,hi,ticksArr,fmt){ticksArr.forEach(v=>{const x=x0+(v
  axis(svg,ax0,ax1,H-14,0,1,[0,.5,1],v=>String(v));
  [.1,.25,.5,1,2,4].forEach(v=>{const x=XB(v);el('line',{x1:x,x2:x,y1:26,y2:H-20,stroke:'#e1e7d5','stroke-opacity':v===1?.35:.1},svg);const t=el('text',{x,y:H-6,'text-anchor':'middle','font-size':10.5,fill:'#8f9f7d','font-family':'ui-monospace,Menlo,monospace'},svg);t.textContent=v+'×';});
  A.forEach((a,i)=>{const y=40+i*30;const t=el('text',{x:0,y:y+4,'font-size':12.5,fill:'#e4ebd9'},svg);t.textContent=L(a.id);
-  el('line',{x1:ax0,x2:XA(Math.max(0,a.spearman)),y1:y,y2:y,stroke:'var(--sage)','stroke-opacity':.35,'stroke-width':2},svg);
-  el('circle',{cx:XA(Math.max(0,a.spearman)),cy:y,r:5,fill:'var(--sage)'},svg);
+  el('line',{x1:ax0,x2:XA(Math.max(0,a.spearman)),y1:y,y2:y,stroke:pig(a.id),'stroke-opacity':.4,'stroke-width':2},svg);
+  el('circle',{cx:XA(Math.max(0,a.spearman)),cy:y,r:5,fill:pig(a.id)},svg);
   const n=el('text',{x:ax1+30,y:y+4,'text-anchor':'end','font-size':10.5,fill:'#8f9f7d','font-family':'ui-monospace,Menlo,monospace'},svg);n.textContent=a.spearman.toFixed(2);
-  if(a.medianRatio>0){el('line',{x1:XB(1),x2:XB(a.medianRatio),y1:y,y2:y,stroke:a.medianRatio>=1?POS:NEG,'stroke-opacity':.4,'stroke-width':2},svg);el('circle',{cx:XB(a.medianRatio),cy:y,r:5,fill:a.medianRatio>=1?POS:NEG},svg);}
+  if(a.medianRatio>0){el('line',{x1:XB(1),x2:XB(a.medianRatio),y1:y,y2:y,stroke:pig(a.id),'stroke-opacity':.4,'stroke-width':2},svg);el('circle',{cx:XB(a.medianRatio),cy:y,r:5,fill:pig(a.id)},svg);}
   else{const z=el('text',{x:XB(.1)-4,y:y+4,'text-anchor':'end','font-size':10.5,fill:'#8f9f7d'},svg);z.textContent='≈ 0';}
  });
 })();
