@@ -33,7 +33,6 @@
 
 .globe-surface{position:absolute;left:32px;top:154px;z-index:4;padding:0;margin:0;border:0;min-width:0}.globe-surface legend{font-size:11px;color:#85919d;margin-bottom:9px}.globe-surface>div{display:flex;gap:15px}.globe-surface button{display:flex;gap:6px;align-items:center;font-size:12px;padding:5px 0;color:#7e8995;border-bottom:1px solid transparent;transition:color .2s,border-color .2s}.globe-surface button[aria-pressed=true]{color:#e7ebef;border-color:#a8b3bf}.surface-swatch{width:9px;height:9px;border-radius:50%;border:1px solid #74818d}.surface-white{background:#e9e9e6;border-color:#e9e9e6}.surface-charcoal{background:#29313b}.surface-satellite{background:linear-gradient(135deg,#72876a,#264561)}.surface-view-white .globe-label.selected{color:#263039;text-shadow:0 1px 5px #fff8}.surface-view-white .globe-label.selected .pin{background:#263039;box-shadow:0 0 0 3px #26303912}
 @media(max-width:600px){.globe-surface{left:20px;top:132px}.globe-surface legend{display:none}.globe-surface>div{gap:14px}.globe-surface button{font-size:11px}.minimal-atlas .globe-host{top:165px}}
-@media(min-width:1000px){.minimal-atlas .globe-host{right:230px}}
 @media(min-width:601px) and (max-width:999px){.surface-view-white .paint-palette{background:#05070ad9;padding:12px;right:20px;width:269px;border-radius:3px}}
 
 /* Keep controls readable when the native field fills the view at close zoom. */
@@ -41,3 +40,8 @@
 .minimal-search,.globe-surface,.air-readout{background:#05070ae8;padding:8px;margin-left:-8px}
 @media(min-width:601px){.paint-palette{background:#05070ae8;padding:12px;right:20px;width:269px}}
 .air-clear{position:absolute;right:12px;top:12px;display:grid;place-items:center;width:28px;height:28px;border:0;background:transparent;color:inherit;opacity:.65;cursor:pointer}.air-clear:hover{opacity:1}.air-clear:focus-visible{outline:1px solid currentColor;outline-offset:2px}
+
+/* The globe fills the desktop viewport; charcoal controls float without hard masks. */
+.surface-view-charcoal .minimal-header h1,.surface-view-charcoal .minimal-hint,.surface-view-charcoal .minimal-search,.surface-view-charcoal .globe-surface,.surface-view-charcoal .air-readout,.surface-view-charcoal .paint-palette{background:transparent;text-shadow:0 1px 4px #05070a,0 0 12px #05070a}
+.surface-view-charcoal .minimal-search,.surface-view-charcoal .globe-surface,.surface-view-charcoal .air-readout,.surface-view-charcoal .paint-palette{isolation:isolate}
+.surface-view-charcoal .minimal-search:before,.surface-view-charcoal .globe-surface:before,.surface-view-charcoal .air-readout:before,.surface-view-charcoal .paint-palette:before{content:'';position:absolute;inset:-12px;z-index:-1;border-radius:24px;background:#05070acc;filter:blur(18px);pointer-events:none}

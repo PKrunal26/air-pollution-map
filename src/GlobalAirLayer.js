@@ -13,15 +13,15 @@ export function createGlobalAirLayer(scene) {
     float edge=min(min(location.x-regionBounds.x,regionBounds.z-location.x),min(location.y-regionBounds.y,regionBounds.w-location.y));
     float inside=smoothstep(0.,1.5,edge);
     visibility=mix(1.-inside*regionMix,inside*regionMix,isRegion)*smoothstep(0.,.08,facing);
-    gl_PointSize=clamp(spacing*focalPixels*1.08*(.8+.2*(1.-exp(-total*1.7)))/max(-mv.z,.05),1.5,24.);
+    gl_PointSize=clamp(spacing*focalPixels*1.62*(.8+.2*(1.-exp(-total*1.7)))/max(-mv.z,.05),2.25,36.);
     gl_Position=projectionMatrix*mv;
    }`,
-  // Four slightly offset ink plates within each point keep the effect in screen space.
+  // Expanded sprites preserve ink size while allowing 2.5x print misregistration without clipping.
   // Sample coordinates and source concentrations never move.
   fragmentShader:`uniform float contrast;uniform float densityGain;uniform vec3 pigment0;uniform vec3 pigment1;uniform vec3 pigment2;uniform vec3 pigment3;varying vec4 inkWeights;varying float visibility;
    float ink(vec2 p,vec2 offset){float r=length(p-offset);float aa=max(fwidth(r)*.55,.012);return 1.-smoothstep(.345-aa,.345+aa,r);}
-   void main(){if(visibility<.001)discard;vec2 p=gl_PointCoord-.5;
-    vec4 coverage=vec4(ink(p,vec2(-.095,-.045)),ink(p,vec2(.10,.055)),ink(p,vec2(-.025,.105)),ink(p,vec2(.055,-.105)));
+   void main(){if(visibility<.001)discard;vec2 p=(gl_PointCoord-.5)*1.5;
+    vec4 coverage=vec4(ink(p,vec2(-.2375,-.1125)),ink(p,vec2(.25,.1375)),ink(p,vec2(-.0625,.2625)),ink(p,vec2(.1375,-.2625)));
     vec4 weights=inkWeights*coverage;float total=dot(weights,vec4(1.));if(total<.001)discard;
     vec3 absorption=-log(pigment0)*weights.x-log(pigment1)*weights.y-log(pigment2)*weights.z-log(pigment3)*weights.w;
     vec3 colour=exp(-absorption/max(total,.0001)*contrast);
