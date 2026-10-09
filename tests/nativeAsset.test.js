@@ -25,7 +25,7 @@ test('browser asset loader decompresses once and preserves abort signals',async(
  const original=await readFile(new URL(`../public/data/${meta.dataFile}`,import.meta.url));
  const previous=globalThis.fetch,controller=new AbortController();
  try{
-  globalThis.fetch=async(url,options)=>{assert.equal(url,`/data/${meta.compressedFile}?v=${meta.sha256.slice(0,12)}`);assert.equal(options.signal,controller.signal);assert.equal(options.cache,undefined);return new Response(compressed);};
+  globalThis.fetch=async(url,options)=>{assert.equal(url,`data/${meta.compressedFile}?v=${meta.sha256.slice(0,12)}`);assert.equal(options.signal,controller.signal);assert.equal(options.cache,undefined);return new Response(compressed);};
   assert.deepEqual(Buffer.from(await fetchNativeAsset(meta,meta.dataFile,controller.signal)),original);
   // Some static servers already decompress the stored gzip through Content-Encoding.
   globalThis.fetch=async()=>new Response(original);
@@ -38,7 +38,7 @@ test('raw fallback works and missing or corrupt compressed assets fail visibly',
  const meta={dataFile:'test.bin',compressedFile:'test.bin.gz'};
  try{
   globalThis.DecompressionStream=undefined;
-  globalThis.fetch=async url=>{assert.equal(url,'/data/test.bin');return new Response(new Uint8Array([1,2,3]));};
+  globalThis.fetch=async url=>{assert.equal(url,'data/test.bin');return new Response(new Uint8Array([1,2,3]));};
   assert.deepEqual([...new Uint8Array(await fetchNativeAsset(meta,'test.bin'))],[1,2,3]);
   globalThis.DecompressionStream=decoder;
   globalThis.fetch=async()=>new Response(null,{status:503});

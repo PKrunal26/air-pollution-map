@@ -39,7 +39,7 @@ export async function decodeNativeLayers(metadata,buffer) {
 }
 
 export async function fetchNativeLayers(signal,onProgress) {
- const metadataResponse=await fetch('/data/global-air-native.json',{signal,cache:'no-cache'});
+ const metadataResponse=await fetch('data/global-air-native.json',{signal,cache:'no-cache'});
  if(!metadataResponse.ok)throw new Error('Native metadata unavailable');
  const metadata=await metadataResponse.json();
  return decodeNativeLayers(metadata,await fetchNativeAsset(metadata,'global-air-native.bin',signal,onProgress));
@@ -61,7 +61,7 @@ export async function decodeEuropeLayers(metadata,buffer) {
 }
 
 export async function fetchEuropeLayers(signal,onProgress) {
- const response=await fetch('/data/europe-air-native.json',{signal});
+ const response=await fetch('data/europe-air-native.json',{signal});
  if(!response.ok)throw new Error('Regional metadata unavailable');
  const metadata=await response.json();
  return decodeEuropeLayers(metadata,await fetchNativeAsset(metadata,'europe-air-native.bin',signal,onProgress));

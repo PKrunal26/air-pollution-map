@@ -41,9 +41,9 @@ export default function Globe({city,zoom,focus,onCity,onReady,globalAir=null,pai
    if(previous){previous.dispose();textures.delete(previous);}
    satelliteMaterial.needsUpdate=true;renderer.domElement.dataset.earthResolution=String(texture.image.width);readySoon();
   },undefined,()=>{if(tier===1&&!disposed)readySoon();});}
-  loadEarth('/earth.jpg',1);
-  loadEarth(renderer.capabilities.maxTextureSize>=8192?'/earth-8k.jpg':'/earth-4k.jpg',2);
-  loader.load('/earth-specular.jpg',texture=>{if(disposed){texture.dispose();return;}textures.add(texture);texture.anisotropy=anisotropy;satelliteMaterial.specularMap=texture;satelliteMaterial.needsUpdate=true;for(const id of ['white','charcoal']){surfaceMaterials[id].uniforms.waterMask.value=texture;surfaceMaterials[id].uniforms.hasMask.value=1;}});
+  loadEarth('earth.jpg',1);
+  loadEarth(renderer.capabilities.maxTextureSize>=8192?'earth-8k.jpg':'earth-4k.jpg',2);
+  loader.load('earth-specular.jpg',texture=>{if(disposed){texture.dispose();return;}textures.add(texture);texture.anisotropy=anisotropy;satelliteMaterial.specularMap=texture;satelliteMaterial.needsUpdate=true;for(const id of ['white','charcoal']){surfaceMaterials[id].uniforms.waterMask.value=texture;surfaceMaterials[id].uniforms.hasMask.value=1;}});
   scene.add(new THREE.AmbientLight(0xb7c8ee,.36));const sun=new THREE.DirectionalLight(0xffffff,2.25);scene.add(sun);const fill=new THREE.DirectionalLight(0x638ec5,.12);scene.add(fill);
   const halo=new THREE.Mesh(new THREE.SphereGeometry(1.002,96,64),new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:atmosphere,side:THREE.FrontSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));scene.add(halo);
   const outer=new THREE.Mesh(new THREE.SphereGeometry(1.009,96,64),new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:atmosphere,side:THREE.BackSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));scene.add(outer);

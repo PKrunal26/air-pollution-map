@@ -62,7 +62,7 @@ npm test
 npm run build
 ```
 
-Deploy the existing Sites project declared in `.openai/hosting.json`; retain its current audience.
+Every push to `main` is tested, built and deployed to GitHub Pages by `.github/workflows/pages.yml` (https://pkrunal26.github.io/air-pollution-map/). Asset paths are relative (`base: './'`), so the build also works from any subpath or static host.
 
 ## Verification
 

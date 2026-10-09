@@ -26,7 +26,7 @@ export async function decodeWeather(meta,buffer){
  return {...meta,fields};
 }
 export async function fetchWeather(signal){
- const response=await fetch('/data/weather-native.json',{signal});
+ const response=await fetch('data/weather-native.json',{signal});
  if(!response.ok)throw new Error('Weather metadata unavailable');
  const meta=await response.json();
  return decodeWeather(meta,await fetchNativeAsset(meta,'weather-native.bin',signal));

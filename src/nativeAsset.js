@@ -20,7 +20,7 @@ export async function fetchNativeAsset(metadata,expectedFile,signal,onProgress){
  const compressed=typeof DecompressionStream!=='undefined'&&metadata.compressedFile===`${expectedFile}.gz`;
  // The checksum in the metadata versions the URL, so the large binary can stay in the HTTP cache.
  const version=typeof metadata.sha256==='string'?`?v=${metadata.sha256.slice(0,12)}`:'';
- const response=await fetch(`/data/${compressed?metadata.compressedFile:expectedFile}${version}`,{signal});
+ const response=await fetch(`data/${compressed?metadata.compressedFile:expectedFile}${version}`,{signal});
  if(!response.ok)throw new Error('Native field unavailable');
  const declared=Number(response.headers?.get?.('content-length'))||0;
  // If a server already decoded the gzip, bytes exceed the compressed size, so fall back to the raw length.
