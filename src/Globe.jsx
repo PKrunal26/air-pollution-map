@@ -8,33 +8,38 @@ import {createGlobalAirLayer} from './GlobalAirLayer';
 const vec=(lat,lon,r=1)=>new THREE.Vector3(r*Math.cos(lat*Math.PI/180)*Math.cos(lon*Math.PI/180),r*Math.sin(lat*Math.PI/180),-r*Math.cos(lat*Math.PI/180)*Math.sin(lon*Math.PI/180));
 const vertex=`varying vec3 vNormal; varying vec3 vPosition; void main(){vNormal=normalize(normalMatrix*normal);vec4 p=modelViewMatrix*vec4(position,1.);vPosition=p.xyz;gl_Position=projectionMatrix*p;}`;
 const atmosphere=`varying vec3 vNormal;varying vec3 vPosition;void main(){float rim=pow(1.-abs(dot(normalize(vNormal),normalize(-vPosition))),3.6);gl_FragColor=vec4(vec3(.22,.48,.94),rim*.18);}`;
-export default function Globe({city,active,selected,mode,zoom,focus,year,month,scenario,onCity,onReady,clean=false,globalAir=null,paint=null}){
- const host=useRef(null),runtime=useRef(null),props=useRef({city,active,selected,mode,zoom,focus,year,month,scenario,onCity,globalAir,paint}),[error,setError]=useState(false);
- props.current={city,active,selected,mode,zoom,focus,year,month,scenario,onCity,globalAir,paint};
+export default function Globe({city,active,selected,mode,zoom,focus,year,month,scenario,onCity,onReady,clean=false,globalAir=null,paint=null,surface='satellite'}){
+ const host=useRef(null),runtime=useRef(null),props=useRef({city,active,selected,mode,zoom,focus,year,month,scenario,onCity,globalAir,paint,surface}),[error,setError]=useState(false);
+ props.current={city,active,selected,mode,zoom,focus,year,month,scenario,onCity,globalAir,paint,surface};
  useEffect(()=>{
   let renderer;try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});}catch(e){setError(true);return;}
   const container=host.current; renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setClearColor(0x000000,0);renderer.outputColorSpace=THREE.SRGBColorSpace;container.appendChild(renderer.domElement);
   const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(39,1,.01,100);camera.position.copy(vec(22,68,3.8));
   const controls=new OrbitControls(camera,renderer.domElement);controls.enablePan=false;controls.enableDamping=true;controls.dampingFactor=.075;controls.rotateSpeed=.55;controls.minDistance=1.65;controls.maxDistance=6;controls.enableZoom=true;
-  const earth=new THREE.Mesh(new THREE.SphereGeometry(1,192,128),new THREE.MeshPhongMaterial({color:0xffffff,shininess:14,specular:0x465564}));scene.add(earth);
+  const satelliteMaterial=new THREE.MeshPhongMaterial({color:0xffffff,shininess:14,specular:0x465564});
+  function neutralMaterial(colour){return new THREE.ShaderMaterial({uniforms:{base:{value:new THREE.Vector3(...colour)}},vertexShader:vertex,fragmentShader:`uniform vec3 base;varying vec3 vNormal;varying vec3 vPosition;void main(){vec3 n=normalize(vNormal);float face=max(0.,dot(n,normalize(-vPosition)));float light=.82+.18*max(0.,dot(n,normalize(vec3(-.4,.5,1.))));float edge=1.-pow(1.-face,3.)*.10;gl_FragColor=vec4(base*light*edge,1.);}`});}
+  const surfaceMaterials={satellite:satelliteMaterial,white:neutralMaterial([.98,.98,.97]),charcoal:neutralMaterial([.13,.15,.18])};
+  const earth=new THREE.Mesh(new THREE.SphereGeometry(1,192,128),satelliteMaterial);scene.add(earth);
+
   let disposed=false,textureTier=0;const textures=new Set();
   const loader=new THREE.TextureLoader(),anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());
   function loadEarth(url,tier){loader.load(url,texture=>{
    if(disposed||tier<textureTier){texture.dispose();return;}
    textureTier=tier;texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=anisotropy;
-   const previous=earth.material.map;earth.material.map=texture;textures.add(texture);
+   const previous=satelliteMaterial.map;satelliteMaterial.map=texture;textures.add(texture);
    if(previous){previous.dispose();textures.delete(previous);}
-   earth.material.needsUpdate=true;renderer.domElement.dataset.earthResolution=String(texture.image.width);
+   satelliteMaterial.needsUpdate=true;renderer.domElement.dataset.earthResolution=String(texture.image.width);
   });}
   loadEarth('/earth.jpg',1);
   loadEarth(renderer.capabilities.maxTextureSize>=8192?'/earth-8k.jpg':'/earth-4k.jpg',2);
-  loader.load('/earth-specular.jpg',texture=>{if(disposed){texture.dispose();return;}textures.add(texture);texture.anisotropy=anisotropy;earth.material.specularMap=texture;earth.material.needsUpdate=true;});
+  loader.load('/earth-specular.jpg',texture=>{if(disposed){texture.dispose();return;}textures.add(texture);texture.anisotropy=anisotropy;satelliteMaterial.specularMap=texture;satelliteMaterial.needsUpdate=true;});
   scene.add(new THREE.AmbientLight(0xb7c8ee,.36));const sun=new THREE.DirectionalLight(0xffffff,2.25);scene.add(sun);const fill=new THREE.DirectionalLight(0x638ec5,.12);scene.add(fill);
   const halo=new THREE.Mesh(new THREE.SphereGeometry(1.002,96,64),new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:atmosphere,side:THREE.FrontSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));scene.add(halo);
   const outer=new THREE.Mesh(new THREE.SphereGeometry(1.009,96,64),new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:atmosphere,side:THREE.BackSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));scene.add(outer);
   const outlines=[];const countries=feature(atlas,atlas.objects.countries);
   for(const f of countries.features){const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;for(const poly of polys)for(const ring of poly){for(let i=1;i<ring.length;i++){const a=ring[i-1],b=ring[i];if(Math.abs(a[0]-b[0])<180){outlines.push(...vec(a[1],a[0],1.003).toArray(),...vec(b[1],b[0],1.003).toArray());}}}}
-  const outlineGeo=new THREE.BufferGeometry();outlineGeo.setAttribute('position',new THREE.Float32BufferAttribute(outlines,3));if(!clean)scene.add(new THREE.LineSegments(outlineGeo,new THREE.LineBasicMaterial({color:0x98c0b3,transparent:true,opacity:.13})));else outlineGeo.dispose();
+  const outlineGeo=new THREE.BufferGeometry();outlineGeo.setAttribute('position',new THREE.Float32BufferAttribute(outlines,3));
+  const countryLines=new THREE.LineSegments(outlineGeo,new THREE.LineBasicMaterial({color:0x98c0b3,transparent:true,opacity:.13}));scene.add(countryLines);
   const grid=new THREE.Group();for(let lat=-60;lat<=60;lat+=30){const p=[];for(let lon=-180;lon<=180;lon+=2)p.push(vec(lat,lon,1.005));grid.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p),new THREE.LineBasicMaterial({color:0x749b92,transparent:true,opacity:.10})));}for(let lon=0;lon<360;lon+=30){const p=[];for(let lat=-90;lat<=90;lat+=2)p.push(vec(lat,lon,1.005));grid.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p),new THREE.LineBasicMaterial({color:0x749b92,transparent:true,opacity:.10})));}if(!clean)scene.add(grid);else grid.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
   let seed=717;const random=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646;};const normal=()=>Math.sqrt(-2*Math.log(Math.max(.0001,random())))*Math.cos(6.283*random());
   const particleGroups=[],cloudGroups=[];
@@ -68,9 +73,14 @@ void main(){vec2 uv=gl_PointCoord-.5;float d=length(uv);if(d>.49)discard;vec2 p=
    if(i===0){[origin,curve.getPoint(.5)].forEach((position,j)=>{const el=document.createElement('div');el.className='path-label';el.style.setProperty('--trace',s.color);el.innerHTML=`<span>${j===0?s.origin:s.intermediate}</span><small>${j===0?'ILLUSTRATIVE ORIGIN':s.formula}</small>`;container.appendChild(el);pathLabels.push({el,position,labelIndex:j});});}
   });}
   let dimensions={w:1,h:1};const resize=()=>{dimensions={w:container.clientWidth,h:container.clientHeight};renderer.setSize(dimensions.w,dimensions.h);camera.aspect=dimensions.w/dimensions.h;camera.updateProjectionMatrix();};const observer=new ResizeObserver(resize);observer.observe(container);resize();
-  let frame,oldFocus=-1,oldSelected='',oldCity='',oldActive='',oldZoom=-1,tween=null;const timer=new THREE.Clock();const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let frame,oldFocus=-1,oldSelected='',oldCity='',oldActive='',oldZoom=-1,oldSurface='',tween=null;const timer=new THREE.Clock();const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function labelPosition(position,el){const facing=position.clone().normalize().dot(camera.position.clone().normalize());const screen=position.clone().project(camera);const visible=facing>1/camera.position.length()+.02&&Math.abs(screen.x)<.94&&Math.abs(screen.y)<.86;el.style.display=visible?'':'none';el.style.transform=`translate(${(screen.x*.5+.5)*dimensions.w}px,${(-screen.y*.5+.5)*dimensions.h}px)`;}
   const animate=()=>{frame=requestAnimationFrame(animate);const elapsed=timer.getElapsedTime();const p=props.current;
+   if(oldSurface!==p.surface){
+    oldSurface=p.surface;earth.material=surfaceMaterials[p.surface]??satelliteMaterial;
+    countryLines.visible=!clean||p.surface!=='satellite';countryLines.material.color.set(p.surface==='white'?0x717b83:0x8693a1);countryLines.material.opacity=p.surface==='white'?.24:.22;
+    halo.visible=outer.visible=p.surface==='satellite';renderer.domElement.dataset.globeSurface=p.surface;
+   }
    globalLayer.update({data:clean?p.globalAir:null,paint:p.paint});
    if(p.selected!==oldSelected||p.city.id!==oldCity||p.active.join()!==oldActive){rebuild();oldSelected=p.selected;oldCity=p.city.id;oldActive=p.active.join();}
    if(p.focus!==oldFocus||p.zoom!==oldZoom){const target=vec(p.city.lat,p.city.lon,p.zoom===1?2.3:3.8);tween={start:camera.position.clone(),end:target,t:elapsed};oldFocus=p.focus;oldZoom=p.zoom;}
@@ -79,7 +89,7 @@ void main(){vec2 uv=gl_PointCoord-.5;float d=length(uv);if(d>.49)discard;vec2 p=
     l.label.classList.toggle('selected',l.city.id===p.city.id);});traces.forEach(t=>t.bead.position.copy(t.curve.getPoint(((reduced?0:elapsed)*.08+t.offset)%1)));renderer.render(scene,camera);
   };animate();runtime.current={camera,controls};onReady?.();
   const cancelTween=()=>{tween=null;};renderer.domElement.addEventListener('pointerdown',cancelTween);const keyboard=e=>{if(e.target!==container)return;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','-'].includes(e.key)){e.preventDefault();tween=null;const spherical=new THREE.Spherical().setFromVector3(camera.position);if(e.key==='ArrowLeft')spherical.theta-=.09;if(e.key==='ArrowRight')spherical.theta+=.09;if(e.key==='ArrowUp')spherical.phi=Math.max(.12,spherical.phi-.07);if(e.key==='ArrowDown')spherical.phi=Math.min(Math.PI-.12,spherical.phi+.07);if(e.key==='+')spherical.radius=Math.max(1.65,spherical.radius*.9);if(e.key==='-')spherical.radius=Math.min(6,spherical.radius*1.1);camera.position.setFromSpherical(spherical);}};container.addEventListener('keydown',keyboard);
-  return()=>{disposed=true;textures.forEach(t=>t.dispose());cancelAnimationFrame(frame);container.removeEventListener('keydown',keyboard);observer.disconnect();renderer.domElement.removeEventListener('pointerdown',cancelTween);controls.dispose();globalLayer.dispose();disposePaths();labels.forEach(l=>l.label.remove());scene.traverse(o=>{o.geometry?.dispose();if(o.material)o.material.dispose();});renderer.dispose();renderer.domElement.remove();};
+  return()=>{disposed=true;Object.values(surfaceMaterials).forEach(m=>{if(m!==earth.material)m.dispose();});textures.forEach(t=>t.dispose());cancelAnimationFrame(frame);container.removeEventListener('keydown',keyboard);observer.disconnect();renderer.domElement.removeEventListener('pointerdown',cancelTween);controls.dispose();globalLayer.dispose();disposePaths();labels.forEach(l=>l.label.remove());scene.traverse(o=>{o.geometry?.dispose();if(o.material)o.material.dispose();});renderer.dispose();renderer.domElement.remove();};
  },[]);
  return <div ref={host} className="globe-host" tabIndex={0} role="region" aria-label="Interactive Earth. Drag or use arrow keys to rotate. Scroll or use plus and minus to zoom.">{error&&<div className="webgl-error">The 3D globe needs WebGL. Try opening this preview in a browser with graphics acceleration enabled. You can still explore the city and system controls.</div>}</div>;
 }

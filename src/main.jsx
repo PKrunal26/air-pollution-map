@@ -9,7 +9,9 @@ import './styles.css';
 import {parseGlobalLayers} from './globalAir';
 import {initialPaint} from './paintLayers';
 import GlobalAirLegend from './GlobalAirLegend';
+import GlobeSurface from './GlobeSurface';
 function App(){
+ const [surface,setSurface]=useState('white');
  const [globalAir,setGlobalAir]=useState({status:'loading',data:null}),[paint,setPaint]=useState(initialPaint);
  useEffect(()=>{const controller=new AbortController();fetch('/data/global-air-layers.json',{signal:controller.signal,cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('Global layer unavailable');return r.json();}).then(parseGlobalLayers).then(data=>setGlobalAir({status:'ready',data})).catch(e=>{if(e.name!=='AbortError')setGlobalAir({status:'error',data:null});});return()=>controller.abort();},[]);
  const [city,setCity]=useState(cities[0]),[zoom,setZoom]=useState(0),[focus,setFocus]=useState(0),[query,setQuery]=useState(''),[search,setSearch]=useState(false),[about,setAbout]=useState(false);
@@ -26,12 +28,13 @@ function App(){
   dialog.addEventListener('keydown',trap);
   return()=>{dialog.removeEventListener('keydown',trap);previous?.focus();};
  },[about]);
- return <main className="atlas-app minimal-atlas">
-  <Globe clean globalAir={globalAir.data} paint={paint} city={city} active={[]} selected={null} mode="terrain" zoom={zoom} focus={focus} year={2024} month={0} scenario={0} onCity={chooseCity}/>
+ return <main className={`atlas-app minimal-atlas surface-view-${surface}`}>
+  <Globe clean surface={surface} globalAir={globalAir.data} paint={paint} city={city} active={[]} selected={null} mode="terrain" zoom={zoom} focus={focus} year={2024} month={0} scenario={0} onCity={chooseCity}/>
   <header className="minimal-header"><h1>Who owns the air?</h1><button ref={aboutButton} aria-label="About this version" onClick={()=>setAbout(true)}><Info size={19} weight="light"/></button></header>
   <div className="minimal-search"><div className="search-input"><MagnifyingGlass size={17}/><input aria-label="Search cities" placeholder="Find a place" value={query} onFocus={()=>setSearch(true)} onChange={e=>{setQuery(e.target.value);setSearch(true);}} onKeyDown={e=>{if(e.key==='Enter'&&results[0])chooseCity(results[0]);}}/></div>
    {search&&<div className="search-results"><div className="results-heading">PLACES<button aria-label="Close search" onClick={()=>setSearch(false)}><X size={16}/></button></div>{results.map(c=><button className="search-result" key={c.id} onClick={()=>chooseCity(c)}><span>{c.name}<small>{c.country}</small></span></button>)}{!results.length&&<p className="empty-search">Try Delhi, London or Beijing.</p>}</div>}
   </div>
+  <GlobeSurface value={surface} onChange={setSurface}/>
   <AirQuality city={city}/>
   <GlobalAirLegend state={globalAir} paint={paint} onChange={(id,change)=>setPaint(current=>({...current,[id]:{...current[id],...change}}))}/>
   <div className="minimal-zoom"><button aria-label="Zoom in" onClick={()=>{setZoom(1);setFocus(f=>f+1);}}><Plus size={18}/></button><button aria-label="Zoom out" onClick={()=>{setZoom(0);setFocus(f=>f+1);}}><Minus size={18}/></button></div>
