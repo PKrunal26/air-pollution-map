@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {parseGlobalAir,sampleGlobalAir} from '../src/globalAir.js';
 
 test('global snapshot is complete, real-valued and consistently timestamped',async()=>{
- const snapshot=parseGlobalAir(JSON.parse(await readFile(new URL('../public/data/global-pm25.json',import.meta.url),'utf8')));
+ const snapshot=parseGlobalAir(JSON.parse(await readFile(new URL('./fixtures/global-pm25.json',import.meta.url),'utf8')));
  assert.equal(snapshot.modelCoordinates.length,2664);
  assert.ok(new Set(snapshot.values).size>100);
  assert.equal(new Date(snapshot.validAt).getUTCMinutes(),0);

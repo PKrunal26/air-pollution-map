@@ -22,7 +22,10 @@ source = base+run.strftime('%Y/%m/%d/%H%MZ/')+valid.strftime('%Y-%m-%dT%H%M.om')
 cache_file = args.cache / (run.strftime('%Y-%m-%dT%H%MZ-')+valid.strftime('%Y-%m-%dT%H%M.om'))
 if not cache_file.exists():
     cache_file.write_bytes(urllib.request.urlopen(source, timeout=60).read())
-variables = ['pm2_5','nitrogen_dioxide','ozone','dust']
+catalog = json.loads(pathlib.Path('src/camsFields.json').read_text())
+fields = [f for f in catalog if f['coverage'] == 'global']
+variables = [f['id'] for f in fields]
+units = {f['id']: f['unit'] for f in fields}
 arrays, stats = [], {}
 with OmFileReader(str(cache_file)) as root:
     assert root.get_child_by_name('valid_time').read_scalar() == int(valid.timestamp())
@@ -33,7 +36,7 @@ with OmFileReader(str(cache_file)) as root:
     for name in variables:
         reader = root.get_child_by_name(name)
         assert reader.shape == (451,900)
-        assert reader.get_child_by_name('unit').read_scalar() == 'μg/m³'
+        assert reader.get_child_by_name('unit').read_scalar() == units[name]
         array = reader.read_array((...))
         assert np.all(np.isfinite(array)) and np.all(array >= 0)
         arrays.append(array.astype('<f4').tobytes(order='C'))
@@ -42,7 +45,7 @@ blob = b''.join(arrays)
 asset = pathlib.Path('public/data')
 asset.mkdir(parents=True,exist_ok=True)
 snapshot = {
-    'schema':3,'unit':'μg/m³','kind':'modeled','domain':'cams_global',
+    'schema':5,'units':units,'kind':'modeled','domain':'cams_global',
     'provider':'CAMS / ECMWF via Open-Meteo AWS Open Data','source':source,
     'documentation':'https://github.com/open-meteo/open-data','licence':'CC BY 4.0',
     'validAt':int(valid.timestamp()*1000),'referenceTime':int(run.timestamp()*1000),

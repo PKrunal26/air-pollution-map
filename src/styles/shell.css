@@ -1,0 +1,48 @@
+:root{--loader:100}
+
+/* zoom / reset controls */
+.minimal-zoom{position:absolute;bottom:34px;left:46px;z-index:var(--chrome);display:flex;flex-direction:row;gap:5px;color:#899b73;animation:fade-in 1s var(--motion) .7s both}
+.minimal-zoom button{width:36px;height:36px;border-radius:50%;color:#a2b28b;background:#12190ee6;border:1px solid #c5d5ac12}
+.minimal-zoom button:hover:not(:disabled){background:var(--hover-bg);color:#edf4e1}
+.minimal-zoom button:disabled{opacity:.3}
+.minimal-zoom>span{width:1px;height:12px;background:#aec49326;align-self:center;margin:0 7px}
+
+/* city + composition cards share one column so they never overlap each other or the layer panel */
+.side-stack{position:absolute;top:96px;right:32px;width:300px;max-height:calc(100dvh - 210px);z-index:var(--readout);display:flex;flex-direction:column;gap:12px;pointer-events:none}
+.side-stack>*{pointer-events:auto}
+.side-stack>.air-composition:not(.is-pinned){pointer-events:none}
+.side-stack:empty{display:none}
+
+@media(max-width:1100px){
+ .minimal-zoom{left:32px}
+ .side-stack{right:24px;width:280px}
+}
+@media(min-width:1101px){.layers-open .side-stack{right:388px}}
+@media(min-width:701px) and (max-width:1100px){.layers-open .side-stack{right:350px}}
+
+@media(max-width:700px){
+ .side-stack{top:auto;bottom:94px;left:16px;right:72px;width:auto;max-height:45dvh;justify-content:flex-end}
+ .layers-open .side-stack{display:none}
+ /* reset, zoom in, zoom out grouped in one vertical pill above the layer launcher */
+ .minimal-zoom{left:auto;right:16px;bottom:calc(max(29px,env(safe-area-inset-bottom)) + 58px);flex-direction:column;gap:0;border-radius:24px;background:#12190ee6;border:1px solid #c5d5ac1f;padding:2px;z-index:7}
+ .minimal-zoom>span{width:auto;height:1px;margin:0 9px;align-self:stretch;background:#aec49324}
+ .minimal-zoom button{width:44px;height:44px;border:0;background:none}
+ .minimal-zoom button+button{border-top:1px solid #aec49324}
+ .minimal-zoom button,.minimal-zoom button+button{border-radius:0}
+ .minimal-zoom button:first-child{border-radius:22px 22px 0 0}
+ .minimal-zoom button:last-child{border-radius:0 0 22px 22px}
+}
+
+/* loading screen */
+.loader{position:fixed;inset:0;z-index:var(--loader);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;background:radial-gradient(ellipse at 50% 46%,#161c17 0,#0b0e0d 68%);color:#a2b28b;opacity:1}
+.loader.is-leaving{pointer-events:none;animation:loader-out .5s var(--motion) forwards}
+.loader-mark{display:grid;place-items:center;margin-bottom:22px;animation:fade-in .8s var(--motion) both}
+.loader-meridian{transform-box:fill-box;transform-origin:center;animation:loader-spin 6s ease-in-out infinite}
+.loader-meridian-2{animation-delay:-3s}
+.loader-name{font-size:21px;font-weight:350;letter-spacing:.02em;color:var(--text);margin-bottom:26px}
+.loader-bar{width:min(220px,56vw);height:2px;border-radius:2px;background:#e4e8dc1a;overflow:hidden}
+.loader-bar>span{display:block;height:100%;background:#a2b28b;transform-origin:left center;transform:scaleX(0);transition:transform .35s var(--motion)}
+.loader-text{margin-top:14px;min-height:1.4em;font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums;text-align:center;padding:0 24px}
+
+@keyframes loader-out{to{opacity:0;visibility:hidden}}
+@keyframes loader-spin{0%,100%{transform:scaleX(1)}50%{transform:scaleX(-1)}}

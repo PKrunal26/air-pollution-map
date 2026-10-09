@@ -1,0 +1,74 @@
+/* Readout cards: flow children of .side-stack (positioned by the app shell). */
+.air-readout,.air-composition{position:relative;width:100%;min-width:0;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:var(--radius-card);box-shadow:var(--glass-shadow);backdrop-filter:blur(var(--glass-blur));animation:rise-in .5s var(--motion) both}
+.air-readout{flex-shrink:0;padding:20px 22px 14px;pointer-events:auto}
+.air-clear{position:absolute;right:12px;top:12px;width:32px;height:32px;display:grid;place-items:center;color:#9bac85;border-radius:50%}
+.air-clear:hover{color:#dfe8d0;background:var(--hover-bg)}
+.air-place{display:flex;align-items:baseline;flex-wrap:wrap;gap:3px 9px;padding-right:30px;font-size:17px;font-weight:400;color:var(--text)}
+.air-place small{font-size:12px;color:var(--text-muted)}
+.plume-note{font-size:12px;color:#b3c39d;margin-top:8px}
+.air-value{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 9px;margin-top:12px}
+.air-pollutant,.air-unit{font-size:13px;color:var(--text-muted)}
+.air-value strong{font-size:43px;font-weight:350;letter-spacing:-1px;line-height:1.1;color:var(--text)}
+.air-value .who-chip{align-self:center;margin-left:auto}
+.air-who-note,.air-snapshot-note{font-size:12px;line-height:1.5;color:var(--text-muted);margin-top:8px}
+.air-snapshot-note{color:#c8b595;padding-top:8px;border-top:1px solid #c6d5ae12}
+.air-status{font-size:12px;line-height:1.5;color:#c8b595;margin-top:4px}
+.air-empty{font-size:13px;color:#a1b0bc;margin:14px 0}
+.air-credit{display:flex;justify-content:space-between;align-items:center;gap:4px;font-size:11px;color:var(--text-muted);margin-top:8px}
+.air-credit a{color:#b3c39d}
+.air-credit button{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;color:#b3c39d}
+.air-credit button:disabled{opacity:.4}
+.air-resolution{white-space:nowrap}
+.air-readout :is(button,a):focus-visible,.air-composition :is(button,summary,a):focus-visible{outline-offset:2px}
+
+.who-chip{display:inline-flex;align-items:baseline;gap:5px;padding:2px 9px;border-radius:99px;font-size:13px;font-weight:500;line-height:1.4;white-space:nowrap;background:#b4c29722;color:#c9d6b6}
+.who-chip small{font-size:11px;font-weight:400;opacity:.85}
+.who-warn{background:#e0b45a26;color:#ebc47a}
+.who-high{background:#e0614f2e;color:#f4978a}
+
+.air-composition{display:flex;flex-direction:column;flex:0 1 auto;min-height:0;max-height:min(560px,calc(100dvh - 300px));padding:20px 22px;pointer-events:none}
+.air-composition.is-pinned{pointer-events:auto}
+.composition-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-shrink:0}
+.composition-kicker{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:450;line-height:1.5;color:var(--text-muted)}
+.composition-heading h2{font-size:20px;font-weight:400;letter-spacing:-.4px;line-height:1.2;margin-top:4px;color:var(--text)}
+.composition-close{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;color:#a4b290;flex-shrink:0;margin:-6px -8px 0 0}
+.composition-close:hover{color:#dfe8d0;background:var(--hover-bg)}
+.composition-location{font-size:13px;color:#c5d2b4;margin-top:8px;flex-shrink:0}
+.composition-caption{font-size:12px;line-height:1.5;color:var(--text-muted);margin-top:14px;margin-bottom:4px;flex-shrink:0}
+.composition-scroll{flex:1 1 auto;min-height:0;overflow:auto;padding-right:2px;overscroll-behavior:contain}
+.composition-fields{margin:0}
+.composition-fields>div{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:38px;border-bottom:1px solid #c6d5ae0c}
+.composition-fields dt{display:flex;align-items:center;gap:7px;font-size:13px;color:#ccd7bd;min-width:0}
+.composition-fields dt>span{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.composition-fields dt small{color:var(--text-muted);font-size:11px}
+.composition-fields dd{display:flex;align-items:center;justify-content:flex-end;gap:7px;margin:0;font-size:14px;color:var(--text);white-space:nowrap}
+.composition-fields dd .who-chip{padding:1px 8px;font-size:12px}
+.composition-fields dd .who-chip small{display:none}
+.composition-fields dd small{font-size:11px;color:var(--text-muted);min-width:34px;text-align:right}
+.composition-footer{padding:12px 0 4px;display:flex;flex-direction:column;gap:4px;font-size:12px;line-height:1.5;color:var(--text-muted)}
+.composition-footer .composition-pin{margin-top:6px;color:#becdad}
+.composition-more{margin-top:8px}
+.composition-more summary{display:flex;align-items:center;justify-content:space-between;cursor:pointer;list-style:none;font-size:13px;color:#becdad;min-height:38px}
+.composition-more summary::-webkit-details-marker{display:none}
+.composition-more summary>span{color:var(--text-muted);font-size:11px;margin-left:auto}
+.composition-more summary:after{content:'+';margin-left:7px}
+.composition-more[open] summary:after{content:'−'}
+.composition-empty{font-size:13px;line-height:1.6;color:#a8b896;margin-top:16px}
+.composition-expand{display:none;align-items:center;justify-content:center;gap:6px;width:100%;min-height:44px;margin-top:2px;font-size:13px;color:#becdad;flex-shrink:0}
+.composition-expand svg{transition:transform .3s var(--motion)}
+.composition-expand[aria-expanded=true] svg{transform:rotate(180deg)}
+
+@media(max-width:700px){
+ .air-readout{padding:16px 18px 10px}
+ .air-value strong{font-size:36px}
+ .air-composition{max-height:45dvh;padding:16px 18px 8px;border-radius:18px 18px 0 0}
+ .composition-heading h2{font-size:18px}
+ .composition-location{margin-top:6px}
+ .composition-caption{margin-top:10px}
+ .composition-fields>div{min-height:40px}
+ .composition-expand{display:flex}
+ .air-composition.is-pinned:not(.is-expanded) .composition-fields>div:not(.is-key),.air-composition.is-pinned:not(.is-expanded) .composition-more,.air-composition.is-pinned:not(.is-expanded) .composition-footer{display:none}
+ .air-composition.is-pinned:not(.is-expanded) .composition-scroll{overflow:visible}
+}
+@media(hover:none){.air-composition:not(.is-pinned){display:none}}
+@media(prefers-reduced-motion:reduce){.air-readout,.air-composition{animation:none}.composition-expand svg{transition:none}}

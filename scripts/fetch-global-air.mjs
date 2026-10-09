@@ -41,6 +41,6 @@ for(let offset=0;offset<points.length;offset+=96){
  console.log(`Validated ${modelCoordinates.length}/${points.length} × ${variables.length} layers`);
 }
 const snapshot={schema:2,unit:'μg/m³',kind:'modeled',domain:'cams_global',provider:'CAMS / ECMWF via Open-Meteo',source:'https://open-meteo.com/en/docs/air-quality-api',licence:'CC BY 4.0',validAt:timestamp*1000,retrievedAt:new Date().toISOString(),grid:{width,height,step,latStart:-90,lonStart:-180,order:'south-to-north, west-to-east'},fields,modelCoordinates};
-await mkdir('public/data',{recursive:true});
-await writeFile('public/data/global-air-layers.json',JSON.stringify(snapshot));
+await mkdir('tests/fixtures',{recursive:true});
+await writeFile('tests/fixtures/global-air-layers.json',JSON.stringify(snapshot));
 console.log(JSON.stringify({validAt:new Date(snapshot.validAt).toISOString(),samples:modelCoordinates.length,ranges:Object.fromEntries(variables.map(id=>[id,[Math.min(...fields[id]),Math.max(...fields[id])]]))}));

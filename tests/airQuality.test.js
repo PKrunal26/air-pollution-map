@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {airQualityUrl,parseAirQuality,fetchAirQuality} from '../src/airQuality.js';
+import {airQualityUrl,parseAirQuality,fetchAirQuality,snapshotNote} from '../src/airQuality.js';
 const now=Date.UTC(2026,9,8,10,30);
 const payload={latitude:28.6,longitude:77.2,current:{pm2_5:71,time:Date.UTC(2026,9,8,10)/1000},current_units:{pm2_5:'μg/m³',time:'unixtime'}};
 test('uses a consistent global model and unambiguous UTC timestamps',()=>{
@@ -34,4 +34,12 @@ test('passes the abort signal through and preserves the source value',async()=>{
  }});
  assert.equal(result.pm25,payload.current.pm2_5);
  assert.equal(result.fetchedAt,now);
+});
+test('explains when the globe snapshot differs from the live estimate',()=>{
+ const snap=Date.UTC(2026,9,9,3);
+ assert.equal(snapshotNote(snap,Date.UTC(2026,9,9,14)),'Globe shows the saved 9 Oct, 03:00 UTC snapshot, so values can differ.');
+ assert.equal(snapshotNote(null),null);
+ assert.equal(snapshotNote(NaN),null);
+ assert.equal(snapshotNote(snap,snap),null);
+ assert.match(snapshotNote(snap),/saved/);
 });

@@ -1,15 +1,60 @@
-// Geographic locations only. Pollution values arrive from the CAMS API.
-export const places = [
- {id:'delhi',name:'New Delhi',country:'India',lat:28.61,lon:77.21},
- {id:'beijing',name:'Beijing',country:'China',lat:39.90,lon:116.41},
- {id:'london',name:'London',country:'United Kingdom',lat:51.51,lon:-0.13},
- {id:'lagos',name:'Lagos',country:'Nigeria',lat:6.52,lon:3.38},
- {id:'saopaulo',name:'São Paulo',country:'Brazil',lat:-23.55,lon:-46.63},
- {id:'newyork',name:'New York',country:'United States',lat:40.71,lon:-74.01},
- {id:'mumbai',name:'Mumbai',country:'India',lat:19.08,lon:72.88},
- {id:'tokyo',name:'Tokyo',country:'Japan',lat:35.68,lon:139.69},
- {id:'sydney',name:'Sydney',country:'Australia',lat:-33.87,lon:151.21},
- {id:'paris',name:'Paris',country:'France',lat:48.86,lon:2.35},
- {id:'cairo',name:'Cairo',country:'Egypt',lat:30.04,lon:31.24},
- {id:'jakarta',name:'Jakarta',country:'Indonesia',lat:-6.21,lon:106.85},
+// Geographic locations only (offline list of major world cities). Pollution values arrive from the CAMS API.
+const rows=[
+ ['delhi','New Delhi','India',28.61,77.21],['beijing','Beijing','China',39.90,116.41],['london','London','United Kingdom',51.51,-0.13],['lagos','Lagos','Nigeria',6.52,3.38],['saopaulo','São Paulo','Brazil',-23.55,-46.63],['newyork','New York','United States',40.71,-74.01],['mumbai','Mumbai','India',19.08,72.88],['tokyo','Tokyo','Japan',35.68,139.69],['sydney','Sydney','Australia',-33.87,151.21],['paris','Paris','France',48.86,2.35],['cairo','Cairo','Egypt',30.04,31.24],['jakarta','Jakarta','Indonesia',-6.21,106.85],
+ // East Asia
+ ['osaka','Osaka','Japan',34.69,135.50],['nagoya','Nagoya','Japan',35.18,136.91],['sapporo','Sapporo','Japan',43.06,141.35],['seoul','Seoul','South Korea',37.57,126.98],['busan','Busan','South Korea',35.18,129.08],
+ ['shanghai','Shanghai','China',31.23,121.47],['guangzhou','Guangzhou','China',23.13,113.26],['shenzhen','Shenzhen','China',22.54,114.06],['chengdu','Chengdu','China',30.57,104.07],['chongqing','Chongqing','China',29.56,106.55],['wuhan','Wuhan','China',30.59,114.31],['xian','Xi’an','China',34.34,108.94],['tianjin','Tianjin','China',39.34,117.36],['hangzhou','Hangzhou','China',30.27,120.16],['nanjing','Nanjing','China',32.06,118.80],['shenyang','Shenyang','China',41.80,123.43],['harbin','Harbin','China',45.80,126.53],['kunming','Kunming','China',25.04,102.71],['urumqi','Ürümqi','China',43.83,87.62],['lhasa','Lhasa','China',29.65,91.12],['hongkong','Hong Kong','China',22.32,114.17],['taipei','Taipei','Taiwan',25.03,121.57],['ulaanbaatar','Ulaanbaatar','Mongolia',47.89,106.91],
+ // South-east Asia
+ ['manila','Manila','Philippines',14.60,120.98],['hanoi','Hanoi','Vietnam',21.03,105.85],['hochiminh','Ho Chi Minh City','Vietnam',10.82,106.63],['bangkok','Bangkok','Thailand',13.76,100.50],['chiangmai','Chiang Mai','Thailand',18.79,98.98],['phnompenh','Phnom Penh','Cambodia',11.56,104.93],['yangon','Yangon','Myanmar',16.87,96.20],['kualalumpur','Kuala Lumpur','Malaysia',3.14,101.69],['singapore','Singapore','Singapore',1.35,103.82],['surabaya','Surabaya','Indonesia',-7.25,112.75],
+ // South Asia
+ ['dhaka','Dhaka','Bangladesh',23.81,90.41],['kolkata','Kolkata','India',22.57,88.36],['bengaluru','Bengaluru','India',12.97,77.59],['chennai','Chennai','India',13.08,80.27],['hyderabad','Hyderabad','India',17.39,78.49],['ahmedabad','Ahmedabad','India',23.02,72.57],['pune','Pune','India',18.52,73.86],['surat','Surat','India',21.17,72.83],['jaipur','Jaipur','India',26.91,75.79],['lucknow','Lucknow','India',26.85,80.95],['karachi','Karachi','Pakistan',24.86,67.00],['lahore','Lahore','Pakistan',31.55,74.34],['islamabad','Islamabad','Pakistan',33.68,73.05],['kabul','Kabul','Afghanistan',34.53,69.17],['kathmandu','Kathmandu','Nepal',27.72,85.32],['colombo','Colombo','Sri Lanka',6.93,79.86],
+ // Central Asia and Caucasus
+ ['tashkent','Tashkent','Uzbekistan',41.30,69.24],['almaty','Almaty','Kazakhstan',43.24,76.89],['astana','Astana','Kazakhstan',51.17,71.45],['bishkek','Bishkek','Kyrgyzstan',42.87,74.59],['dushanbe','Dushanbe','Tajikistan',38.56,68.77],['ashgabat','Ashgabat','Turkmenistan',37.96,58.33],['baku','Baku','Azerbaijan',40.41,49.87],['tbilisi','Tbilisi','Georgia',41.72,44.79],['yerevan','Yerevan','Armenia',40.18,44.51],
+ // Middle East
+ ['tehran','Tehran','Iran',35.69,51.39],['baghdad','Baghdad','Iraq',33.31,44.37],['riyadh','Riyadh','Saudi Arabia',24.71,46.68],['jeddah','Jeddah','Saudi Arabia',21.54,39.17],['dubai','Dubai','United Arab Emirates',25.20,55.27],['abudhabi','Abu Dhabi','United Arab Emirates',24.45,54.38],['doha','Doha','Qatar',25.29,51.53],['kuwaitcity','Kuwait City','Kuwait',29.38,47.99],['muscat','Muscat','Oman',23.59,58.41],['amman','Amman','Jordan',31.95,35.93],['beirut','Beirut','Lebanon',33.89,35.50],['damascus','Damascus','Syria',33.51,36.29],['jerusalem','Jerusalem','Israel',31.77,35.21],['telaviv','Tel Aviv','Israel',32.09,34.78],['sanaa','Sanaa','Yemen',15.37,44.19],['istanbul','Istanbul','Türkiye',41.01,28.98],['ankara','Ankara','Türkiye',39.93,32.86],
+ // Western and southern Europe
+ ['berlin','Berlin','Germany',52.52,13.40],['hamburg','Hamburg','Germany',53.55,9.99],['munich','Munich','Germany',48.14,11.58],['madrid','Madrid','Spain',40.42,-3.70],['barcelona','Barcelona','Spain',41.39,2.17],['valencia','Valencia','Spain',39.47,-0.38],['lisbon','Lisbon','Portugal',38.72,-9.14],['marseille','Marseille','France',43.30,5.37],['lyon','Lyon','France',45.76,4.84],['rome','Rome','Italy',41.90,12.50],['milan','Milan','Italy',45.46,9.19],['naples','Naples','Italy',40.85,14.27],['amsterdam','Amsterdam','Netherlands',52.37,4.90],['brussels','Brussels','Belgium',50.85,4.35],['vienna','Vienna','Austria',48.21,16.37],['zurich','Zurich','Switzerland',47.38,8.54],['geneva','Geneva','Switzerland',46.20,6.14],['dublin','Dublin','Ireland',53.35,-6.26],['edinburgh','Edinburgh','United Kingdom',55.95,-3.19],['manchester','Manchester','United Kingdom',53.48,-2.24],['birmingham','Birmingham','United Kingdom',52.49,-1.89],['athens','Athens','Greece',37.98,23.73],['valletta','Valletta','Malta',35.90,14.51],
+ // Northern and eastern Europe
+ ['copenhagen','Copenhagen','Denmark',55.68,12.57],['stockholm','Stockholm','Sweden',59.33,18.07],['oslo','Oslo','Norway',59.91,10.75],['helsinki','Helsinki','Finland',60.17,24.94],['reykjavik','Reykjavík','Iceland',64.15,-21.94],['tallinn','Tallinn','Estonia',59.44,24.75],['riga','Riga','Latvia',56.95,24.11],['vilnius','Vilnius','Lithuania',54.69,25.28],['warsaw','Warsaw','Poland',52.23,21.01],['krakow','Kraków','Poland',50.06,19.94],['prague','Prague','Czechia',50.08,14.44],['bratislava','Bratislava','Slovakia',48.15,17.11],['budapest','Budapest','Hungary',47.50,19.04],['bucharest','Bucharest','Romania',44.43,26.10],['sofia','Sofia','Bulgaria',42.70,23.32],['belgrade','Belgrade','Serbia',44.79,20.45],['zagreb','Zagreb','Croatia',45.81,15.98],['ljubljana','Ljubljana','Slovenia',46.06,14.51],['sarajevo','Sarajevo','Bosnia and Herzegovina',43.86,18.41],['kyiv','Kyiv','Ukraine',50.45,30.52],['minsk','Minsk','Belarus',53.90,27.57],['chisinau','Chișinău','Moldova',47.01,28.86],
+ // Russia
+ ['moscow','Moscow','Russia',55.76,37.62],['stpetersburg','Saint Petersburg','Russia',59.93,30.34],['yekaterinburg','Yekaterinburg','Russia',56.84,60.60],['novosibirsk','Novosibirsk','Russia',55.03,82.92],['vladivostok','Vladivostok','Russia',43.12,131.89],
+ // Africa
+ ['abuja','Abuja','Nigeria',9.08,7.40],['accra','Accra','Ghana',5.60,-0.19],['abidjan','Abidjan','Côte d’Ivoire',5.36,-4.01],['dakar','Dakar','Senegal',14.72,-17.47],['bamako','Bamako','Mali',12.64,-8.00],['ouagadougou','Ouagadougou','Burkina Faso',12.37,-1.52],['niamey','Niamey','Niger',13.51,2.11],['alexandria','Alexandria','Egypt',31.20,29.92],['tripoli','Tripoli','Libya',32.89,13.19],['tunis','Tunis','Tunisia',36.81,10.18],['algiers','Algiers','Algeria',36.75,3.06],['casablanca','Casablanca','Morocco',33.57,-7.59],['rabat','Rabat','Morocco',34.02,-6.83],['marrakesh','Marrakesh','Morocco',31.63,-8.01],['khartoum','Khartoum','Sudan',15.50,32.56],['addisababa','Addis Ababa','Ethiopia',9.03,38.74],['nairobi','Nairobi','Kenya',-1.29,36.82],['kampala','Kampala','Uganda',0.35,32.58],['kigali','Kigali','Rwanda',-1.95,30.06],['daressalaam','Dar es Salaam','Tanzania',-6.79,39.21],['mogadishu','Mogadishu','Somalia',2.05,45.32],['kinshasa','Kinshasa','DR Congo',-4.44,15.27],['luanda','Luanda','Angola',-8.84,13.23],['yaounde','Yaoundé','Cameroon',3.85,11.50],['lusaka','Lusaka','Zambia',-15.39,28.32],['harare','Harare','Zimbabwe',-17.83,31.05],['maputo','Maputo','Mozambique',-25.97,32.57],['antananarivo','Antananarivo','Madagascar',-18.88,47.51],['windhoek','Windhoek','Namibia',-22.56,17.08],['johannesburg','Johannesburg','South Africa',-26.20,28.05],['pretoria','Pretoria','South Africa',-25.75,28.19],['capetown','Cape Town','South Africa',-33.92,18.42],
+ // North America
+ ['losangeles','Los Angeles','United States',34.05,-118.24],['chicago','Chicago','United States',41.88,-87.63],['houston','Houston','United States',29.76,-95.37],['phoenix','Phoenix','United States',33.45,-112.07],['philadelphia','Philadelphia','United States',39.95,-75.17],['sanfrancisco','San Francisco','United States',37.77,-122.42],['seattle','Seattle','United States',47.61,-122.33],['denver','Denver','United States',39.74,-104.99],['dallas','Dallas','United States',32.78,-96.80],['atlanta','Atlanta','United States',33.75,-84.39],['miami','Miami','United States',25.76,-80.19],['boston','Boston','United States',42.36,-71.06],['washington','Washington, D.C.','United States',38.91,-77.04],['lasvegas','Las Vegas','United States',36.17,-115.14],['anchorage','Anchorage','United States',61.22,-149.90],['honolulu','Honolulu','United States',21.31,-157.86],
+ ['toronto','Toronto','Canada',43.65,-79.38],['montreal','Montréal','Canada',45.50,-73.57],['vancouver','Vancouver','Canada',49.28,-123.12],['calgary','Calgary','Canada',51.05,-114.07],['edmonton','Edmonton','Canada',53.55,-113.49],['ottawa','Ottawa','Canada',45.42,-75.70],
+ ['mexicocity','Mexico City','Mexico',19.43,-99.13],['guadalajara','Guadalajara','Mexico',20.67,-103.35],['monterrey','Monterrey','Mexico',25.69,-100.32],
+ // Central America and Caribbean
+ ['guatemalacity','Guatemala City','Guatemala',14.63,-90.51],['sanjose','San José','Costa Rica',9.93,-84.08],['panamacity','Panama City','Panama',8.98,-79.52],['havana','Havana','Cuba',23.11,-82.37],['santodomingo','Santo Domingo','Dominican Republic',18.49,-69.93],['portauprince','Port-au-Prince','Haiti',18.59,-72.31],['sanjuan','San Juan','Puerto Rico',18.47,-66.11],
+ // South America
+ ['bogota','Bogotá','Colombia',4.71,-74.07],['medellin','Medellín','Colombia',6.24,-75.58],['caracas','Caracas','Venezuela',10.48,-66.90],['quito','Quito','Ecuador',-0.18,-78.47],['guayaquil','Guayaquil','Ecuador',-2.17,-79.92],['lima','Lima','Peru',-12.05,-77.04],['lapaz','La Paz','Bolivia',-16.50,-68.15],['santacruz','Santa Cruz de la Sierra','Bolivia',-17.78,-63.18],['santiago','Santiago','Chile',-33.45,-70.67],['buenosaires','Buenos Aires','Argentina',-34.60,-58.38],['cordoba','Córdoba','Argentina',-31.42,-64.18],['montevideo','Montevideo','Uruguay',-34.90,-56.16],['asuncion','Asunción','Paraguay',-25.26,-57.58],
+ ['riodejaneiro','Rio de Janeiro','Brazil',-22.91,-43.17],['brasilia','Brasília','Brazil',-15.79,-47.88],['salvador','Salvador','Brazil',-12.97,-38.51],['fortaleza','Fortaleza','Brazil',-3.73,-38.53],['belohorizonte','Belo Horizonte','Brazil',-19.92,-43.94],['manaus','Manaus','Brazil',-3.12,-60.02],['recife','Recife','Brazil',-8.05,-34.88],['portoalegre','Porto Alegre','Brazil',-30.03,-51.23],['curitiba','Curitiba','Brazil',-25.43,-49.27],
+ // Oceania
+ ['melbourne','Melbourne','Australia',-37.81,144.96],['brisbane','Brisbane','Australia',-27.47,153.03],['perth','Perth','Australia',-31.95,115.86],['adelaide','Adelaide','Australia',-34.93,138.60],['canberra','Canberra','Australia',-35.28,149.13],['darwin','Darwin','Australia',-12.46,130.84],['hobart','Hobart','Australia',-42.88,147.33],['auckland','Auckland','New Zealand',-36.85,174.76],['wellington','Wellington','New Zealand',-41.29,174.78],['christchurch','Christchurch','New Zealand',-43.53,172.64],['portmoresby','Port Moresby','Papua New Guinea',-9.44,147.18],['suva','Suva','Fiji',-18.14,178.44],['noumea','Nouméa','New Caledonia',-22.28,166.46],['papeete','Papeete','French Polynesia',-17.54,-149.57],
 ];
+export const places=rows.map(([id,name,country,lat,lon])=>({id,name,country,lat,lon}));
+// Extra search terms (old or local spellings) — matching only, never displayed.
+export const placeAliases={delhi:'delhi',mumbai:'bombay',kolkata:'calcutta',chennai:'madras',bengaluru:'bangalore',yangon:'rangoon',hochiminh:'saigon',beijing:'peking',istanbul:'constantinople',stpetersburg:'st petersburg leningrad',kyiv:'kiev',newyork:'nyc new york city',washington:'dc washington dc',losangeles:'la',hongkong:'hk',kualalumpur:'kl',abudhabi:'abu dhabi',saopaulo:'sao paulo',astana:'nur-sultan nursultan',xian:'xian',telaviv:'tel aviv-yafo',daressalaam:'dar es salaam',chisinau:'kishinev',mexicocity:'cdmx',sanfrancisco:'sf'};
+export const normalizeText=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[’'`]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+const index=places.map(p=>({p,name:normalizeText(p.name),country:normalizeText(p.country),alias:normalizeText(placeAliases[p.id])}));
+const wordStart=(s,q)=>s.startsWith(q)||s.includes(' '+q);
+// Ranked offline match: name prefix, name word prefix, alias, country prefix, then substrings.
+export function searchPlaces(query,list=places){
+ const q=normalizeText(query);if(!q)return[];
+ const rows=list===places?index:list.map(p=>({p,name:normalizeText(p.name),country:normalizeText(p.country),alias:normalizeText(placeAliases[p.id])}));
+ return rows.map((r,i)=>{
+  const rank=r.name.startsWith(q)?0:wordStart(r.name,q)?1:r.alias&&wordStart(r.alias,q)?2:wordStart(r.country,q)?3:r.name.includes(q)?4:(r.name+' '+r.country).includes(q)?5:-1;
+  return{p:r.p,rank,i};
+ }).filter(r=>r.rank>=0).sort((a,b)=>a.rank-b.rank||a.i-b.i).map(r=>r.p);
+}
+const hemi=(v,pos,neg)=>`${Math.abs(v).toFixed(2)}° ${v<0?neg:pos}`;
+// "48.85, 2.35", "48.85 2.35", "48.85N 2.35E", "-33.87,151.21" -> a coordinate pseudo-place, else null.
+export function parseCoordinates(query){
+ const m=String(query||'').replace(/°/g,'').trim().match(/^(-?\d+(?:\.\d+)?)\s*([ns])?\s*[,;\s]\s*(-?\d+(?:\.\d+)?)\s*([ew])?$/i);
+ if(!m)return null;
+ let lat=parseFloat(m[1]),lon=parseFloat(m[3]);
+ if(m[2]&&m[2].toLowerCase()==='s')lat=-Math.abs(lat);if(m[4]&&m[4].toLowerCase()==='w')lon=-Math.abs(lon);
+ if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return null;
+ lat=Math.round(lat*100)/100;lon=Math.round(lon*100)/100;
+ return{id:`coord-${lat}-${lon}`,name:`${hemi(lat,'N','S')}, ${hemi(lon,'E','W')}`,country:'Coordinates',lat,lon};
+}

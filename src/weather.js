@@ -1,8 +1,9 @@
+import {fetchNativeAsset} from './nativeAsset.js';
 export const WEATHER_FIELDS=['temperature_2m','relative_humidity_2m','wind_u_component_10m','wind_v_component_10m'];
 export const WEATHER_LAYERS=[
- {id:'wind',label:'Wind',name:'Wind',colour:'#d9e6ef',scale:'10 m · m/s',defaultStrength:70},
- {id:'temperature',label:'Temperature',name:'Temperature',colour:'#f29084',scale:'−40 — 40 °C',defaultStrength:65},
- {id:'humidity',label:'Humidity',name:'Relative humidity',colour:'#65cbbb',scale:'0 — 100 %',defaultStrength:55},
+ {id:'wind',label:'Wind',name:'Wind',colour:'#99a7b0',scale:'10 m · m/s',lo:'calm',hi:'strong',defaultStrength:70},
+ {id:'temperature',label:'Temperature',name:'Temperature',colour:'#de9056',scale:'−40 — 40 °C',lo:'−40',hi:'40+ °C',defaultStrength:65},
+ {id:'humidity',label:'Humidity',name:'Relative humidity',colour:'#1cb9cd',scale:'0 — 100 %',lo:'0',hi:'100 %',defaultStrength:55},
 ];
 export const initialWeather=()=>Object.fromEntries(WEATHER_LAYERS.map(l=>[l.id,{enabled:false,strength:l.defaultStrength}]));
 export async function decodeWeather(meta,buffer){
@@ -27,9 +28,8 @@ export async function decodeWeather(meta,buffer){
 export async function fetchWeather(signal){
  const response=await fetch('/data/weather-native.json',{signal});
  if(!response.ok)throw new Error('Weather metadata unavailable');
- const meta=await response.json(),binary=await fetch('/data/weather-native.bin',{signal});
- if(!binary.ok)throw new Error('Weather fields unavailable');
- return decodeWeather(meta,await binary.arrayBuffer());
+ const meta=await response.json();
+ return decodeWeather(meta,await fetchNativeAsset(meta,'weather-native.bin',signal));
 }
 // Longitude wraps; latitude clamps at the poles. U is eastward, V northward.
 export function sampleWeather(data,id,lat,lon){

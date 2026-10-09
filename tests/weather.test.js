@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {decodeWeather,sampleWeather,initialWeather,WEATHER_FIELDS} from '../src/weather.js';
+import {decodeWeather,sampleWeather,initialWeather,WEATHER_FIELDS,WEATHER_LAYERS} from '../src/weather.js';
 
 test('weather is a verified complete global snapshot at the pollution timestamp',async()=>{
  const meta=JSON.parse(await readFile(new URL('../public/data/weather-native.json',import.meta.url),'utf8'));
@@ -36,4 +36,9 @@ test('each weather layer starts off and can be changed independently',()=>{
  const a=initialWeather(),b=initialWeather();
  assert.ok(Object.values(a).every(s=>s.enabled===false));
  a.wind.enabled=true;assert.equal(a.temperature.enabled,false);assert.equal(a.humidity.enabled,false);assert.equal(b.wind.enabled,false);
+});
+
+test('weather layers carry key ticks for the on-map legend',()=>{
+ for(const l of WEATHER_LAYERS){assert.ok(l.lo&&l.hi&&l.colour);}
+ assert.equal(initialWeather().wind.enabled,false);
 });

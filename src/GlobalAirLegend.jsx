@@ -1,29 +1,82 @@
-import React,{useEffect,useState} from 'react';
-import {SlidersHorizontal,X} from '@phosphor-icons/react';
-import {PAINT_LAYERS} from './paintLayers';
+import React,{useEffect,useMemo,useRef,useState} from 'react';
+import {SlidersHorizontal,X,CaretDown,ArrowSquareOut,ArrowRight} from '@phosphor-icons/react';
+import {PAINT_LAYERS,keyRows,layerUnit} from './paintLayers';
+import {scalesFor} from './fieldStats';
 import {WEATHER_LAYERS} from './weather';
-const format=new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'UTC'});
-function LayerRow({layer,setting,available,onChange,slidersOpen,weather=false}){
- return <div className={`paint-row pigment-${layer.id}${setting.enabled?' is-on':''}`} style={{'--pigment':layer.colour,'--strength':`${setting.strength}%`}}>
-  <div className="paint-row-top"><button aria-label={`Toggle ${layer.name} layer`} aria-pressed={setting.enabled} disabled={!available} onClick={()=>onChange(layer.id,{enabled:!setting.enabled})}><span className="paint-swatch" aria-hidden="true"/><span>{layer.label}</span></button><span className="paint-scale">{weather?layer.scale:<>0 — {layer.range}+ <small>µg/m³</small></>}</span></div>
-  {weather&&setting.enabled&&layer.id!=='wind'&&<div className={`weather-key key-${layer.id}`} aria-label={layer.id==='temperature'?'Blue is cold; coral is hot':'Dark teal is dry; mint is humid'}/>}
-  {slidersOpen&&<label className="paint-strength"><span>Strength</span><input type="range" min="0" max="100" step="5" value={setting.strength} disabled={!available||!setting.enabled} aria-label={`${layer.name} ${weather?'display':'paint'} strength`} onChange={e=>onChange(layer.id,{strength:Number(e.target.value)})}/><output>{setting.strength}%</output></label>}
+import GlobeSurface from './GlobeSurface';
+import './styles/panel.css';
+const TABS=[['air','Air quality'],['weather','Weather']],GROUPS=['Atmospheric context','Trace gases & aerosols','Europe only'];
+function useCompact(){
+ const [compact,setCompact]=useState(()=>typeof matchMedia==='function'&&matchMedia('(max-width:700px)').matches);
+ useEffect(()=>{if(typeof matchMedia!=='function')return;const query=matchMedia('(max-width:700px)'),sync=()=>setCompact(query.matches);sync();query.addEventListener('change',sync);return()=>query.removeEventListener('change',sync);},[]);
+ return compact;
+}
+function EuropeHint({names,onShow}){
+ return <div className="europe-hint" role="status"><p><strong>{names}</strong>: Europe only</p><button onClick={onShow}>Show Europe<ArrowRight size={13}/></button></div>;
+}
+function LayerRow({layer,setting,available,onChange,expanded,onExpand,weather=false}){
+ const unit=layerUnit(layer);
+ return <div className={`layer-row${setting.enabled?' is-on':''}`} style={{'--pigment':layer.colour,'--strength':`${setting.strength}%`}}>
+  <div className="layer-line">
+   <button className="layer-toggle" role="switch" aria-label={`Toggle ${layer.name} layer`} aria-checked={setting.enabled} disabled={!available} onClick={()=>onChange(layer.id,{enabled:!setting.enabled})}>
+    <span className="paint-swatch" aria-hidden="true"/><span className="layer-label"><strong>{layer.name}</strong><small>{weather?layer.scale:`${layer.label} · ${unit}`}</small></span><span className="switch-track" aria-hidden="true"><span/></span>
+   </button>
+   <button className="layer-adjust" aria-label={`Adjust ${layer.name} intensity`} aria-expanded={expanded} disabled={!available||!setting.enabled} onClick={onExpand}><CaretDown size={14}/></button>
+  </div>
+  {expanded&&setting.enabled&&<div className="layer-settings">
+   <label className="paint-strength"><span>Display intensity</span><output>{setting.strength}%</output><input type="range" min="0" max="100" step="5" value={setting.strength} aria-label={`${layer.name} display strength`} onChange={e=>onChange(layer.id,{strength:Number(e.target.value)})}/></label>
+   {layer.id==='aerosol_optical_depth'&&<p className="layer-range">Whole atmospheric column at 550 nm.</p>}
+   {layer.id==='pm10'&&<p className="layer-range">Includes fine particles; do not add to PM₂.₅.</p>}
+   {layer.id==='dust'&&<p className="layer-range">Overlaps particulate matter.</p>}
+   {weather&&layer.id!=='wind'&&<div className={`weather-key key-${layer.id}`}/>}
+  </div>}
  </div>;
 }
-export default function GlobalAirLegend({state,paint,onChange,detail,regional,weather,weatherSettings,onWeatherChange}) {
- const data=state.data;
- const [slidersOpen,setSlidersOpen]=useState(true),[panelOpen,setPanelOpen]=useState(()=>!window.matchMedia('(max-width:600px)').matches);
- useEffect(()=>{const close=e=>{if(e.key==='Escape')setPanelOpen(false);};window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close);},[]);
- const active=Object.values(paint).filter(s=>s.enabled).length+Object.values(weatherSettings).filter(s=>s.enabled).length;
+export default function GlobalAirLegend({surface,onSurfaceChange,panelOpen,onPanelChange,onFlyTo,state,paint,onChange,detail,regional,regionalError,weather,weatherSettings,onWeatherChange}){
+ const [tab,setTab]=useState('air'),[expanded,setExpanded]=useState(null);
+ const compact=useCompact(),launcher=useRef(null);
+ const groupActive=group=>PAINT_LAYERS.filter(l=>l.group===group&&paint[l.id]?.enabled).length;
+ const [openGroups,setOpenGroups]=useState(()=>new Set(GROUPS.filter(groupActive)));
+ const seen=useRef(Object.fromEntries(GROUPS.map(g=>[g,groupActive(g)])));
+ const counts=GROUPS.map(groupActive).join();
+ useEffect(()=>{
+  const grown=GROUPS.filter(g=>groupActive(g)>seen.current[g]);
+  GROUPS.forEach(g=>{seen.current[g]=groupActive(g);});
+  if(grown.length)setOpenGroups(current=>new Set([...current,...grown]));
+ },[counts]);
+ const scales=useMemo(()=>{const global=scalesFor(state.data,PAINT_LAYERS);return {global,regional:scalesFor(regional,PAINT_LAYERS,global)};},[state.data,regional]);
+ const rows=keyRows(paint,weatherSettings,scales),active=rows.length;
+ const europeRows=rows.filter(r=>r.europe),europeNames=europeRows.map(r=>r.label).join(', ');
+ const showHint=!!europeNames&&detail!=='regional'&&!!onFlyTo;
+ const showEurope=()=>{onFlyTo?.(50,10);if(compact)onPanelChange(false);};
+ const close=()=>{onPanelChange(false);launcher.current?.focus();};
+ useEffect(()=>{const escape=e=>{if(e.key==='Escape'&&panelOpen){onPanelChange(false);launcher.current?.focus();}};window.addEventListener('keydown',escape);return()=>window.removeEventListener('keydown',escape);},[panelOpen,onPanelChange]);
+ const moveTab=(e,id)=>{
+  const ids=TABS.map(t=>t[0]),i=ids.indexOf(id),next={ArrowRight:ids[(i+1)%ids.length],ArrowLeft:ids[(i-1+ids.length)%ids.length],Home:ids[0],End:ids[ids.length-1]}[e.key];
+  if(!next)return;e.preventDefault();setTab(next);document.getElementById(`tab-${next}`)?.focus();
+ };
+ const row=(layer,weatherRow=false)=><LayerRow key={layer.id} layer={layer} setting={(weatherRow?weatherSettings:paint)[layer.id]} available={weatherRow?!!weather.data:!!(state.data?.fields[layer.id]||regional?.fields[layer.id])} weather={weatherRow} onChange={weatherRow?onWeatherChange:onChange} expanded={expanded===layer.id} onExpand={()=>setExpanded(current=>current===layer.id?null:layer.id)}/>;
  return <>
-  <button className="layers-launcher" aria-controls="layer-controls" aria-expanded={panelOpen} onClick={()=>setPanelOpen(open=>!open)}><SlidersHorizontal size={17}/><span>{panelOpen?'Close layers':`Layers · ${active} on`}</span></button>
-  <section id="layer-controls" className={`paint-palette${slidersOpen?'':' sliders-collapsed'}${panelOpen?' panel-open':' panel-closed'}`} aria-label="Map layers" inert={!panelOpen?true:undefined}>
-  <div className="paint-heading"><span>Atmosphere</span><button className="paint-collapse" aria-expanded={slidersOpen} aria-label={slidersOpen?'Collapse all sliders':'Expand all sliders'} onClick={()=>setSlidersOpen(open=>!open)}><SlidersHorizontal size={15} weight="light"/><span>{slidersOpen?'Hide sliders':'Show sliders'}</span></button><button className="layers-close" aria-label="Close layer panel" onClick={()=>setPanelOpen(false)}><X size={18}/></button></div>
-  <div className="layer-grid">{PAINT_LAYERS.map(layer=><LayerRow key={layer.id} layer={layer} setting={paint[layer.id]} available={!!data} onChange={onChange} slidersOpen={slidersOpen}/>)}</div>
-  {data?<><p className="paint-meta">Modeled · {format.format(new Date(data.validAt))} UTC</p><p className="paint-note">{detail==='regional'?'Europe · ~11 km · regional model':`Global · ~45 km · ${detail==='overview'?'overview':detail==='medium'?'more detail':'native detail'}`}</p>{regional&&<p className="paint-note">Zoom reveals ~11 km detail over Europe</p>}</>:<p className="paint-meta" role="status">{state.status==='error'?'Global layers unavailable':'Loading global layers…'}</p>}
-  <div className="weather-heading">Weather</div>
-  <div className="layer-grid">{WEATHER_LAYERS.map(layer=><LayerRow key={layer.id} weather layer={layer} setting={weatherSettings[layer.id]} available={!!weather?.data} onChange={onWeatherChange} slidersOpen={slidersOpen}/>)}</div>
-  {weather?.data?<><p className="paint-meta"><a href="https://open-meteo.com/en/docs/ecmwf-api" target="_blank" rel="noreferrer">ECMWF IFS / Open-Meteo</a> · ~28 km</p><p className="paint-note">{format.format(new Date(weather.data.validAt))} UTC · model snapshot</p><details className="weather-evidence"><summary>About the weather layers</summary><p className="paint-note">Temperature & humidity at 2 m; wind at 10 m. Wind animation shows a frozen field, not pollutant trajectories or elapsed real time. Colours mix for display only.</p><p className="paint-note">Weather data: <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a></p></details></>:<p className="paint-meta" role="status">{weather?.status==='error'?'Weather layers unavailable':'Loading weather layers…'}</p>}
-  <button className="layers-clear" onClick={()=>{PAINT_LAYERS.forEach(l=>onChange(l.id,{enabled:false}));WEATHER_LAYERS.forEach(l=>onWeatherChange(l.id,{enabled:false}));}}>Turn all layers off</button>
- </section></>;
+  <button ref={launcher} className={`layers-launcher${panelOpen?' is-open':''}`} aria-controls="layer-controls" aria-expanded={panelOpen} onClick={()=>onPanelChange(!panelOpen)}><span className="launcher-icon">{panelOpen?<X size={17} weight="light"/>:<SlidersHorizontal size={17} weight="light"/>}</span><span>{panelOpen?'Hide layers':'Explore layers'}</span><small aria-label={`${active} active`}>{active}</small></button>
+  <aside id="layer-controls" className={`layer-panel${panelOpen?' is-open':''}`} aria-label="Map layers" inert={!panelOpen?true:undefined}>
+   <div className="layer-panel-heading"><h2>The atmosphere</h2><button className="layer-clear" disabled={!active} onClick={()=>{PAINT_LAYERS.forEach(l=>onChange(l.id,{enabled:false}));WEATHER_LAYERS.forEach(l=>onWeatherChange(l.id,{enabled:false}));}}>Clear</button><button className="icon-button" aria-label="Close layer panel" onClick={close}><X size={18} weight="light"/></button></div>
+   <div className="layer-tabs" role="tablist" aria-label="Layer categories">{TABS.map(([id,label])=><button key={id} id={`tab-${id}`} role="tab" aria-selected={tab===id} aria-controls={`panel-${id}`} tabIndex={tab===id?0:-1} onClick={()=>setTab(id)} onKeyDown={e=>moveTab(e,id)}>{label}</button>)}</div>
+   <div className="layer-scroll scroll-fade" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+    {tab==='air'?<>
+     {state.status==='loading'&&<p className="data-status" role="status">Loading CAMS fields…</p>}
+     {state.status==='error'&&<p className="data-status" role="status">Global fields unavailable. Reload to retry.</p>}
+     {showHint&&panelOpen&&<EuropeHint names={europeNames} onShow={showEurope}/>}
+     <div className="layer-group">{PAINT_LAYERS.filter(l=>l.group==='Pollutants').map(l=>row(l))}</div>
+     {GROUPS.map(group=>{const on=groupActive(group),total=PAINT_LAYERS.filter(l=>l.group===group).length;return <details className={`layer-group-more${on?' has-active':''}`} key={group} open={openGroups.has(group)} onToggle={e=>{const open=e.currentTarget.open;setOpenGroups(current=>{if(current.has(group)===open)return current;const next=new Set(current);open?next.add(group):next.delete(group);return next;});}}><summary>{group}<span>{on>0&&<em className="group-active">{on} on</em>}<b>{total}</b><CaretDown size={13}/></span></summary>{group==='Europe only'&&!regional&&<p className="data-status" role="status">{regionalError?'European fields unavailable. Reload to retry.':'Loading European fields…'}</p>}{group==='Europe only'&&<p className="coverage-note">Pollen may be zero outside its season.</p>}{PAINT_LAYERS.filter(l=>l.group===group).map(l=>row(l))}</details>;})}
+    </>:<>
+     {WEATHER_LAYERS.map(l=>row(l,true))}
+     {!weather.data&&<p className="data-status" role="status">{weather.status==='error'?'Weather unavailable. Reload to retry.':'Loading weather…'}</p>}
+    </>}
+   </div>
+   <footer className="layer-footer">
+    <p><a href={tab==='air'?'https://open-meteo.com/en/docs/air-quality-api':'https://open-meteo.com/en/docs/ecmwf-api'} target="_blank" rel="noreferrer">{tab==='air'?'CAMS':'ECMWF'} via Open-Meteo<ArrowSquareOut size={11}/></a></p>
+    <div className="layer-footer-actions"><GlobeSurface value={surface} onChange={onSurfaceChange}/></div>
+   </footer>
+  </aside>
+ </>;
 }

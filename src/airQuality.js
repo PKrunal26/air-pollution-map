@@ -27,3 +27,10 @@ export async function fetchAirQuality(city, {signal,fetcher=fetch,now=Date.now} 
  if (!response.ok) throw new Error(`Air-quality service unavailable (${response.status})`);
  return parseAirQuality(await response.json(), now());
 }
+
+const noteFormat=new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'UTC'});
+// Explains why the city card (live) and the globe (saved snapshot) can disagree.
+export function snapshotNote(snapshotAt,validAt=null){
+ if(!Number.isFinite(snapshotAt)||snapshotAt<=0||snapshotAt===validAt)return null;
+ return `Globe shows the saved ${noteFormat.format(new Date(snapshotAt))} UTC snapshot, so values can differ.`;
+}

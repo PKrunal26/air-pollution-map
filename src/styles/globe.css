@@ -1,0 +1,6 @@
+.globe-label{position:absolute;left:0;top:0;z-index:2;display:flex;gap:8px;align-items:center;padding:8px 10px;color:#e5ebda;text-shadow:0 1px 6px #000,0 0 15px #000;font-size:12px;line-height:16px;white-space:nowrap;cursor:pointer;will-change:transform}
+.globe-label .pin{display:block;flex:none;width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 0 3px #0008}
+.surface-view-white .globe-label.selected{color:#253029;text-shadow:0 1px 5px #fff8}.surface-view-white .globe-label .pin{box-shadow:0 0 0 3px #fff8}
+.globe-label:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;border-radius:8px}
+.globe-probe{position:absolute;left:0;top:0;z-index:3;width:13px;height:13px;border:1px solid #f3f5e7;border-radius:50%;box-shadow:0 0 0 4px #111a0c80;pointer-events:none}.globe-probe:after{content:'';position:absolute;inset:4px;background:#f3f5e7;border-radius:50%}.globe-probe[hidden]{display:none}
+.webgl-error{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:max-content;max-width:min(350px,calc(100% - 32px));padding:20px;font-size:13px;line-height:1.6;background:#151d13e8;color:#bfccae;border-radius:12px}

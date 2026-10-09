@@ -1,0 +1,15 @@
+/* Hover-readout switch: header pill. */
+.readout-toggle{gap:9px;min-height:40px;font-size:12px;color:var(--text-muted)}
+.readout-toggle.is-on{color:#ced3c5}
+.readout-toggle svg{transition:transform .4s var(--motion)}
+.readout-toggle:hover:not(:disabled) svg{transform:translate(1px,-1px)}
+.readout-header .switch-track{width:28px;height:16px;border-radius:8px}
+.readout-header .switch-track>span{top:2px;left:2px;width:12px;height:12px}
+.readout-header.is-on .switch-track>span{transform:translateX(12px)}
+@media(max-width:700px){
+ .readout-header{width:44px;height:44px;min-height:44px;padding:0;position:relative}
+ .readout-header .readout-label,.readout-header .switch-track{display:none}
+ .readout-header:not(.is-on):after{content:"";position:absolute;left:12px;right:12px;top:50%;height:1.5px;border-radius:1px;background:currentColor;transform:rotate(-40deg)}
+ .readout-header.is-on{color:#e4ebd9}
+ .readout-header.is-on:before{content:"";position:absolute;right:10px;top:10px;width:6px;height:6px;border-radius:50%;background:#9aac83}
+}
