@@ -1,6 +1,6 @@
 # Who Owns the Air?
 
-A minimal, globe-first environmental artwork. Drag Earth, search one of twelve cities, and zoom closer. The Globe selector switches between a neutral white surface, charcoal and NASA satellite imagery without changing the data, camera or paint strengths. White is the initial surface to make mixed pigment colours easier to read. Neutral surfaces include subdued country outlines.
+A minimal, globe-first environmental artwork. Drag Earth, search one of twelve cities, and zoom closer. The Globe selector switches between a neutral white surface, charcoal and NASA satellite imagery without changing the data, camera or paint strengths. White uses ivory land and blue-grey oceans, with stronger pigment contrast and coverage for visibility. This display adjustment does not change the concentration fields or relative layer weights. Neutral surfaces include subdued country outlines; the existing ocean specular texture supplies the land/water mask.
 
 ## Real data, first layer
 

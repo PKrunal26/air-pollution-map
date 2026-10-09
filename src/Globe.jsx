@@ -17,8 +17,12 @@ export default function Globe({city,active,selected,mode,zoom,focus,year,month,s
   const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(39,1,.01,100);camera.position.copy(vec(22,68,3.8));
   const controls=new OrbitControls(camera,renderer.domElement);controls.enablePan=false;controls.enableDamping=true;controls.dampingFactor=.075;controls.rotateSpeed=.55;controls.minDistance=1.65;controls.maxDistance=6;controls.enableZoom=true;
   const satelliteMaterial=new THREE.MeshPhongMaterial({color:0xffffff,shininess:14,specular:0x465564});
-  function neutralMaterial(colour){return new THREE.ShaderMaterial({uniforms:{base:{value:new THREE.Vector3(...colour)}},vertexShader:vertex,fragmentShader:`uniform vec3 base;varying vec3 vNormal;varying vec3 vPosition;void main(){vec3 n=normalize(vNormal);float face=max(0.,dot(n,normalize(-vPosition)));float light=.82+.18*max(0.,dot(n,normalize(vec3(-.4,.5,1.))));float edge=1.-pow(1.-face,3.)*.10;gl_FragColor=vec4(base*light*edge,1.);}`});}
-  const surfaceMaterials={satellite:satelliteMaterial,white:neutralMaterial([.98,.98,.97]),charcoal:neutralMaterial([.13,.15,.18])};
+  function neutralMaterial(land,ocean){return new THREE.ShaderMaterial({
+   uniforms:{base:{value:new THREE.Vector3(...land)},ocean:{value:new THREE.Vector3(...ocean)},waterMask:{value:null},hasMask:{value:0}},
+   vertexShader:`varying vec2 surfaceUv;varying vec3 vNormal;varying vec3 vPosition;void main(){surfaceUv=uv;vNormal=normalize(normalMatrix*normal);vec4 p=modelViewMatrix*vec4(position,1.);vPosition=p.xyz;gl_Position=projectionMatrix*p;}`,
+   fragmentShader:`uniform vec3 base;uniform vec3 ocean;uniform sampler2D waterMask;uniform float hasMask;varying vec2 surfaceUv;varying vec3 vNormal;varying vec3 vPosition;void main(){vec3 n=normalize(vNormal);float face=max(0.,dot(n,normalize(-vPosition)));float light=.90+.10*max(0.,dot(n,normalize(vec3(-.4,.5,1.))));float edge=1.-pow(1.-face,3.)*.08;float water=smoothstep(.25,.75,texture2D(waterMask,surfaceUv).r)*hasMask;gl_FragColor=vec4(mix(base,ocean,water)*light*edge,1.);}`,
+  });}
+  const surfaceMaterials={satellite:satelliteMaterial,white:neutralMaterial([.97,.97,.95],[.66,.73,.79]),charcoal:neutralMaterial([.13,.15,.18],[.13,.15,.18])};
   const earth=new THREE.Mesh(new THREE.SphereGeometry(1,192,128),satelliteMaterial);scene.add(earth);
 
   let disposed=false,textureTier=0;const textures=new Set();
@@ -32,7 +36,7 @@ export default function Globe({city,active,selected,mode,zoom,focus,year,month,s
   });}
   loadEarth('/earth.jpg',1);
   loadEarth(renderer.capabilities.maxTextureSize>=8192?'/earth-8k.jpg':'/earth-4k.jpg',2);
-  loader.load('/earth-specular.jpg',texture=>{if(disposed){texture.dispose();return;}textures.add(texture);texture.anisotropy=anisotropy;satelliteMaterial.specularMap=texture;satelliteMaterial.needsUpdate=true;});
+  loader.load('/earth-specular.jpg',texture=>{if(disposed){texture.dispose();return;}textures.add(texture);texture.anisotropy=anisotropy;satelliteMaterial.specularMap=texture;satelliteMaterial.needsUpdate=true;for(const id of ['white','charcoal']){surfaceMaterials[id].uniforms.waterMask.value=texture;surfaceMaterials[id].uniforms.hasMask.value=1;}});
   scene.add(new THREE.AmbientLight(0xb7c8ee,.36));const sun=new THREE.DirectionalLight(0xffffff,2.25);scene.add(sun);const fill=new THREE.DirectionalLight(0x638ec5,.12);scene.add(fill);
   const halo=new THREE.Mesh(new THREE.SphereGeometry(1.002,96,64),new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:atmosphere,side:THREE.FrontSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));scene.add(halo);
   const outer=new THREE.Mesh(new THREE.SphereGeometry(1.009,96,64),new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:atmosphere,side:THREE.BackSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));scene.add(outer);
@@ -81,7 +85,7 @@ void main(){vec2 uv=gl_PointCoord-.5;float d=length(uv);if(d>.49)discard;vec2 p=
     countryLines.visible=!clean||p.surface!=='satellite';countryLines.material.color.set(p.surface==='white'?0x717b83:0x8693a1);countryLines.material.opacity=p.surface==='white'?.24:.22;
     halo.visible=outer.visible=p.surface==='satellite';renderer.domElement.dataset.globeSurface=p.surface;
    }
-   globalLayer.update({data:clean?p.globalAir:null,paint:p.paint});
+   globalLayer.update({data:clean?p.globalAir:null,paint:p.paint,surface:p.surface});
    if(p.selected!==oldSelected||p.city.id!==oldCity||p.active.join()!==oldActive){rebuild();oldSelected=p.selected;oldCity=p.city.id;oldActive=p.active.join();}
    if(p.focus!==oldFocus||p.zoom!==oldZoom){const target=vec(p.city.lat,p.city.lon,p.zoom===1?2.3:3.8);tween={start:camera.position.clone(),end:target,t:elapsed};oldFocus=p.focus;oldZoom=p.zoom;}
    if(tween){let t=Math.min(1,(elapsed-tween.t)/(reduced?.02:1.5));const eased=t*t*(3-2*t);camera.position.lerpVectors(tween.start,tween.end,eased);if(t===1)tween=null;}
