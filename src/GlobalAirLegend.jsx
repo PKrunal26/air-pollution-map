@@ -9,6 +9,6 @@ export default function GlobalAirLegend({state,paint,onChange}) {
    <div className="paint-row-top"><button aria-label={`Toggle ${layer.name} layer`} aria-pressed={setting.enabled} disabled={!data} onClick={()=>onChange(layer.id,{enabled:!setting.enabled})}><span className="paint-swatch" aria-hidden="true"/><span>{layer.label}</span></button><span className="paint-scale">0 — {layer.range}+</span></div>
    <label className="paint-strength"><span>Paint strength</span><input type="range" min="0" max="100" step="5" value={setting.strength} disabled={!data||!setting.enabled} aria-label={`${layer.name} paint strength`} onChange={e=>onChange(layer.id,{strength:Number(e.target.value)})}/><output>{setting.strength}%</output></label>
   </div>;})}
-  {data?<><p className="paint-meta">Modeled · {format.format(new Date(data.validAt))} UTC</p><p className="paint-note">Each dot = one 5° sample · colours mix</p></>:<p className="paint-meta" role="status">{state.status==='error'?'Global layers unavailable':'Loading global layers…'}</p>}
+  {data?<><p className="paint-meta">Modeled · {format.format(new Date(data.validAt))} UTC</p><p className="paint-note">{data.grid.step}° native grid · {new Intl.NumberFormat('en-GB').format(data.grid.width*data.grid.height)} cells per layer</p></>:<p className="paint-meta" role="status">{state.status==='error'?'Global layers unavailable':'Loading global layers…'}</p>}
  </section>;
 }

@@ -16,7 +16,32 @@ import {PAINT_LAYERS} from './paintLayers.js';
 
 export function parseGlobalLayers(payload) {
  const g=payload?.grid;
- if(payload?.schema!==2||payload.unit!=='μg/m³'||payload.domain!=='cams_global'||payload.kind!=='modeled'||!Number.isFinite(payload.validAt)||payload.validAt<=0||g?.width!==72||g.height!==37||g.step!==5||g.latStart!==-90||g.lonStart!==-180||g.order!=='south-to-north, west-to-east')throw new Error('Invalid global layer metadata');
- for(const layer of PAINT_LAYERS){const values=payload.fields?.[layer.id];if(!Array.isArray(values)||values.length!==g.width*g.height||values.some(v=>!Number.isFinite(v)||v<0))throw new Error(`Invalid ${layer.label} field`);}
+ const supportedGrid=payload?.schema===2?g?.width===72&&g.height===37&&g.step===5:payload?.schema===3&&g?.width===900&&g.height===451&&g.step===.4;
+ if(!supportedGrid||payload.unit!=='μg/m³'||payload.domain!=='cams_global'||payload.kind!=='modeled'||!Number.isFinite(payload.validAt)||payload.validAt<=0||g.latStart!==-90||g.lonStart!==-180||g.order!=='south-to-north, west-to-east')throw new Error('Invalid global layer metadata');
+ for(const layer of PAINT_LAYERS){const values=payload.fields?.[layer.id];if(!(Array.isArray(values)||values instanceof Float32Array)||values.length!==g.width*g.height||values.some(v=>!Number.isFinite(v)||v<0))throw new Error(`Invalid ${layer.label} field`);}
  return payload;
+}
+
+// Decode the provider's native float values; verify integrity before any visual clamping.
+export async function decodeNativeLayers(metadata,buffer) {
+ const count=900*451,order=PAINT_LAYERS.map(p=>p.id);
+ if(metadata?.schema!==3||metadata.encoding!=='float32-le, layer-major'||metadata.dataFile!=='global-air-native.bin'||JSON.stringify(metadata.fieldOrder)!==JSON.stringify(order)||metadata.byteLength!==count*4*4||!(buffer instanceof ArrayBuffer)||buffer.byteLength!==metadata.byteLength||!/^[a-f0-9]{64}$/.test(metadata.sha256??''))throw new Error('Invalid native data encoding');
+ const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)),b=>b.toString(16).padStart(2,'0')).join('');
+ if(hash!==metadata.sha256)throw new Error('Native data checksum mismatch');
+ const fields={},littleEndian=new Uint16Array(new Uint8Array([1,0]).buffer)[0]===1;
+ order.forEach((id,layer)=>{
+  const offset=layer*count*4;
+  if(littleEndian)fields[id]=new Float32Array(buffer,offset,count);
+  else{const view=new DataView(buffer,offset,count*4);fields[id]=Float32Array.from({length:count},(_,i)=>view.getFloat32(i*4,true));}
+ });
+ return parseGlobalLayers({...metadata,fields});
+}
+
+export async function fetchNativeLayers(signal) {
+ const metadataResponse=await fetch('/data/global-air-native.json',{signal,cache:'no-cache'});
+ if(!metadataResponse.ok)throw new Error('Native metadata unavailable');
+ const metadata=await metadataResponse.json();
+ const response=await fetch('/data/global-air-native.bin',{signal,cache:'no-cache'});
+ if(!response.ok)throw new Error('Native field unavailable');
+ return decodeNativeLayers(metadata,await response.arrayBuffer());
 }
