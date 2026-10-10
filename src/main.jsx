@@ -1,4 +1,4 @@
-import React,{useEffect,useState} from 'react';
+import React,{useEffect,useState,useSyncExternalStore} from 'react';
 import {createRoot} from 'react-dom/client';
 import './styles.css';
 import {Plus,Minus,Info,ArrowCounterClockwise} from '@phosphor-icons/react';
@@ -14,9 +14,13 @@ import GlobalAirLegend from './GlobalAirLegend';
 import Loader from './Loader';
 import {fetchWeather,initialWeather} from './weather';
 import {parseEmbedParams,applyLayerSelection} from './embedParams';
+import {fetchFrameManifest,fetchHistoryManifest,createTimeline,frameDataset,nearestFrame} from './airFrames';
+import TimeBar from './TimeBar';
+import LayerPicker from './LayerPicker';
+import {loadOnboarded,saveOnboarded} from './onboarding';
 import './styles/shell.css';
 
-const LOADER_TIMEOUT=20000;
+const LOADER_TIMEOUT=20000,noop=()=>()=>{};
 // ?embed=1 shows the globe only (for iframes); layers, surface and bg set the initial look.
 const OPTIONS=parseEmbedParams(typeof location!=='undefined'?location.search:''),EMBED=OPTIONS.embed;
 if(OPTIONS.bg)document.documentElement.style.setProperty('--embed-bg',OPTIONS.bg);
@@ -35,9 +39,38 @@ function App(){
  const [flyTarget,setFlyTarget]=useState(null),[range,setRange]=useState({atMin:false,atMax:false});
  const [globeReady,setGlobeReady]=useState(false),[airVisible,setAirVisible]=useState(false),[opened,setOpened]=useState(false),[timedOut,setTimedOut]=useState(false),[progress,setProgress]=useState({loaded:0,total:null});
  const desktop=useMedia('(min-width:701px)');
+ // First visit only (not embedded, not when the URL picks layers): ask which pollutants to show.
+ const [picking,setPicking]=useState(()=>!EMBED&&!OPTIONS.layers&&!loadOnboarded());
+ const finishPicking=React.useCallback(()=>{saveOnboarded();setPicking(false);},[]);
+ const [timelines,setTimelines]=useState({forecast:null,history:null}),[mode,setMode]=useState(OPTIONS.history?'history':'forecast'),[frameAir,setFrameAir]=useState(null);
+ const timeline=timelines[mode]??timelines.forecast;
+ const changeMode=next=>{timeline?.pause();setMode(next);};
  useEffect(()=>{if(EMBED)return;const controller=new AbortController();fetchWeather(controller.signal).then(data=>setWeather({status:'ready',data})).catch(e=>{if(e.name!=='AbortError')setWeather({status:'error',data:null});});return()=>controller.abort();},[]);
  useEffect(()=>{const controller=new AbortController();fetchEuropeLayers(controller.signal).then(setRegionalAir).catch(e=>{if(e.name!=='AbortError')setRegionalError(true);});return()=>controller.abort();},[]);
  useEffect(()=>{const controller=new AbortController();fetchNativeLayers(controller.signal,(loaded,total)=>setProgress({loaded,total})).then(data=>setGlobalAir({status:'ready',data})).catch(e=>{if(e.name!=='AbortError')setGlobalAir({status:'error',data:null});});return()=>controller.abort();},[]);
+ // Forecast frames load after the snapshot is on screen; they never block the first view.
+ useEffect(()=>{
+  if(globalAir.status!=='ready')return;
+  const controller=new AbortController(),made=[],reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Forecast (48 h, 3-hourly) and history (monthly means since 2022) load independently; either can be missing.
+  const open=(kind,fetcher)=>fetcher(controller.signal).then(manifest=>{
+   const line=createTimeline(manifest,{reduced,kind,start:kind==='history'?manifest.frames.length-1:manifest.snapshotIndex});made.push(line);
+   const at=OPTIONS.time==null||OPTIONS.history!==(kind==='history')?-1:manifest.frames.findIndex(f=>f.validAt===OPTIONS.time);
+   if(at>=0)line.seek(at);
+   if(OPTIONS.play&&(kind==='history')===OPTIONS.history)line.play();
+   setTimelines(current=>({...current,[kind]:line}));
+  }).catch(()=>{});
+  open('forecast',fetchFrameManifest);open('history',fetchHistoryManifest);
+  return()=>{controller.abort();made.forEach(l=>l.dispose());};
+ },[globalAir.status]);
+ // Readout away from the snapshot hour: values from the nearest real frame (never a blend), labelled with its time.
+ const frameIndex=useSyncExternalStore(timeline?.subscribe??noop,()=>timeline&&!timeline.atSnapshot?nearestFrame(timeline.position,timeline.count):-1);
+ useEffect(()=>{
+  if(!timeline||frameIndex<0){setFrameAir(null);return;}
+  if(!readout||!probe)return; // converted only while a readout is open
+  const bits=timeline.bits(frameIndex);
+  if(bits)setFrameAir(current=>current?.frame===frameIndex?current:frameDataset(timeline.manifest,frameIndex,bits));
+ },[timeline,frameIndex,timeline?.version,readout,probe]);
  useEffect(()=>{const timer=setTimeout(()=>setTimedOut(true),LOADER_TIMEOUT);return()=>clearTimeout(timer);},[]);
  const clearProbe=()=>{setProbe(null);setProbeReset(n=>n+1);};
  const changeReadout=on=>{setReadout(on);saveReadout(on);if(!on)clearProbe();};
@@ -55,9 +88,9 @@ function App(){
  const ready=opened||timedOut||(globeReady&&(airVisible||globalAir.status==='error'||noLayers));
  useEffect(()=>{if(ready)setOpened(true);},[ready]);
  const updatePaint=(id,change)=>setPaint(current=>({...current,[id]:{...current[id],...change}}));
- return <main className={`atlas-app${EMBED?' is-embed':''}${OPTIONS.bg?' has-bg':''}${panel==='layers'?' layers-open':''} surface-view-${surface}`} aria-busy={!ready||undefined}>
+ return <main className={`atlas-app${EMBED?' is-embed':''}${OPTIONS.bg?' has-bg':''}${panel==='layers'?' layers-open':''}${picking&&ready?' is-picking':''} surface-view-${surface}`} aria-busy={!ready||undefined}>
   <div className="atlas-interface" inert={!ready?true:undefined}>
-   <Globe onProbe={setProbe} readout={readout} probeEnabled={readout&&panel!=='search'} probeReset={probeReset} surface={surface} globalAir={globalAir.data} regionalAir={regionalAir} onDetail={setDetail} paint={paint} weatherData={weather.data} weatherSettings={weatherSettings} city={city} zoom={zoom} focus={focus} reset={reset} viewShift={viewShift} flyTarget={flyTarget} onCameraRange={cameraRange} onReady={()=>setGlobeReady(true)} onAirVisible={()=>setAirVisible(true)} onCity={chooseCity} onInteraction={interact} homeScale={OPTIONS.zoom} wheelModifier={EMBED}/>
+   <Globe onProbe={setProbe} readout={readout} probeEnabled={readout&&panel!=='search'} probeReset={probeReset} surface={surface} globalAir={globalAir.data} regionalAir={regionalAir} onDetail={setDetail} paint={paint} weatherData={weather.data} weatherSettings={weatherSettings} city={city} zoom={zoom} focus={focus} reset={reset} viewShift={viewShift} flyTarget={flyTarget} onCameraRange={cameraRange} onReady={()=>setGlobeReady(true)} onAirVisible={()=>setAirVisible(true)} onCity={chooseCity} onInteraction={interact} homeScale={OPTIONS.zoom} wheelModifier={EMBED} timeline={timeline}/>
    {!EMBED&&<>
    <header className="minimal-header">
     <button className="atlas-brand" aria-label="Return to overview" onClick={overview}><svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="12" stroke="currentColor" strokeWidth=".8"/><ellipse cx="16" cy="16" rx="6" ry="12" stroke="currentColor" strokeWidth=".8" transform="rotate(35 16 16)"/><path d="M4 16h24" stroke="currentColor" strokeWidth=".8"/></svg><span>Air Atlas</span></button>
@@ -65,9 +98,11 @@ function App(){
    </header>
    <div className="side-stack">
     {city&&<AirQuality city={city} onClear={()=>setCity(null)} snapshotAt={globalAir.data?.validAt??null}/>}
-    {probeCard&&<AirComposition location={probe} global={globalAir} regional={regionalAir} paint={paint} onClose={clearProbe}/>}
+    {probeCard&&<AirComposition location={probe} global={frameIndex>=0?{status:frameAir?'ready':'loading',data:frameAir}:globalAir} regional={frameIndex>=0?null:regionalAir} paint={paint} onClose={clearProbe}/>}
    </div>
-   <GlobalAirLegend surface={surface} onSurfaceChange={setSurface} panelOpen={panel==='layers'} onPanelChange={open=>{if(open)clearProbe();setPanel(open?'layers':null);}} onFlyTo={flyTo} detail={detail} regional={regionalAir} regionalError={regionalError} state={globalAir} paint={paint} weather={weather} weatherSettings={weatherSettings} onWeatherChange={(id,change)=>setWeatherSettings(current=>({...current,[id]:{...current[id],...change}}))} onChange={updatePaint}/>
+   <GlobalAirLegend surface={surface} onSurfaceChange={setSurface} panelOpen={panel==='layers'} onPanelChange={open=>{if(open){clearProbe();if(picking)finishPicking();}setPanel(open?'layers':null);}} onFlyTo={flyTo} detail={detail} regional={regionalAir} regionalError={regionalError} state={globalAir} paint={paint} weather={weather} weatherSettings={weatherSettings} onWeatherChange={(id,change)=>setWeatherSettings(current=>({...current,[id]:{...current[id],...change}}))} onChange={updatePaint}/>
+   {picking&&ready&&<LayerPicker paint={paint} onChange={updatePaint} onDone={finishPicking}/>}
+   {timeline&&<TimeBar timeline={timeline} mode={timeline.kind} modes={Object.keys(timelines).filter(k=>timelines[k])} onMode={changeMode}/>}
    <div className="minimal-zoom" role="group" aria-label="Globe zoom"><button aria-label="Reset globe view" onClick={overview}><ArrowCounterClockwise size={17} weight="light"/></button><span/><button aria-label="Zoom in" disabled={range.atMin} onClick={()=>{setZoom(z=>z+1);}}><Plus size={17} weight="light"/></button><button aria-label="Zoom out" disabled={range.atMax} onClick={()=>{setZoom(z=>z-1);}}><Minus size={17} weight="light"/></button></div>
    </>}
   </div>

@@ -42,14 +42,14 @@ test('new fields produce independent bounded pigments and clear cleanly',()=>{
  }
 });
 
-test('only PM2.5 is enabled by default so first-load pigments stay readable',()=>{
+test('PM2.5 and dust are enabled by default so first-load pigments stay readable',()=>{
  const enabled=Object.entries(initialPaint()).filter(([,s])=>s.enabled).map(([id])=>id);
- assert.deepEqual(enabled,['pm2_5']);
+ assert.deepEqual(enabled,['pm2_5','dust']);
 });
 
 test('colour key lists only enabled layers with their own scale',()=>{
  const paint=initialPaint(),weather={wind:{enabled:false},temperature:{enabled:true},humidity:{enabled:false}};
- paint.pm10.enabled=true;paint.ammonia.enabled=true;
+ paint.dust.enabled=false;paint.pm10.enabled=true;paint.ammonia.enabled=true;
  const rows=keyRows(paint,weather);
  assert.deepEqual(rows.map(r=>r.id),['pm2_5','pm10','ammonia','temperature']);
  assert.equal(rows[0].hi,'100+ μg/m³');

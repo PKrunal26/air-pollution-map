@@ -45,7 +45,7 @@
     "coverage": "global",
     "unit": "μg/m³",
     "defaultStrength": 75,
-    "defaultEnabled": false
+    "defaultEnabled": true
   },
   {
     "id": "pm10",

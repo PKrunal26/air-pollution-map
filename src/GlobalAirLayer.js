@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {PAINT_LAYERS} from './paintLayers';
+import {PAINT_LAYERS,GLOBAL_FIELD_IDS} from './paintLayers';
 import {scalesFor} from './fieldStats';
 import {DOT_COUNTS,REGIONAL_DOT_COUNTS,FULL_RADIUS,PLATE_OFFSET,buildAirGeometry,gridBounds,detailLevel,dotSpacing,plateOffset} from './sphereSampling';
 
@@ -21,6 +21,15 @@ function oklab([r,g,b]){
 }
 const LABS=PAINT_LAYERS.map(l=>oklab(l.rgb)),INK_L=LABS.reduce((s,v)=>s+v[0],0)/LABS.length;
 const REGIONAL_FAR=3.2,REGIONAL_KEEP_MS=8000;
+// Time bar: frames are 900x451 half-float texture arrays (one layer per global field), sampled per dot in the vertex
+// shader and blended with frameMix, so playback needs no geometry rebuild. Missing cells (NaN) draw nothing.
+const FRAME_W=900,FRAME_H=451,KEEP_TEXTURES=3;
+function frameTexture(bits){
+ const t=new THREE.DataArrayTexture(bits,FRAME_W,FRAME_H,bits.length/(FRAME_W*FRAME_H));
+ t.format=THREE.RedFormat;t.type=THREE.HalfFloatType;t.internalFormat='R16F';
+ t.minFilter=t.magFilter=THREE.LinearFilter;t.wrapS=THREE.RepeatWrapping;t.wrapT=THREE.ClampToEdgeWrapping;
+ t.generateMipmaps=false;t.unpackAlignment=2;t.needsUpdate=true;return t;
+}
 const reduced=()=>typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // Geometry is built in a module Worker (transferred typed arrays); falls back to the main thread.
@@ -61,18 +70,29 @@ function toGeometry(g) {
  geometry.boundingSphere=new THREE.Sphere(new THREE.Vector3(),1.01);return geometry;
 }
 export function createGlobalAirLayer(scene) {
-const uniforms={halfView:{value:new THREE.Vector2(1,1)},spacing:{value:.01},regionMix:{value:0},isRegion:{value:0},regionBounds:{value:new THREE.Vector4(-25,30,45,72)}};
+const blank=frameTexture(new Uint16Array(FRAME_W*FRAME_H));
+ const uniforms={halfView:{value:new THREE.Vector2(1,1)},spacing:{value:.01},regionMix:{value:0},isRegion:{value:0},regionBounds:{value:new THREE.Vector4(-25,30,45,72)},timeMode:{value:0},frameMix:{value:0},frameA:{value:blank},frameB:{value:blank}};
  for(let i=0;i<GROUPS;i++){
-  for(const n of ['amount','regionalFields','globalFields','plateX','plateY','ink'])uniforms[`${n}${i}`]={value:new THREE.Vector4()};
+  for(const n of ['amount','regionalFields','globalFields','plateX','plateY','ink','frameLayer','frameLo','frameSpan'])uniforms[`${n}${i}`]={value:new THREE.Vector4()};
  }
  LABS.forEach(([,a,b],i)=>{uniforms[`pigment${i}`]={value:new THREE.Vector3(a,b,Math.hypot(a,b))};});
  // Vertex: builds the Earth-fixed tangent frame (east/north from lat/lon) and its screen Jacobian, so discs and plate
  // offsets live on the surface and are foreshortened like it. Fragment works in lattice-spacing units, edges are
  // anti-aliased analytically from that Jacobian (the exact per-pixel step of the distance field).
  const material=new THREE.ShaderMaterial({uniforms,
-  vertexShader:`attribute vec2 location;uniform vec2 halfView;uniform float spacing;uniform float regionMix;uniform float isRegion;uniform vec4 regionBounds;varying vec4 invM;varying float spritePx;
-   ${sequence(i=>`attribute vec4 sampleWeights${i};uniform vec4 amount${i};uniform vec4 regionalFields${i};uniform vec4 globalFields${i};varying vec4 radius${i};`)}
+  vertexShader:`precision highp sampler2DArray;
+   attribute vec2 location;uniform vec2 halfView;uniform float spacing;uniform float regionMix;uniform float isRegion;uniform vec4 regionBounds;varying vec4 invM;varying float spritePx;
+   uniform float timeMode;uniform float frameMix;uniform sampler2DArray frameA;uniform sampler2DArray frameB;
+   ${sequence(i=>`attribute vec4 sampleWeights${i};uniform vec4 amount${i};uniform vec4 regionalFields${i};uniform vec4 globalFields${i};uniform vec4 frameLayer${i};uniform vec4 frameLo${i};uniform vec4 frameSpan${i};varying vec4 radius${i};`)}
+   // Display weight of one field at this dot: linear blend of the two frames' values, then the layer's display scale.
+   float frameWeight(float layer,float lo,float span,float amount,vec2 uv){
+    if(amount<=0.||layer<0.)return 0.;
+    float v=mix(textureLod(frameA,vec3(uv,layer),0.).r,textureLod(frameB,vec3(uv,layer),0.).r,frameMix);
+    if(isnan(v)||v<=0.)return 0.;
+    return clamp((v-lo)/span,0.,1.);
+   }
    void main(){
+    vec2 frameUv=vec2(((location.x+180.)/.4+.5)/${FRAME_W}.,((location.y+90.)/.4+.5)/${FRAME_H}.);
     vec4 mv=modelViewMatrix*vec4(position,1.);float w=-mv.z;mat3 rot=mat3(modelViewMatrix);
     float th=radians(location.x),ph=radians(location.y);float st=sin(th),ct=cos(th),sp=sin(ph),cp=cos(ph);
     vec3 e=rot*vec3(-st,0.,-ct),n=rot*vec3(-sp*ct,cp,sp*st);
@@ -88,7 +108,9 @@ const uniforms={halfView:{value:new THREE.Vector2(1,1)},spacing:{value:.01},regi
     ${sequence(i=>`vec4 globalFade${i}=vec4(1.)-inside*regionMix*regionalFields${i};
      vec4 regionalFade${i}=inside*mix(vec4(1.),vec4(regionMix),globalFields${i});
      vec4 fade${i}=sqrt(max(mix(globalFade${i},regionalFade${i},isRegion),0.))*limb;
-     radius${i}=${FULL_RADIUS}*sqrt(clamp(sampleWeights${i}*amount${i},0.,1.))*fade${i};`)}
+     vec4 weights${i}=sampleWeights${i};
+     if(timeMode>.5)weights${i}=vec4(frameWeight(frameLayer${i}.x,frameLo${i}.x,frameSpan${i}.x,amount${i}.x,frameUv),frameWeight(frameLayer${i}.y,frameLo${i}.y,frameSpan${i}.y,amount${i}.y,frameUv),frameWeight(frameLayer${i}.z,frameLo${i}.z,frameSpan${i}.z,amount${i}.z,frameUv),frameWeight(frameLayer${i}.w,frameLo${i}.w,frameSpan${i}.w,amount${i}.w,frameUv));
+     radius${i}=${FULL_RADIUS}*sqrt(clamp(weights${i}*amount${i},0.,1.))*fade${i};`)}
     spritePx=2.*${FULL_RADIUS+PLATE_OFFSET}*major+2.;
     gl_PointSize=spritePx;gl_Position=facing<.04?vec4(2.,2.,2.,1.):projectionMatrix*mv;
    }`,
@@ -152,7 +174,14 @@ const uniforms={halfView:{value:new THREE.Vector2(1,1)},spacing:{value:.01},regi
   renderer.render(inkScene,camera);
   renderer.setRenderTarget(previous);renderer.setClearColor(clear,alpha);
  };
- const builder=createBuilder(),geometries=new Map(),pending=new Set();
+ const builder=createBuilder(),geometries=new Map(),pending=new Set(),frameTextures=new Map();
+ const textureFor=(index,bits)=>{ // index: '<timeline kind>:<frame>'
+  let t=frameTextures.get(index);
+  if(!t||t.image.data!==bits){t?.dispose();t=frameTexture(bits);}
+  frameTextures.delete(index);frameTextures.set(index,t);
+  for(const [k,v] of frameTextures){if(frameTextures.size<=KEEP_TEXTURES)break;if(v!==t&&k!==index){v.dispose();frameTextures.delete(k);}}
+  return t;
+ };
  let current=null,currentRegional=null,level=0,lastDetail='',globalId=0,regionalId=0,regionalGeometry=null,regionalBuilt=-1,regionalLevel=0,regionalPending=false,regionalReadyAt=0,epoch=0,regionalEpoch=0,disposed=false,lastShown=-1,prevShown=-1,farSince=0,reported=false;
  const ensureLevel=l=>{
   if(geometries.has(l)||pending.has(l)||!globalId)return;
@@ -177,7 +206,7 @@ const uniforms={halfView:{value:new THREE.Vector2(1,1)},spacing:{value:.01},regi
   }).catch(()=>{}).finally(()=>{if(mine===regionalEpoch)regionalPending=false;});
  };
  return {
-  update({data,regional,paint,surface,camera,width,height,pixelRatio,onDetail,onVisible}) {
+  update({data,regional,frames=null,paint,surface,camera,width,height,pixelRatio,onDetail,onVisible}) {
    const strengths=PAINT_LAYERS.map(layer=>{const setting=paint?.[layer.id];return setting?.enabled?setting.strength/100:0;});
    const distance=camera.position.length();
    if(data!==current){
@@ -192,7 +221,8 @@ const uniforms={halfView:{value:new THREE.Vector2(1,1)},spacing:{value:.01},regi
    const pxPerUnit=height*pixelRatio/2/(Math.tan(camera.fov*Math.PI/360)*Math.max(.05,distance-1));
    level=detailLevel(pxPerUnit,level);regionalLevel=detailLevel(pxPerUnit,regionalLevel,REGIONAL_DOT_COUNTS);
    if(data){ensureLevel(level);display(shown(level));}
-   const regionAvailable=!!(regional&&data&&regional.validAt===data.validAt);
+   // While the time bar is away from the snapshot hour only the global frames are drawn (no European layer).
+   const regionAvailable=!frames&&!!(regional&&data&&regional.validAt===data.validAt);
    const regionOnlyEnabled=regionAvailable&&PAINT_LAYERS.some((l,i)=>strengths[i]>0&&regional.fields[l.id]&&!data.fields[l.id]);
    const bounds=regionAvailable?gridBounds(regional.grid):null;
    // The regional set is small (~180k dots, ~15 MB) and rebuilds in the worker in well under a second, so it is
@@ -211,6 +241,17 @@ const uniforms={halfView:{value:new THREE.Vector2(1,1)},spacing:{value:.01},regi
    // Near-uniform fields (e.g. ozone) get muted ink: lower plate coverage (opacity), same hue, applied before the commutative mix.
    const gs=scalesFor(data,PAINT_LAYERS),rs=scalesFor(regionAvailable?regional:null,PAINT_LAYERS,gs);
    const inkOf=PAINT_LAYERS.map(l=>(gs[l.id]??rs[l.id])?.emphasis==='muted'?MUTED_INK:1);
+   // Frames use the snapshot's display scales, so muted layers keep one fixed baseline through playback.
+   // Texture layer per paint layer; -1 (draws nothing) for fields the frames do not carry, e.g. in the monthly history.
+   const frameLayer=PAINT_LAYERS.map(l=>(frames?.fields??GLOBAL_FIELD_IDS).indexOf(l.id));
+   const frameLo=PAINT_LAYERS.map(l=>gs[l.id]?.emphasis==='muted'?gs[l.id].floor:0);
+   const frameSpan=PAINT_LAYERS.map(l=>gs[l.id]?.emphasis==='muted'?gs[l.id].ceiling-gs[l.id].floor:l.range);
+   material.uniforms.timeMode.value=frames?1:0;
+   if(frames){
+    material.uniforms.frameA.value=textureFor(`${frames.key}:${frames.a}`,frames.bitsA);
+    material.uniforms.frameB.value=textureFor(`${frames.key}:${frames.b}`,frames.bitsB);
+    material.uniforms.frameMix.value=frames.t;
+   }
    composite.material.uniforms.contrast.value=surface==='white'?1.8:surface==='charcoal'?.85:1;
    [material,regionalMaterial].forEach(m=>{
     m.uniforms.regionMix.value=regionMix;
@@ -224,6 +265,9 @@ const uniforms={halfView:{value:new THREE.Vector2(1,1)},spacing:{value:.01},regi
      m.uniforms[`ink${i}`].value.fromArray(lanes.map(k=>inkOf[k]??1));
      m.uniforms[`plateX${i}`].value.fromArray(lanes.map(k=>plate[k]?.[0]??0));
      m.uniforms[`plateY${i}`].value.fromArray(lanes.map(k=>plate[k]?.[1]??0));
+     m.uniforms[`frameLayer${i}`].value.fromArray(lanes.map(k=>frameLayer[k]??-1));
+     m.uniforms[`frameLo${i}`].value.fromArray(lanes.map(k=>frameLo[k]??0));
+     m.uniforms[`frameSpan${i}`].value.fromArray(lanes.map(k=>frameSpan[k]??1));
     }
     if(bounds)m.uniforms.regionBounds.value.set(bounds.west,bounds.south,bounds.east,bounds.north);
    });
@@ -237,6 +281,6 @@ const uniforms={halfView:{value:new THREE.Vector2(1,1)},spacing:{value:.01},regi
    const detail=regionMix>.5&&regionInView?'regional':level<3?'overview':level<5?'medium':'native';
    if(detail!==lastDetail){lastDetail=detail;onDetail?.(detail);}
   },
-  dispose(){disposed=true;inkScene.remove(marks,regionalMarks);scene.remove(composite);composite.geometry.dispose();composite.material.dispose();target.dispose();geometries.forEach(release);geometries.clear();if(regionalGeometry)release(regionalGeometry);regionalGeometry=null;builder.dispose();material.dispose();regionalMaterial.dispose();},
+  dispose(){disposed=true;frameTextures.forEach(t=>t.dispose());frameTextures.clear();blank.dispose();inkScene.remove(marks,regionalMarks);scene.remove(composite);composite.geometry.dispose();composite.material.dispose();target.dispose();geometries.forEach(release);geometries.clear();if(regionalGeometry)release(regionalGeometry);regionalGeometry=null;builder.dispose();material.dispose();regionalMaterial.dispose();},
  };
 }

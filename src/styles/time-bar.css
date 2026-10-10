@@ -1,0 +1,43 @@
+/* Time bar. Desktop: one slim line at the bottom centre; gutters clear the zoom group (left) and the launcher or layer
+   panel (right). Phones: two lines in the bottom dock (label and range switch, then a full-width scrubber). */
+.time-bar{position:absolute;left:210px;right:210px;margin:0 auto;bottom:38px;max-width:500px;height:36px;z-index:var(--chrome);display:grid;grid-template-columns:auto auto minmax(48px,1fr) auto;grid-template-areas:"play label track modes";align-items:center;column-gap:10px;padding:0 4px;border:1px solid var(--glass-border);border-radius:18px;background:#12190ecc;backdrop-filter:blur(var(--glass-blur));font-size:12px;font-variant-numeric:tabular-nums;color:var(--text-muted);animation:fade-in 1s var(--motion) .8s both;transition:right .6s var(--motion)}
+@media(min-width:701px){.layers-open .time-bar{right:380px}}
+@media(min-width:701px) and (max-width:960px){.layers-open .time-bar{visibility:hidden}}
+.time-bar .time-play{grid-area:play;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;color:var(--text);background:none}
+.time-bar .time-play:hover:not(:disabled){background:var(--hover-bg);color:#fff}
+.time-bar .time-play:disabled{opacity:.35}
+.time-label{grid-area:label;margin:0;white-space:nowrap;color:var(--text)}
+.time-label span,.time-label small{color:var(--text-muted)}
+.time-label small{font-size:11px}
+.time-track{grid-area:track;position:relative;height:28px;display:flex;align-items:center}
+.time-track input{position:relative;z-index:1;display:block;width:100%;height:100%;margin:0;background:none;appearance:none;-webkit-appearance:none;cursor:pointer;touch-action:none}
+.time-track input::-webkit-slider-runnable-track{height:1px;background:#aec49347}
+.time-track input::-moz-range-track{height:1px;background:#aec49347}
+.time-track input::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:9px;margin-top:-4px;border-radius:50%;background:var(--text);border:0}
+.time-track input::-moz-range-thumb{width:9px;height:9px;border-radius:50%;background:var(--text);border:0}
+.time-track input:focus-visible{outline:none}
+.time-track input:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px #d5ddc466}
+/* midnight UTC or January marks on the line */
+.time-ticks{position:absolute;left:4px;right:4px;top:50%;height:7px;margin-top:-3px;pointer-events:none}
+.time-ticks span{position:absolute;width:1px;height:100%;background:#aec49366}
+.time-modes{grid-area:modes;display:flex;gap:2px;padding:2px;border-radius:14px;background:#e1ead30d}
+.time-modes button{height:24px;padding:0 9px;border-radius:12px;font-size:11px;color:var(--text-muted);white-space:nowrap}
+.time-modes button:hover{color:var(--text)}
+.time-modes button[aria-pressed="true"]{background:#e1ead31f;color:var(--text)}
+@media(max-width:1100px) and (min-width:701px){.time-bar{left:196px}}
+@media(max-width:700px){
+ .time-bar{left:16px;right:76px;max-width:none;margin:0;bottom:var(--dock);height:auto;grid-template-columns:44px 1fr auto;grid-template-areas:"play label modes" "play track track";row-gap:0;padding:4px 10px 2px 2px;border-radius:24px}
+ .time-bar .time-play{width:44px;height:44px}
+ .time-label{align-self:end}
+ .time-track{height:32px}
+ .time-modes{align-self:end}
+ .time-modes button{height:28px;padding:0 8px}
+ .time-label small{display:none}
+ .time-label{overflow:hidden;text-overflow:ellipsis}
+}
+/* Bigger thumb on touch screens at any width. */
+@media(pointer:coarse){
+ .time-track input::-webkit-slider-thumb{width:16px;height:16px;margin-top:-7.5px}
+ .time-track input::-moz-range-thumb{width:16px;height:16px}
+}
+@media(prefers-reduced-motion:reduce){.time-bar{animation:none;transition:none}}

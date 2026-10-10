@@ -21,10 +21,12 @@
 @media(min-width:701px) and (max-width:1100px){.layers-open .side-stack{right:350px}}
 
 @media(max-width:700px){
- .side-stack{top:auto;bottom:94px;left:16px;right:72px;width:auto;max-height:45dvh;justify-content:flex-end}
- .layers-open .side-stack{display:none}
+ /* bottom dock: time bar and the round layers button share one row above the home indicator */
+ .atlas-app{--dock:max(16px,env(safe-area-inset-bottom));--dock-top:calc(var(--dock) + 70px)}
+ .side-stack{top:auto;bottom:var(--dock-top);left:16px;right:76px;width:auto;max-height:45dvh;justify-content:flex-end}
+ .layers-open .side-stack,.layers-open .minimal-zoom{display:none}
  /* reset, zoom in, zoom out grouped in one vertical pill above the layer launcher */
- .minimal-zoom{left:auto;right:16px;bottom:calc(max(29px,env(safe-area-inset-bottom)) + 58px);flex-direction:column;gap:0;border-radius:24px;background:#12190ee6;border:1px solid #c5d5ac1f;padding:2px;z-index:7}
+ .minimal-zoom{left:auto;right:14px;bottom:calc(var(--dock) + 60px);flex-direction:column;gap:0;border-radius:24px;background:#12190ee6;border:1px solid #c5d5ac1f;padding:2px;z-index:7}
  .minimal-zoom>span{width:auto;height:1px;margin:0 9px;align-self:stretch;background:#aec49324}
  .minimal-zoom button{width:44px;height:44px;border:0;background:none}
  .minimal-zoom button+button{border-top:1px solid #aec49324}
@@ -49,6 +51,7 @@
 
 /* embed mode (?embed=1): globe only, no header vignette; ?bg=<hex> sets a flat ground */
 .is-embed{min-height:0}
+.is-embed .globe-host{inset:0} /* ignore the phone layout's header/launcher insets at any frame size */
 .is-embed .atlas-interface:after{display:none}
 .is-embed .loader-name{display:none}
 .has-bg,.has-bg .loader{background:var(--embed-bg)}

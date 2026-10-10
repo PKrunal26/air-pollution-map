@@ -14,9 +14,9 @@ const vec=(lat,lon,r=1)=>new THREE.Vector3(r*Math.cos(lat*Math.PI/180)*Math.cos(
 const vertex=`varying vec3 vNormal; varying vec3 vPosition; void main(){vNormal=normalize(normalMatrix*normal);vec4 p=modelViewMatrix*vec4(position,1.);vPosition=p.xyz;gl_Position=projectionMatrix*p;}`;
 const atmosphere=`varying vec3 vNormal;varying vec3 vPosition;void main(){float rim=pow(1.-abs(dot(normalize(vNormal),normalize(-vPosition))),3.6);gl_FragColor=vec4(vec3(.22,.48,.94),rim*.18);}`;
 const EARTH_MIN=1.18,EARTH_MAX=6,EPS=.012;
-export default function Globe({city,zoom,focus,onCity,onReady,globalAir=null,paint=null,surface='satellite',regionalAir=null,onDetail,weatherData=null,weatherSettings=null,reset=0,onInteraction,onProbe,readout=true,probeEnabled=true,probeReset=0,viewShift=0,flyTarget=null,onCameraRange,onAirVisible,homeScale=null,wheelModifier=false}){
+export default function Globe({city,zoom,focus,onCity,onReady,globalAir=null,paint=null,surface='satellite',regionalAir=null,onDetail,weatherData=null,weatherSettings=null,reset=0,onInteraction,onProbe,readout=true,probeEnabled=true,probeReset=0,viewShift=0,flyTarget=null,onCameraRange,onAirVisible,homeScale=null,wheelModifier=false,timeline=null}){
  const host=useRef(null),readyDone=useRef(false),airDone=useRef(false),props=useRef({}),[error,setError]=useState(false);
- props.current={city,zoom,focus,onCity,onReady,globalAir,paint,surface,regionalAir,onDetail,weatherData,weatherSettings,reset,onProbe,probeEnabled,probeReset,viewShift,flyTarget,onCameraRange,onAirVisible,homeScale,wheelModifier};
+ props.current={city,zoom,focus,onCity,onReady,globalAir,paint,surface,regionalAir,onDetail,weatherData,weatherSettings,reset,onProbe,probeEnabled,probeReset,viewShift,flyTarget,onCameraRange,onAirVisible,homeScale,wheelModifier,timeline};
  useEffect(()=>{
   const ready=()=>{if(readyDone.current)return;readyDone.current=true;props.current.onReady?.();};
   let renderer;try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});}catch(e){setError(true);ready();return;}
@@ -67,7 +67,7 @@ export default function Globe({city,zoom,focus,onCity,onReady,globalAir=null,pai
   const applyView=()=>{if(shiftNow<1e-4)camera.clearViewOffset();else camera.setViewOffset(dimensions.w,dimensions.h,shiftNow*dimensions.w,0,dimensions.w,dimensions.h);camera.updateProjectionMatrix();};
   const resize=()=>{reframe=true;dimensions={w:Math.max(1,container.clientWidth),h:Math.max(1,container.clientHeight)};renderer.setSize(dimensions.w,dimensions.h);camera.aspect=dimensions.w/dimensions.h;camera.fov=2*Math.atan(Math.tan(39*Math.PI/360)/Math.min(camera.aspect,1))*180/Math.PI;applyView();};const observer=new ResizeObserver(resize);observer.observe(container);resize();camera.position.setLength(homeDistance());
   const probe=createGlobeProbe({canvas:renderer.domElement,container,camera,onProbe:point=>props.current.onProbe?.(point),isEnabled:()=>props.current.probeEnabled});
-  let frame,oldFocus=-1,oldZoom=-1,oldSurface='',oldReset=0,oldFly=props.current.flyTarget?.key,tween=null,lastElapsed=0,range={atMin:false,atMax:false};const timer=new THREE.Clock();const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let lastFrames=null,frame,oldFocus=-1,oldZoom=-1,oldSurface='',oldReset=0,oldFly=props.current.flyTarget?.key,tween=null,lastElapsed=0,range={atMin:false,atMax:false};const timer=new THREE.Clock();const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function placeLabel(){
    if(!label)return;eye.copy(camera.position).normalize();const facing=unit.copy(labelPosition3).normalize().dot(eye);screen.copy(labelPosition3).project(camera);
    label.style.display=facing>1/camera.position.length()+.02&&Math.abs(screen.x)<.94&&Math.abs(screen.y)<.86?'':'none';
@@ -82,7 +82,10 @@ export default function Globe({city,zoom,focus,onCity,onReady,globalAir=null,pai
    if(reframe&&!tween){reframe=false;const home=homeDistance();if(p.homeScale&&lastHome&&Math.abs(camera.position.length()-lastHome)<1e-3)camera.position.setLength(home);lastHome=home;}
    const shiftGoal=Math.max(0,Math.min(.5,p.viewShift||0));
    if(shiftNow!==shiftGoal){shiftNow=reduced||Math.abs(shiftGoal-shiftNow)<1e-4?shiftGoal:shiftNow+(shiftGoal-shiftNow)*(1-Math.exp(-dt/.15));applyView();}
-   globalLayer.update({data:p.globalAir,regional:p.regionalAir,paint:p.paint,surface:p.surface,camera,width:dimensions.w,height:dimensions.h,pixelRatio:renderer.getPixelRatio(),onVisible:()=>{if(airDone.current)return;airDone.current=true;props.current.onAirVisible?.();},onDetail:detail=>{renderer.domElement.dataset.airDetail=detail;p.onDetail?.(detail);}});
+   // Time bar: away from the snapshot hour the dots blend two forecast frames; while a frame loads the last pair stays up.
+   const tl=p.timeline;tl?.tick(dt);
+   if(!tl||tl.atSnapshot)lastFrames=null;else lastFrames=tl.frames()??lastFrames;
+   globalLayer.update({data:p.globalAir,regional:p.regionalAir,frames:lastFrames,paint:p.paint,surface:p.surface,camera,width:dimensions.w,height:dimensions.h,pixelRatio:renderer.getPixelRatio(),onVisible:()=>{if(airDone.current)return;airDone.current=true;props.current.onAirVisible?.();},onDetail:detail=>{renderer.domElement.dataset.airDetail=detail;p.onDetail?.(detail);}});
    weatherLayer.update({data:p.weatherData,settings:p.weatherSettings,surface:p.surface,elapsed,reduced});
    syncLabel(p.city);
    const fly=p.flyTarget,flying=!!fly&&fly.key!==oldFly&&Number.isFinite(fly.lat)&&Number.isFinite(fly.lon);

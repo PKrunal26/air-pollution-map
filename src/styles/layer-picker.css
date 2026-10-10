@@ -1,0 +1,27 @@
+/* First-visit layer picker: a card above the time bar (desktop) or the bottom dock (phones); the globe stays live behind it. */
+.layer-picker{position:absolute;left:0;right:0;bottom:92px;margin:0 auto;width:min(640px,calc(100% - 32px));z-index:var(--drawer);padding:20px 20px 16px;border:1px solid var(--glass-border);border-radius:var(--radius-card);background:var(--glass-bg);box-shadow:var(--glass-shadow);backdrop-filter:blur(var(--glass-blur));animation:picker-in .6s var(--motion) both}
+.layer-picker h2{margin:0;font-size:17px;font-weight:450;letter-spacing:-.2px;color:var(--text)}
+.layer-picker>p{margin:4px 0 14px;font-size:12px;line-height:1.45;color:var(--text-muted)}
+.picker-options{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.picker-options button{display:flex;align-items:center;justify-content:flex-start;gap:10px;min-height:48px;padding:7px 10px;border-radius:12px;border:1px solid #e1e7d514;text-align:left;color:var(--text-muted);background:none;transition:background .3s var(--motion),border-color .3s var(--motion)}
+.picker-options button:hover{background:var(--hover-bg)}
+.picker-options button.is-on{border-color:color-mix(in srgb,var(--pigment) 45%,transparent);background:color-mix(in srgb,var(--pigment) 9%,transparent)}
+.picker-swatch{flex-shrink:0;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--pigment);color:#11160f}
+.is-on .picker-swatch{background:var(--pigment)}
+.picker-text{min-width:0}
+.picker-text strong{display:block;font-size:13px;font-weight:450;color:var(--text)}
+.picker-text small{display:block;font-size:11px;line-height:1.35;color:var(--text-muted)}
+.picker-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.layer-picker .picker-done{height:40px;padding:0 20px;border-radius:20px;background:#e4e9d9;color:#20291b;font-size:13px}
+.layer-picker .picker-done:hover:not(:disabled){background:#f1f4e9}
+.layer-picker .picker-done:disabled{opacity:.4}
+@keyframes picker-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media(max-width:700px){
+ .layer-picker{left:16px;right:16px;width:auto;bottom:var(--dock-top);max-height:calc(100dvh - var(--dock-top) - 90px);overflow-y:auto;padding:18px 16px 14px}
+ .picker-options{grid-template-columns:1fr 1fr}
+ .picker-text small{display:none}
+ .is-picking .minimal-zoom{display:none}
+}
+@media(max-width:860px) and (min-width:701px){.picker-options{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:340px){.picker-options{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.layer-picker{animation:none}}

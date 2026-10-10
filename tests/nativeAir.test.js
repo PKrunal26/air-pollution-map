@@ -64,7 +64,8 @@ test('all 15 global CAMS fields carry correct individual units and stay separate
   await assert.rejects(decodeNativeLayers({...metadata,units:{...metadata.units,[id]:'ppm'}},buffer),/unit/);
  }
  const defaults=(await import('../src/paintLayers.js')).initialPaint();
- assert.equal(Object.values(defaults).filter(s=>s.enabled).length,1);
+ assert.equal(Object.values(defaults).filter(s=>s.enabled).length,2);
  assert.equal(defaults.pm2_5.enabled,true);
- for(const id of GLOBAL_FIELD_IDS.slice(1))assert.equal(defaults[id].enabled,false);
+ assert.equal(defaults.dust.enabled,true);
+ for(const id of GLOBAL_FIELD_IDS.filter(id=>id!=='pm2_5'&&id!=='dust'))assert.equal(defaults[id].enabled,false);
 });

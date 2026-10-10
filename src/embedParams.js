@@ -15,12 +15,18 @@ export function parseEmbedParams(search=''){
  const surface=(params.get('surface')||'').toLowerCase();
  const bg=(params.get('bg')||'').replace(/^#/,'');
  const zoomText=(params.get('zoom')||'').trim(),zoom=zoomText?Number(zoomText):NaN;
+ // t=2026-10-09T18:00Z picks a forecast hour (UTC), t=2024-03 a month of the history; matched to a frame once frames
+ // load. play=1 starts playback.
+ const timeText=(params.get('t')||'').trim(),month=/^(\d{4})-(\d{2})$/.exec(timeText),time=month?Date.UTC(+month[1],+month[2]-1,1):/^\d{4}-\d{2}-\d{2}T\d{2}(:\d{2})?Z?$/.test(timeText)?Date.parse(timeText.replace(/Z?$/,'').replace(/T(\d{2})$/,'T$1:00')+'Z'):NaN;
  return {
   embed,
   layers:ids.length?ids:null,
   surface:SURFACES.includes(surface)?surface:null,
   zoom:Number.isFinite(zoom)&&zoom>=ZOOM_MIN&&zoom<=ZOOM_MAX?zoom:null,
   bg:/^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(bg)?`#${bg.toLowerCase()}`:null,
+  time:Number.isFinite(time)?time:null,
+  history:!!month&&Number.isFinite(time),
+  play:['1','true','yes'].includes((params.get('play')||'').toLowerCase()),
  };
 }
 

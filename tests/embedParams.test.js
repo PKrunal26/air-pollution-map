@@ -4,8 +4,8 @@ import {parseEmbedParams,applyLayerSelection,homeDistanceForZoom} from '../src/e
 import {initialPaint} from '../src/paintLayers.js';
 
 test('no params keeps the normal app',()=>{
- assert.deepEqual(parseEmbedParams(''),{embed:false,layers:null,surface:null,zoom:null,bg:null});
- assert.deepEqual(parseEmbedParams('?city=paris'),{embed:false,layers:null,surface:null,zoom:null,bg:null});
+ assert.deepEqual(parseEmbedParams(''),{embed:false,layers:null,surface:null,zoom:null,bg:null,time:null,history:false,play:false});
+ assert.deepEqual(parseEmbedParams('?city=paris'),{embed:false,layers:null,surface:null,zoom:null,bg:null,time:null,history:false,play:false});
 });
 test('embed flag accepts 1/true and rejects other values',()=>{
  assert.equal(parseEmbedParams('?embed=1').embed,true);
@@ -49,4 +49,14 @@ test('zoom maps to a camera distance that gives that globe diameter / frame heig
  }
  assert.ok(Math.abs(homeDistanceForZoom(.77,fov)-3.8)<.01,'default home view is about 0.77');
  assert.ok(homeDistanceForZoom(1.6,fov)>1.18&&homeDistanceForZoom(1.6,fov)<homeDistanceForZoom(1,fov));
+});
+
+test('t picks a UTC forecast hour and play starts playback', () => {
+ assert.equal(parseEmbedParams('?t=2026-10-09T18:00Z').time,Date.UTC(2026,9,9,18));
+ assert.equal(parseEmbedParams('?t=2026-10-09T18').time,Date.UTC(2026,9,9,18));
+ assert.equal(parseEmbedParams('?t=tomorrow').time,null);
+ assert.deepEqual([parseEmbedParams('?t=2024-03').time,parseEmbedParams('?t=2024-03').history],[Date.UTC(2024,2,1),true]);
+ assert.equal(parseEmbedParams('?t=2026-10-09T18').history,false);
+ assert.equal(parseEmbedParams('?play=1').play,true);
+ assert.equal(parseEmbedParams('?play=0').play,false);
 });

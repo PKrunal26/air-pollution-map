@@ -15,3 +15,16 @@ test('blocked or missing storage falls back to on without throwing',()=>{
  withStorage(blocked,()=>{assert.equal(loadReadout(),true);assert.doesNotThrow(()=>saveReadout(false));});
  assert.equal(loadReadout(),true);assert.doesNotThrow(()=>saveReadout(true));
 });
+
+test('first-visit picker is remembered, offers the common pollutants and stays quiet when storage is blocked', async () => {
+ const {loadOnboarded,saveOnboarded,ONBOARDED_KEY,PICKER_LAYERS}=await import('../src/onboarding.js');
+ const {PAINT_LAYERS}=await import('../src/paintLayers.js');
+ const store=new Map();
+ globalThis.localStorage={getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,String(v))};
+ assert.equal(loadOnboarded(),false);
+ saveOnboarded();assert.equal(store.get(ONBOARDED_KEY),'1');assert.equal(loadOnboarded(),true);
+ globalThis.localStorage={getItem(){throw new Error('blocked');},setItem(){throw new Error('blocked');}};
+ assert.equal(loadOnboarded(),true);assert.doesNotThrow(saveOnboarded);
+ delete globalThis.localStorage;
+ assert.deepEqual(PICKER_LAYERS.map(([id])=>id),PAINT_LAYERS.filter(l=>l.group==='Pollutants').map(l=>l.id).sort((a,b)=>PICKER_LAYERS.findIndex(p=>p[0]===a)-PICKER_LAYERS.findIndex(p=>p[0]===b)));
+});
