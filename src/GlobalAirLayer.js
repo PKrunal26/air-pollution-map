@@ -12,6 +12,14 @@ const lane=i=>`${Math.floor(i/4)}.${'xyzw'[i%4]}`;
 // Disposes GPU buffers, then drops the typed arrays. Never call on a geometry assigned to a Points object.
 const release=g=>{g.dispose();Object.keys(g.attributes).forEach(n=>g.deleteAttribute(n));};
 const MUTED_INK=.55;
+// sRGB 0..1 -> OKLab. Every pigment shares one lightness (tested), so overlaps are mixed by hue and chroma only.
+const toLinear=c=>c<=.04045?c/12.92:((c+.055)/1.055)**2.4;
+function oklab([r,g,b]){
+ [r,g,b]=[r,g,b].map(toLinear);
+ const l=Math.cbrt(.4122214708*r+.5363325363*g+.0514459929*b),m=Math.cbrt(.2119034982*r+.6806995451*g+.1073969566*b),s=Math.cbrt(.0883024619*r+.2817188376*g+.6299787005*b);
+ return [.2104542553*l+.793617785*m-.0040720468*s,1.9779984951*l-2.428592205*m+.4505937099*s,.0259040371*l+.7827717662*m-.808675766*s];
+}
+const LABS=PAINT_LAYERS.map(l=>oklab(l.rgb)),INK_L=LABS.reduce((s,v)=>s+v[0],0)/LABS.length;
 const REGIONAL_FAR=3.2,REGIONAL_KEEP_MS=8000;
 const reduced=()=>typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -53,11 +61,11 @@ function toGeometry(g) {
  geometry.boundingSphere=new THREE.Sphere(new THREE.Vector3(),1.01);return geometry;
 }
 export function createGlobalAirLayer(scene) {
-const uniforms={contrast:{value:1},halfView:{value:new THREE.Vector2(1,1)},spacing:{value:.01},regionMix:{value:0},isRegion:{value:0},regionBounds:{value:new THREE.Vector4(-25,30,45,72)}};
+const uniforms={halfView:{value:new THREE.Vector2(1,1)},spacing:{value:.01},regionMix:{value:0},isRegion:{value:0},regionBounds:{value:new THREE.Vector4(-25,30,45,72)}};
  for(let i=0;i<GROUPS;i++){
   for(const n of ['amount','regionalFields','globalFields','plateX','plateY','ink'])uniforms[`${n}${i}`]={value:new THREE.Vector4()};
  }
- PAINT_LAYERS.forEach((layer,i)=>{uniforms[`pigment${i}`]={value:new THREE.Vector3(...layer.rgb)};});
+ LABS.forEach(([,a,b],i)=>{uniforms[`pigment${i}`]={value:new THREE.Vector3(a,b,Math.hypot(a,b))};});
  // Vertex: builds the Earth-fixed tangent frame (east/north from lat/lon) and its screen Jacobian, so discs and plate
  // offsets live on the surface and are foreshortened like it. Fragment works in lattice-spacing units, edges are
  // anti-aliased analytically from that Jacobian (the exact per-pixel step of the distance field).
@@ -84,10 +92,10 @@ const uniforms={contrast:{value:1},halfView:{value:new THREE.Vector2(1,1)},spaci
     spritePx=2.*${FULL_RADIUS+PLATE_OFFSET}*major+2.;
     gl_PointSize=spritePx;gl_Position=facing<.04?vec4(2.,2.,2.,1.):projectionMatrix*mv;
    }`,
-  fragmentShader:`uniform float contrast;varying vec4 invM;varying float spritePx;
+  fragmentShader:`varying vec4 invM;varying float spritePx;
    ${sequence(i=>`varying vec4 radius${i};uniform vec4 plateX${i};uniform vec4 plateY${i};uniform vec4 ink${i};`)}
    ${PAINT_LAYERS.map((_,i)=>`uniform vec3 pigment${i};`).join('\n')}
-   float total=0.,uncovered=1.;vec3 absorption=vec3(0.);
+   vec4 acc=vec4(0.);
    float pix=1.;
    void plate(float r,vec2 centre,vec3 pigment,float ink,vec2 t){
     if(r<=0.)return;
@@ -96,21 +104,54 @@ const uniforms={contrast:{value:1},halfView:{value:new THREE.Vector2(1,1)},spaci
     // Discs under half a pixel keep ink area pi*r^2: a half-pixel disc scaled by (2r/pix)^2, so they fade, never drop out.
     float re=max(r,.5*pix),k=min(1.,4.*r*r/(pix*pix));
     float c=ink*k*clamp((re-d)/max(step1,1e-5)+.5,0.,1.);
-    total+=c;uncovered*=1.-c;absorption+=-log(pigment)*c;
+    acc+=vec4(pigment*c,c);
    }
    void main(){
     vec2 px=vec2(gl_PointCoord.x-.5,.5-gl_PointCoord.y)*spritePx;
     vec2 t=vec2(invM.x*px.x+invM.y*px.y,invM.z*px.x+invM.w*px.y);
     pix=sqrt(abs(invM.x*invM.w-invM.y*invM.z));
     ${PAINT_LAYERS.map((_,i)=>`plate(radius${lane(i)},vec2(plateX${lane(i)},plateY${lane(i)}),pigment${i},ink${lane(i)},t);`).join('\n')}
-    if(total<.002)discard;
-    gl_FragColor=vec4(exp(-absorption/total*contrast),1.-uncovered);
+    if(acc.w<.002)discard;
+    gl_FragColor=acc;
    }`,transparent:true,depthWrite:false,depthTest:false,
+  // Additive and order-independent: every disc on screen adds (a·c, b·c, chroma·c, c) to a float buffer.
+  blending:THREE.CustomBlending,blendEquation:THREE.AddEquation,blendSrc:THREE.OneFactor,blendDst:THREE.OneFactor,blendSrcAlpha:THREE.OneFactor,blendDstAlpha:THREE.OneFactor,
  });
  const marks=new THREE.Points(new THREE.BufferGeometry(),material);
  const regionalMaterial=material.clone();regionalMaterial.uniforms.isRegion.value=1;
  const regionalMarks=new THREE.Points(new THREE.BufferGeometry(),regionalMaterial);
- marks.visible=regionalMarks.visible=false;marks.renderOrder=regionalMarks.renderOrder=2;scene.add(marks,regionalMarks);
+ marks.visible=regionalMarks.visible=false;
+ const inkScene=new THREE.Scene();inkScene.add(marks,regionalMarks);
+ const target=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,depthBuffer:false});
+ // Overlapping discs from any sprite are averaged in OKLab: hue from the mean a/b direction, chroma restored to the
+ // mean chroma so mixes stay as saturated as their inks instead of greying out. Lightness is the shared ink lightness.
+ const composite=new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.ShaderMaterial({
+  uniforms:{ink:{value:target.texture},size:{value:new THREE.Vector2(1,1)},lightness:{value:INK_L},contrast:{value:1}},
+  vertexShader:`void main(){gl_Position=vec4(position.xy,0.,1.);}`,
+  fragmentShader:`uniform sampler2D ink;uniform vec2 size;uniform float lightness;uniform float contrast;
+   float encode(float c){c=clamp(c,0.,1.);return c<=.0031308?12.92*c:1.055*pow(c,1./2.4)-.055;}
+   void main(){
+    vec4 s=texture2D(ink,gl_FragCoord.xy/size);
+    if(s.w<.002)discard;
+    vec2 ab=s.xy/s.w;float m=length(ab);ab=m>1e-5?ab/m*(s.z/s.w):vec2(0.);
+    float L=pow(lightness,contrast);
+    float l=L+.3963377774*ab.x+.2158037573*ab.y,mm=L-.1055613458*ab.x-.0638541728*ab.y,q=L-.0894841775*ab.x-1.291485548*ab.y;
+    l*=l*l;mm*=mm*mm;q*=q*q;
+    vec3 rgb=vec3(4.0767416621*l-3.3077115913*mm+.2309699292*q,-1.2684380046*l+2.6097574011*mm-.3413193965*q,-.0041960863*l-.7034186147*mm+1.707614701*q);
+    gl_FragColor=vec4(encode(rgb.r),encode(rgb.g),encode(rgb.b),min(1.,s.w));
+   }`,transparent:true,depthWrite:false,depthTest:false,
+ }));
+ composite.frustumCulled=false;composite.renderOrder=2;composite.visible=false;scene.add(composite);
+ const bufferSize=new THREE.Vector2(),clear=new THREE.Color();
+ composite.onBeforeRender=(renderer,_scene,camera)=>{
+  renderer.getDrawingBufferSize(bufferSize);
+  if(target.width!==bufferSize.x||target.height!==bufferSize.y)target.setSize(bufferSize.x,bufferSize.y);
+  composite.material.uniforms.size.value.copy(bufferSize);
+  const previous=renderer.getRenderTarget(),alpha=renderer.getClearAlpha();renderer.getClearColor(clear);
+  renderer.setRenderTarget(target);renderer.setClearColor(0x000000,0);renderer.clear(true,false,false);
+  renderer.render(inkScene,camera);
+  renderer.setRenderTarget(previous);renderer.setClearColor(clear,alpha);
+ };
  const builder=createBuilder(),geometries=new Map(),pending=new Set();
  let current=null,currentRegional=null,level=0,lastDetail='',globalId=0,regionalId=0,regionalGeometry=null,regionalBuilt=-1,regionalLevel=0,regionalPending=false,regionalReadyAt=0,epoch=0,regionalEpoch=0,disposed=false,lastShown=-1,prevShown=-1,farSince=0,reported=false;
  const ensureLevel=l=>{
@@ -170,8 +211,8 @@ const uniforms={contrast:{value:1},halfView:{value:new THREE.Vector2(1,1)},spaci
    // Near-uniform fields (e.g. ozone) get muted ink: lower plate coverage (opacity), same hue, applied before the commutative mix.
    const gs=scalesFor(data,PAINT_LAYERS),rs=scalesFor(regionAvailable?regional:null,PAINT_LAYERS,gs);
    const inkOf=PAINT_LAYERS.map(l=>(gs[l.id]??rs[l.id])?.emphasis==='muted'?MUTED_INK:1);
+   composite.material.uniforms.contrast.value=surface==='white'?1.8:surface==='charcoal'?.85:1;
    [material,regionalMaterial].forEach(m=>{
-    m.uniforms.contrast.value=surface==='white'?1.8:surface==='charcoal'?.85:1;
     m.uniforms.regionMix.value=regionMix;
     m.uniforms.halfView.value.set(width*pixelRatio/2,height*pixelRatio/2);
     m.uniforms.spacing.value=dotSpacing(m===material?DOT_COUNTS[lastShown>=0?lastShown:level]:REGIONAL_DOT_COUNTS[Math.max(0,regionalBuilt)])*1.002;
@@ -190,11 +231,12 @@ const uniforms={contrast:{value:1},halfView:{value:new THREE.Vector2(1,1)},spaci
    // Reported after the frame that first draws global dots has been rendered.
    if(!reported&&marks.visible){reported=true;requestAnimationFrame(()=>{if(!disposed)onVisible?.();});}
    regionalMarks.visible=!!regionalGeometry&&(regionMix>0||regionOnlyEnabled)&&strengths.some(s=>s>0);
+   composite.visible=marks.visible||regionalMarks.visible;
    const centre=camera.position.clone().normalize(),lat=Math.asin(centre.y)*180/Math.PI,lon=Math.atan2(-centre.z,centre.x)*180/Math.PI;
    const regionInView=bounds&&lat>bounds.south&&lat<bounds.north&&lon>bounds.west&&lon<bounds.east;
    const detail=regionMix>.5&&regionInView?'regional':level<3?'overview':level<5?'medium':'native';
    if(detail!==lastDetail){lastDetail=detail;onDetail?.(detail);}
   },
-  dispose(){disposed=true;scene.remove(marks,regionalMarks);geometries.forEach(release);geometries.clear();if(regionalGeometry)release(regionalGeometry);regionalGeometry=null;builder.dispose();material.dispose();regionalMaterial.dispose();},
+  dispose(){disposed=true;inkScene.remove(marks,regionalMarks);scene.remove(composite);composite.geometry.dispose();composite.material.dispose();target.dispose();geometries.forEach(release);geometries.clear();if(regionalGeometry)release(regionalGeometry);regionalGeometry=null;builder.dispose();material.dispose();regionalMaterial.dispose();},
  };
 }

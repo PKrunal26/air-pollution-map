@@ -46,3 +46,10 @@
 
 @keyframes loader-out{to{opacity:0;visibility:hidden}}
 @keyframes loader-spin{0%,100%{transform:scaleX(1)}50%{transform:scaleX(-1)}}
+
+/* embed mode (?embed=1): globe only, no header vignette; ?bg=<hex> sets a flat ground */
+.is-embed{min-height:0}
+.is-embed .atlas-interface:after{display:none}
+.is-embed .loader-name{display:none}
+.has-bg,.has-bg .loader{background:var(--embed-bg)}
+:root:has(.has-bg){background:var(--embed-bg)}

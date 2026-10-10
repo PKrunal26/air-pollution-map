@@ -84,7 +84,7 @@ for name, mask in [('all', everywhere), ('land', land), ('ocean', ~land)]:
 glob_order = order(mats['all']['spearman'])
 part = partial(mats['all']['pearsonLog'])
 
-# block bootstrap (15°×15° blocks) for 95% CI on log-Pearson, all cells
+# block bootstrap (15°×15° blocks) for 95% CI on Spearman ρ, all cells
 bi = ((LAT+90)//15).astype(int); bj = ((LON+180)//15).astype(int); block = (bi*24+bj).ravel()
 ub = np.unique(block); Xall = np.column_stack([tf(k, GF[k].ravel()) for k in gkeys]); wall = area.ravel()
 idx_by_block = [np.flatnonzero(block == b) for b in ub]
@@ -92,7 +92,9 @@ boots = []
 for _ in range(300):
     pick = rng.choice(len(ub), len(ub))
     ii = np.concatenate([idx_by_block[p] for p in pick])
-    boots.append(wcorr(Xall[ii], wall[ii]))
+    Xi, wi_ = Xall[ii], wall[ii]
+    # rank inside each resample so the interval is for Spearman ρ, the headline statistic
+    boots.append(wcorr(np.column_stack([wrank(Xi[:, k], wi_) for k in range(Xi.shape[1])]), wi_))
 boots = np.array(boots); lo, hi = np.percentile(boots, [2.5, 97.5], axis=0)
 
 # ---------------- regional heterogeneity ----------------
