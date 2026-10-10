@@ -1,0 +1,246 @@
+{
+ "seaSalt": {
+  "curve": [
+   [
+    0.5,
+    55.0
+   ],
+   [
+    1.5,
+    60.1
+   ],
+   [
+    2.5,
+    67.9
+   ],
+   [
+    3.5,
+    77.9
+   ],
+   [
+    4.5,
+    90.5
+   ],
+   [
+    5.5,
+    101.4
+   ],
+   [
+    6.5,
+    115.0
+   ],
+   [
+    7.5,
+    127.0
+   ],
+   [
+    8.5,
+    140.6
+   ],
+   [
+    9.5,
+    156.1
+   ],
+   [
+    10.5,
+    165.3
+   ],
+   [
+    11.5,
+    175.5
+   ],
+   [
+    12.5,
+    188.1
+   ],
+   [
+    13.5,
+    200.0
+   ],
+   [
+    14.5,
+    203.2
+   ],
+   [
+    15.5,
+    206.7
+   ],
+   [
+    16.5,
+    203.3
+   ],
+   [
+    17.5,
+    205.9
+   ],
+   [
+    18.5,
+    211.9
+   ],
+   [
+    19.5,
+    219.7
+   ]
+  ],
+  "loglogSlope": 0.706,
+  "pmFromSaltOcean": 0.728,
+  "saltShareOfPm10Ocean": 7.515
+ },
+ "combustion": [
+  {
+   "region": "Southern Africa (fire season)",
+   "pmCo": 0.786,
+   "pmDust": 0.268,
+   "coHcho": 0.784
+  },
+  {
+   "region": "Amazon & Cerrado (fire season)",
+   "pmCo": 0.75,
+   "pmDust": 0.053,
+   "coHcho": 0.615
+  },
+  {
+   "region": "Sahara & Sahel (dust)",
+   "pmCo": 0.006,
+   "pmDust": 0.882,
+   "coHcho": 0.478
+  },
+  {
+   "region": "India & Bangladesh",
+   "pmCo": 0.803,
+   "pmDust": 0.453,
+   "coHcho": 0.777
+  },
+  {
+   "region": "Eastern China",
+   "pmCo": 0.441,
+   "pmDust": 0.587,
+   "coHcho": 0.41
+  },
+  {
+   "region": "Europe",
+   "pmCo": 0.647,
+   "pmDust": 0.196,
+   "coHcho": 0.519
+  }
+ ],
+ "europeSources": {
+  "pmResidentialEC": 0.258,
+  "coResidentialEC": 0.632,
+  "pmOrganic": 0.575,
+  "pmSIA": 0.862,
+  "nh3SIA": 0.341,
+  "no2SIA": 0.413,
+  "so2SIA": 0.771,
+  "siaShareOfPm25": 0.343,
+  "organicShareOfPm25": 0.206
+ },
+ "titration": {
+  "no2O3": -0.357,
+  "no2Ox": -0.205,
+  "bands": [
+   {
+    "no2": "0–1",
+    "o3": 28.3,
+    "no2ppb": 0.2,
+    "ox": 28.5
+   },
+   {
+    "no2": "1–2",
+    "o3": 28.1,
+    "no2ppb": 0.8,
+    "ox": 28.8
+   },
+   {
+    "no2": "2–5",
+    "o3": 24.2,
+    "no2ppb": 1.6,
+    "ox": 25.8
+   },
+   {
+    "no2": "5–10",
+    "o3": 21.1,
+    "no2ppb": 3.5,
+    "ox": 24.6
+   },
+   {
+    "no2": "10–20",
+    "o3": 18.7,
+    "no2ppb": 7.0,
+    "ox": 25.8
+   },
+   {
+    "no2": "20–40",
+    "o3": 14.1,
+    "no2ppb": 14.1,
+    "ox": 28.2
+   },
+   {
+    "no2": "≥ 40",
+    "o3": 7.2,
+    "no2ppb": 25.3,
+    "ox": 32.5
+   }
+  ],
+  "noNo2Day": 0.876,
+  "noNo2Night": 0.026,
+  "noNightMedian": 0.0,
+  "noDayMedian": 1.2999999523162842
+ },
+ "hcho": {
+  "withinLatitude": [
+   {
+    "band": "-40° to -20°",
+    "rho": 0.487
+   },
+   {
+    "band": "-20° to 0°",
+    "rho": 0.264
+   },
+   {
+    "band": "0° to 20°",
+    "rho": -0.198
+   },
+   {
+    "band": "20° to 40°",
+    "rho": 0.313
+   },
+   {
+    "band": "40° to 60°",
+    "rho": 0.51
+   }
+  ],
+  "doublingDegC": 13.587,
+  "dayRho": 0.856,
+  "nightRho": 0.672
+ },
+ "ventilation": {
+  "NO₂": {
+   "global": -0.497,
+   "withinTile": -0.147,
+   "tiles": 618
+  },
+  "CO": {
+   "global": -0.444,
+   "withinTile": -0.058,
+   "tiles": 905
+  },
+  "PM2.5": {
+   "global": -0.278,
+   "withinTile": -0.015,
+   "tiles": 905
+  }
+ },
+ "uv": {
+  "all": 0.993,
+  "daylit": 0.95,
+  "cloudLossMedian": 0.091,
+  "nightShare": 0.513
+ },
+ "dustSplit": {
+  "pm25DustRaw": 0.381,
+  "coarseDust": 0.669,
+  "fineShareDusty": 0.279,
+  "fineShareClean": 0.8
+ }
+}
