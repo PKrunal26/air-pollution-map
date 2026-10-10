@@ -1,6 +1,7 @@
 import React,{useEffect,useRef,useSyncExternalStore} from 'react';
 import {Play,Pause} from '@phosphor-icons/react';
 import {nearestFrame} from './airFrames';
+import {track} from './analytics';
 import './styles/time-bar.css';
 
 const dayFormat=new Intl.DateTimeFormat('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
@@ -12,6 +13,7 @@ const MODES={forecast:{label:'48 h',name:'48-hour forecast'},history:{label:'His
 // The thumb follows playback through a ref (no re-render per animation frame); the label shows the nearest real frame.
 export default function TimeBar({timeline,mode,modes,onMode}){
  useSyncExternalStore(timeline.subscribe,()=>timeline.version);
+ const toggle=()=>{if(!timeline.playing)track(`time/play-${mode}`);timeline.toggle();};
  const range=useRef(null),{count,manifest}=timeline,frames=manifest.frames,history=mode==='history';
  const index=nearestFrame(timeline.position,count),time=new Date(frames[index].validAt);
  const text=history?monthFormat.format(time):`${dayFormat.format(time)} ${hourFormat.format(time)} UTC`;
@@ -21,13 +23,13 @@ export default function TimeBar({timeline,mode,modes,onMode}){
  },[timeline]);
  useEffect(()=>{
   // Space plays/pauses unless focus is in a control that uses it.
-  const key=e=>{if(e.key!==' '||e.metaKey||e.ctrlKey||e.altKey)return;const t=e.target;if(t.closest?.('input,textarea,select,button,[contenteditable],[role="switch"]'))return;e.preventDefault();timeline.toggle();};
+  const key=e=>{if(e.key!==' '||e.metaKey||e.ctrlKey||e.altKey)return;const t=e.target;if(t.closest?.('input,textarea,select,button,[contenteditable],[role="switch"]'))return;e.preventDefault();toggle();};
   window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);
  },[timeline]);
  // Marks at midnight UTC (forecast) or each January (history).
  const marks=frames.map((f,i)=>({i,d:new Date(f.validAt)})).filter(({d})=>history?d.getUTCMonth()===0:d.getUTCHours()===0);
  return <div className={`time-bar${timeline.playing?' is-playing':''}`} role="group" aria-label={MODES[mode].name}>
-  <button className="time-play" onClick={()=>timeline.toggle()} disabled={timeline.failed} aria-label={timeline.playing?'Pause':`Play ${MODES[mode].name.toLowerCase()}`} title={timeline.failed?'Frames unavailable':undefined}>{timeline.playing?<Pause size={14} weight="fill"/>:<Play size={14} weight="fill"/>}</button>
+  <button className="time-play" onClick={toggle} disabled={timeline.failed} aria-label={timeline.playing?'Pause':`Play ${MODES[mode].name.toLowerCase()}`} title={timeline.failed?'Frames unavailable':undefined}>{timeline.playing?<Pause size={14} weight="fill"/>:<Play size={14} weight="fill"/>}</button>
   <p className="time-label" aria-live="off">{history?<>{monthFormat.format(time)} <small>monthly mean</small></>:<><span>{dayFormat.format(time)}</span> {hourFormat.format(time)} <small>UTC</small></>}</p>
   <div className="time-track">
    <input ref={range} type="range" min="0" max={count-1} step="any" defaultValue={timeline.position} aria-label={history?'Month':'Forecast hour'} aria-valuetext={text}

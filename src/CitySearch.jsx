@@ -1,6 +1,7 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {MagnifyingGlass,X,ArrowUpRight,MapPin,GpsFix} from '@phosphor-icons/react';
 import {places,searchPlaces,parseCoordinates} from './places';
+import {track} from './analytics';
 import './styles/search-about.css';
 
 const LIMIT=30;
@@ -33,7 +34,7 @@ export default function CitySearch({onChoose,onLocate,open,onOpenChange,shortcut
  },[open,onOpenChange,shortcutDisabled]);
  useEffect(()=>{if(open)document.getElementById(`city-${results[active]?.id}`)?.scrollIntoView({block:'nearest'});},[active,q,open]);
  const close=()=>{onOpenChange(false);trigger.current?.focus();};
- const choose=city=>{if(city.locate){close();onLocate();return;}const{coordinate,...place}=city;onChoose(place);setQuery('');setActive(0);close();};
+ const choose=city=>{if(city.locate){close();onLocate();return;}const{coordinate,...place}=city;track(coordinate?'search/coordinates':`search/${place.name}`);onChoose(place);setQuery('');setActive(0);close();};
  const keyboard=e=>{
   if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();}
   if(e.key==='ArrowDown'||e.key==='ArrowUp'){
