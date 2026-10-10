@@ -1,5 +1,5 @@
 /* First-visit layer picker: a card above the time bar (desktop) or the bottom dock (phones); the globe stays live behind it. */
-.layer-picker{position:absolute;left:0;right:0;bottom:92px;margin:0 auto;width:min(640px,calc(100% - 32px));z-index:var(--drawer);padding:20px 20px 16px;border:1px solid var(--glass-border);border-radius:var(--radius-card);background:var(--glass-bg);box-shadow:var(--glass-shadow);backdrop-filter:blur(var(--glass-blur));animation:picker-in .6s var(--motion) both}
+.layer-picker{position:absolute;left:0;right:0;bottom:89px;margin:0 auto;width:min(640px,calc(100% - 32px));max-height:calc(100dvh - 89px - 84px);overflow-y:auto;overscroll-behavior:contain;z-index:var(--drawer);padding:20px 20px 16px;border:1px solid var(--glass-border);border-radius:var(--radius-card);background:var(--glass-bg);box-shadow:var(--glass-shadow);backdrop-filter:blur(var(--glass-blur));animation:picker-in .6s var(--motion) both}
 .layer-picker h2{margin:0;font-size:17px;font-weight:450;letter-spacing:-.2px;color:var(--text)}
 .layer-picker>p{margin:4px 0 14px;font-size:12px;line-height:1.45;color:var(--text-muted)}
 .picker-options{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -23,5 +23,6 @@
  .is-picking .minimal-zoom{display:none}
 }
 @media(max-width:860px) and (min-width:701px){.picker-options{grid-template-columns:repeat(3,1fr)}}
+@media(max-height:620px) and (min-width:701px){.layer-picker{bottom:70px;max-height:calc(100dvh - 70px - 68px);padding:16px 18px 12px}.picker-text small{display:none}}
 @media(max-width:340px){.picker-options{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.layer-picker{animation:none}}

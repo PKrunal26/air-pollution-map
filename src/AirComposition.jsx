@@ -36,7 +36,7 @@ export default function AirComposition({location,global,regional,paint,onClose})
  const hasWho=!monthly&&primary.some(field=>whoComparison(field.id,field.value,field.unit));
  const coords=formatCoordinates(location.lat,location.lon);
  return <section ref={card} className={`air-composition${location.pinned?' is-pinned':''}${expanded?' is-expanded':''}`} aria-label={`Air composition at ${placeTitle(place)}, ${coords}`} onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();dismiss();}}}>
-  <div className="composition-heading"><div><p className="composition-kicker">{location.pinned?'Selected location':'Under your cursor'}</p><h2>{placeTitle(place)}</h2></div>{location.pinned&&<button ref={close} className="icon-button composition-close" aria-label="Close air composition" onClick={dismiss}><X size={17} weight="light"/></button>}</div>
+  <div className="composition-heading"><div><p className="composition-kicker">{location.mine?'Your location':location.pinned?'Selected location':'Under your cursor'}</p><h2>{placeTitle(place)}</h2></div>{location.pinned&&<button ref={close} className="icon-button composition-close" aria-label="Close air composition" onClick={dismiss}><X size={17} weight="light"/></button>}</div>
   <p className="composition-location">{coords}</p>
   {sample?<>
    <p className="composition-caption">{hasWho?WHO_CAPTION:monthly?'Monthly mean of hourly model values':'Modelled air composition'}</p>

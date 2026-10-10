@@ -1,6 +1,6 @@
 /* Time bar. Desktop: one slim line at the bottom centre; gutters clear the zoom group (left) and the launcher or layer
    panel (right). Phones: two lines in the bottom dock (label and range switch, then a full-width scrubber). */
-.time-bar{position:absolute;left:210px;right:210px;margin:0 auto;bottom:38px;max-width:500px;height:36px;z-index:var(--chrome);display:grid;grid-template-columns:auto auto minmax(48px,1fr) auto;grid-template-areas:"play label track modes";align-items:center;column-gap:10px;padding:0 4px;border:1px solid var(--glass-border);border-radius:18px;background:#12190ecc;backdrop-filter:blur(var(--glass-blur));font-size:12px;font-variant-numeric:tabular-nums;color:var(--text-muted);animation:fade-in 1s var(--motion) .8s both;transition:right .6s var(--motion)}
+.time-bar{position:absolute;left:240px;right:226px;margin:0 auto;bottom:39px;max-width:500px;height:36px;z-index:var(--chrome);display:grid;grid-template-columns:auto auto minmax(48px,1fr) auto;grid-template-areas:"play label track modes";align-items:center;column-gap:10px;padding:0 4px;border:1px solid var(--glass-border);border-radius:18px;background:#12190ecc;backdrop-filter:blur(var(--glass-blur));font-size:12px;font-variant-numeric:tabular-nums;color:var(--text-muted);animation:fade-in 1s var(--motion) .8s both;transition:right .6s var(--motion)}
 @media(min-width:701px){.layers-open .time-bar{right:380px}}
 @media(min-width:701px) and (max-width:960px){.layers-open .time-bar{visibility:hidden}}
 .time-bar .time-play{grid-area:play;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;color:var(--text);background:none}
@@ -24,14 +24,16 @@
 .time-modes button{height:24px;padding:0 9px;border-radius:12px;font-size:11px;color:var(--text-muted);white-space:nowrap}
 .time-modes button:hover{color:var(--text)}
 .time-modes button[aria-pressed="true"]{background:#e1ead31f;color:var(--text)}
-@media(max-width:1100px) and (min-width:701px){.time-bar{left:196px}}
+@media(max-width:1100px) and (min-width:701px){.time-bar{left:224px;right:222px}.layers-open .time-bar{right:348px}}
+@media(max-width:1000px) and (min-width:701px){.time-bar{right:88px}}
+@media(max-height:620px) and (min-width:701px){.time-bar{bottom:22px}}
 @media(max-width:700px){
- .time-bar{left:16px;right:76px;max-width:none;margin:0;bottom:var(--dock);height:auto;grid-template-columns:44px 1fr auto;grid-template-areas:"play label modes" "play track track";row-gap:0;padding:4px 10px 2px 2px;border-radius:24px}
+ .time-bar{left:16px;right:76px;max-width:none;margin:0;bottom:var(--dock);height:var(--dock-bar);grid-template-columns:44px 1fr auto;grid-template-rows:32px 30px;grid-template-areas:"play label modes" "play track track";align-content:center;row-gap:0;padding:0 10px 0 3px;border-radius:22px}
  .time-bar .time-play{width:44px;height:44px}
  .time-label{align-self:end}
- .time-track{height:32px}
+ .time-track{height:30px}
  .time-modes{align-self:end}
- .time-modes button{height:28px;padding:0 8px}
+ .time-modes button{height:26px;padding:0 9px}
  .time-label small{display:none}
  .time-label{overflow:hidden;text-overflow:ellipsis}
 }

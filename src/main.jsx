@@ -1,7 +1,7 @@
 import React,{useEffect,useState,useSyncExternalStore} from 'react';
 import {createRoot} from 'react-dom/client';
 import './styles.css';
-import {Plus,Minus,Info,ArrowCounterClockwise} from '@phosphor-icons/react';
+import {Plus,Minus,Info,ArrowCounterClockwise,GpsFix} from '@phosphor-icons/react';
 import Globe from './Globe';
 import CitySearch from './CitySearch';
 import AirQuality from './AirReadout.jsx';
@@ -18,9 +18,10 @@ import {fetchFrameManifest,fetchHistoryManifest,createTimeline,frameDataset,near
 import TimeBar from './TimeBar';
 import LayerPicker from './LayerPicker';
 import {loadOnboarded,saveOnboarded} from './onboarding';
+import {locateUser,locationGranted,locationMessage} from './userLocation';
 import './styles/shell.css';
 
-const LOADER_TIMEOUT=20000,noop=()=>()=>{};
+const LOADER_TIMEOUT=20000,noop=()=>()=>{},CHROME_INSET=176;
 // ?embed=1 shows the globe only (for iframes); layers, surface and bg set the initial look.
 const OPTIONS=parseEmbedParams(typeof location!=='undefined'?location.search:''),EMBED=OPTIONS.embed;
 if(OPTIONS.bg)document.documentElement.style.setProperty('--embed-bg',OPTIONS.bg);
@@ -37,6 +38,7 @@ function App(){
  const [city,setCity]=useState(null),[zoom,setZoom]=useState(0),[focus,setFocus]=useState(0),[reset,setReset]=useState(0);
  const [panel,setPanel]=useState(null),[probe,setProbe]=useState(null),[probeReset,setProbeReset]=useState(0),[readout,setReadout]=useState(()=>!EMBED&&loadReadout());
  const [flyTarget,setFlyTarget]=useState(null),[range,setRange]=useState({atMin:false,atMax:false});
+ const [userLocation,setUserLocation]=useState(null),[locating,setLocating]=useState(false),[locateError,setLocateError]=useState('');
  const [globeReady,setGlobeReady]=useState(false),[airVisible,setAirVisible]=useState(false),[opened,setOpened]=useState(false),[timedOut,setTimedOut]=useState(false),[progress,setProgress]=useState({loaded:0,total:null});
  const desktop=useMedia('(min-width:701px)');
  // First visit only (not embedded, not when the URL picks layers): ask which pollutants to show.
@@ -72,6 +74,9 @@ function App(){
   if(bits)setFrameAir(current=>current?.frame===frameIndex?current:frameDataset(timeline.manifest,frameIndex,bits));
  },[timeline,frameIndex,timeline?.version,readout,probe]);
  useEffect(()=>{const timer=setTimeout(()=>setTimedOut(true),LOADER_TIMEOUT);return()=>clearTimeout(timer);},[]);
+ // Permission granted on an earlier visit: show the marker again, without moving the camera or prompting.
+ useEffect(()=>{if(EMBED)return;let live=true;locationGranted().then(ok=>ok?locateUser():null).then(found=>{if(live&&found)setUserLocation(found);}).catch(()=>{});return()=>{live=false;};},[]);
+ useEffect(()=>{if(!locateError)return;const timer=setTimeout(()=>setLocateError(''),6000);return()=>clearTimeout(timer);},[locateError]);
  const clearProbe=()=>{setProbe(null);setProbeReset(n=>n+1);};
  const changeReadout=on=>{setReadout(on);saveReadout(on);if(!on)clearProbe();};
  const closeTransient=()=>setPanel(p=>p==='search'?null:p);
@@ -79,7 +84,12 @@ function App(){
  const overview=()=>{clearProbe();setCity(null);setZoom(0);setFocus(0);setReset(n=>n+1);closeTransient();};
  // Rotating or zooming the globe must not close the layer panel; only the search popover.
  const interact=()=>setPanel(p=>p==='search'?null:p);
- const flyTo=(lat,lon)=>setFlyTarget(t=>({key:(t?.key??0)+1,lat,lon,distance:1.6}));
+ const flyTo=(lat,lon,distance=1.6,pin)=>setFlyTarget(t=>({key:(t?.key??0)+1,lat,lon,distance,pin}));
+ // My location: fly there and pin the air readout on it.
+ const locate=()=>{
+  if(locating)return;setLocating(true);setLocateError('');closeTransient();
+  locateUser().then(found=>{setUserLocation(found);setCity(null);flyTo(found.lat,found.lon,2.3,{mine:true});}).catch(e=>setLocateError(locationMessage(e))).finally(()=>setLocating(false));
+ };
  const cameraRange=next=>setRange(current=>current.atMin===next.atMin&&current.atMax===next.atMax?current:{atMin:!!next.atMin,atMax:!!next.atMax});
  const probeCard=readout&&!!probe&&(!panel||panel==='layers');
  const stacked=!!city||(probeCard&&!!probe.pinned);
@@ -90,11 +100,11 @@ function App(){
  const updatePaint=(id,change)=>setPaint(current=>({...current,[id]:{...current[id],...change}}));
  return <main className={`atlas-app${EMBED?' is-embed':''}${OPTIONS.bg?' has-bg':''}${panel==='layers'?' layers-open':''}${picking&&ready?' is-picking':''} surface-view-${surface}`} aria-busy={!ready||undefined}>
   <div className="atlas-interface" inert={!ready?true:undefined}>
-   <Globe onProbe={setProbe} readout={readout} probeEnabled={readout&&panel!=='search'} probeReset={probeReset} surface={surface} globalAir={globalAir.data} regionalAir={regionalAir} onDetail={setDetail} paint={paint} weatherData={weather.data} weatherSettings={weatherSettings} city={city} zoom={zoom} focus={focus} reset={reset} viewShift={viewShift} flyTarget={flyTarget} onCameraRange={cameraRange} onReady={()=>setGlobeReady(true)} onAirVisible={()=>setAirVisible(true)} onCity={chooseCity} onInteraction={interact} homeScale={OPTIONS.zoom} wheelModifier={EMBED} timeline={timeline}/>
+   <Globe onProbe={setProbe} readout={readout} probeEnabled={readout&&panel!=='search'} probeReset={probeReset} surface={surface} globalAir={globalAir.data} regionalAir={regionalAir} onDetail={setDetail} paint={paint} weatherData={weather.data} weatherSettings={weatherSettings} city={city} zoom={zoom} focus={focus} reset={reset} viewShift={viewShift} flyTarget={flyTarget} onCameraRange={cameraRange} onReady={()=>setGlobeReady(true)} onAirVisible={()=>setAirVisible(true)} onCity={chooseCity} onInteraction={interact} homeScale={OPTIONS.zoom} wheelModifier={EMBED} timeline={timeline} userLocation={userLocation} chromeInset={EMBED?0:CHROME_INSET}/>
    {!EMBED&&<>
    <header className="minimal-header">
     <button className="atlas-brand" aria-label="Return to overview" onClick={overview}><svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="12" stroke="currentColor" strokeWidth=".8"/><ellipse cx="16" cy="16" rx="6" ry="12" stroke="currentColor" strokeWidth=".8" transform="rotate(35 16 16)"/><path d="M4 16h24" stroke="currentColor" strokeWidth=".8"/></svg><span>Air Atlas</span></button>
-    <nav aria-label="Explore the atlas"><CitySearch open={panel==='search'} onOpenChange={open=>setPanel(open?'search':null)} onChoose={chooseCity}/><ReadoutToggle on={readout} onChange={changeReadout}/><a className="about-trigger" href="study.html" aria-label="About the data"><Info size={16} weight="light"/><span>About</span></a></nav>
+    <nav aria-label="Explore the atlas"><CitySearch open={panel==='search'} onOpenChange={open=>setPanel(open?'search':null)} onChoose={chooseCity} onLocate={locate}/><ReadoutToggle on={readout} onChange={changeReadout}/><a className="about-trigger" href="study.html" aria-label="About the data"><Info size={16} weight="light"/><span>About</span></a></nav>
    </header>
    <div className="side-stack">
     {city&&<AirQuality city={city} onClear={()=>setCity(null)} snapshotAt={globalAir.data?.validAt??null}/>}
@@ -103,7 +113,8 @@ function App(){
    <GlobalAirLegend surface={surface} onSurfaceChange={setSurface} panelOpen={panel==='layers'} onPanelChange={open=>{if(open){clearProbe();if(picking)finishPicking();}setPanel(open?'layers':null);}} onFlyTo={flyTo} detail={detail} regional={regionalAir} regionalError={regionalError} state={globalAir} paint={paint} weather={weather} weatherSettings={weatherSettings} onWeatherChange={(id,change)=>setWeatherSettings(current=>({...current,[id]:{...current[id],...change}}))} onChange={updatePaint}/>
    {picking&&ready&&<LayerPicker paint={paint} onChange={updatePaint} onDone={finishPicking}/>}
    {timeline&&<TimeBar timeline={timeline} mode={timeline.kind} modes={Object.keys(timelines).filter(k=>timelines[k])} onMode={changeMode}/>}
-   <div className="minimal-zoom" role="group" aria-label="Globe zoom"><button aria-label="Reset globe view" onClick={overview}><ArrowCounterClockwise size={17} weight="light"/></button><span/><button aria-label="Zoom in" disabled={range.atMin} onClick={()=>{setZoom(z=>z+1);}}><Plus size={17} weight="light"/></button><button aria-label="Zoom out" disabled={range.atMax} onClick={()=>{setZoom(z=>z-1);}}><Minus size={17} weight="light"/></button></div>
+   <div className="minimal-zoom" role="group" aria-label="Globe view"><button aria-label="Reset globe view" onClick={overview}><ArrowCounterClockwise size={17} weight="light"/></button><button className={`locate-button${locating?' is-locating':''}${userLocation?' is-found':''}`} aria-label="Show my location" aria-busy={locating||undefined} onClick={locate}><GpsFix size={17} weight={userLocation?'regular':'light'}/></button><span/><button aria-label="Zoom in" disabled={range.atMin} onClick={()=>{setZoom(z=>z+1);}}><Plus size={17} weight="light"/></button><button aria-label="Zoom out" disabled={range.atMax} onClick={()=>{setZoom(z=>z-1);}}><Minus size={17} weight="light"/></button></div>
+   <p className={`locate-status${locateError?' is-shown':''}`} role="status">{locateError}</p>
    </>}
   </div>
   <Loader ready={ready} progress={progress} textureReady={globeReady} downloaded={globalAir.status!=='loading'} failed={globalAir.status==='error'}/>

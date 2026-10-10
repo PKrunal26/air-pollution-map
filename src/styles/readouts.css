@@ -26,7 +26,7 @@
 .who-warn{background:#e0b45a26;color:#ebc47a}
 .who-high{background:#e0614f2e;color:#f4978a}
 
-.air-composition{display:flex;flex-direction:column;flex:0 1 auto;min-height:0;max-height:min(560px,calc(100dvh - 300px));padding:20px 22px;pointer-events:none}
+.air-composition{display:flex;flex-direction:column;flex:0 1 auto;min-height:0;max-height:560px;padding:20px 22px;pointer-events:none}
 .air-composition.is-pinned{pointer-events:auto}
 .composition-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-shrink:0}
 .composition-kicker{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:450;line-height:1.5;color:var(--text-muted)}

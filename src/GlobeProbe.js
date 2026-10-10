@@ -9,7 +9,7 @@ export function createGlobeProbe({canvas,container,camera,onProbe,isEnabled}){
  const pointers=new Set();
  function emit(next){
   location=next;
-  const key=next?`${next.lat.toFixed(3)},${next.lon.toFixed(3)},${next.pinned}`:'';
+  const key=next?`${next.lat.toFixed(3)},${next.lon.toFixed(3)},${next.pinned},${!!next.mine}`:'';
   if(key!==lastKey){lastKey=key;onProbe(next);}
   if(!next){worldPoint=null;marker.hidden=true;}
  }
@@ -46,6 +46,8 @@ export function createGlobeProbe({canvas,container,camera,onProbe,isEnabled}){
  return {
   clear,
   inspectCentre(){pendingCentre=true;},
+  // Pin a known place (e.g. the viewer's own position) without a pointer; extra fields ride along to onProbe.
+  pinAt(point,extra){pointer=null;pendingCentre=false;worldPoint=point.clone().normalize();emit({...pointToLocation(worldPoint),pinned:true,...extra});},
   update({enabled,reset,time}){
    if(reset!==lastReset||!enabled){lastReset=reset;clear();return;}
    if(pendingCentre){

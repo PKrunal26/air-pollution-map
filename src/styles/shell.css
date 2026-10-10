@@ -1,20 +1,26 @@
 :root{--loader:100}
 
 /* zoom / reset controls */
-.minimal-zoom{position:absolute;bottom:34px;left:46px;z-index:var(--chrome);display:flex;flex-direction:row;gap:5px;color:#899b73;animation:fade-in 1s var(--motion) .7s both}
+.minimal-zoom{position:absolute;bottom:39px;left:46px;z-index:var(--chrome);display:flex;flex-direction:row;gap:5px;color:#899b73;animation:fade-in 1s var(--motion) .7s both}
 .minimal-zoom button{width:36px;height:36px;border-radius:50%;color:#a2b28b;background:#12190ee6;border:1px solid #c5d5ac12}
 .minimal-zoom button:hover:not(:disabled){background:var(--hover-bg);color:#edf4e1}
 .minimal-zoom button:disabled{opacity:.3}
 .minimal-zoom>span{width:1px;height:12px;background:#aec49326;align-self:center;margin:0 7px}
+.minimal-zoom .locate-button.is-found{color:#a9cdf5}
+.locate-button.is-locating svg{animation:locate-blink .9s ease-in-out infinite alternate}
+@keyframes locate-blink{to{opacity:.3}}
+/* location errors: a short note above the zoom group that fades out on its own */
+.locate-status{position:absolute;left:46px;bottom:87px;z-index:var(--chrome);max-width:300px;padding:9px 14px;border:1px solid var(--glass-border);border-radius:14px;background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur));font-size:12px;line-height:1.45;color:var(--text);opacity:0;visibility:hidden;transform:translate3d(0,6px,0);transition:opacity .35s var(--motion),transform .45s var(--motion),visibility .35s}
+.locate-status.is-shown{opacity:1;visibility:visible;transform:none}
 
 /* city + composition cards share one column so they never overlap each other or the layer panel */
-.side-stack{position:absolute;top:96px;right:32px;width:300px;max-height:calc(100dvh - 210px);z-index:var(--readout);display:flex;flex-direction:column;gap:12px;pointer-events:none}
+.side-stack{position:absolute;top:96px;right:32px;width:300px;max-height:calc(100dvh - 192px);z-index:var(--readout);display:flex;flex-direction:column;gap:12px;pointer-events:none}
 .side-stack>*{pointer-events:auto}
 .side-stack>.air-composition:not(.is-pinned){pointer-events:none}
 .side-stack:empty{display:none}
 
 @media(max-width:1100px){
- .minimal-zoom{left:32px}
+ .minimal-zoom,.locate-status{left:32px}
  .side-stack{right:24px;width:280px}
 }
 @media(min-width:1101px){.layers-open .side-stack{right:388px}}
@@ -22,17 +28,25 @@
 
 @media(max-width:700px){
  /* bottom dock: time bar and the round layers button share one row above the home indicator */
- .atlas-app{--dock:max(16px,env(safe-area-inset-bottom));--dock-top:calc(var(--dock) + 70px)}
+ .atlas-app{--dock:max(16px,env(safe-area-inset-bottom));--dock-bar:70px;--dock-top:calc(var(--dock) + var(--dock-bar) + 10px)}
  .side-stack{top:auto;bottom:var(--dock-top);left:16px;right:76px;width:auto;max-height:45dvh;justify-content:flex-end}
  .layers-open .side-stack,.layers-open .minimal-zoom{display:none}
  /* reset, zoom in, zoom out grouped in one vertical pill above the layer launcher */
- .minimal-zoom{left:auto;right:14px;bottom:calc(var(--dock) + 60px);flex-direction:column;gap:0;border-radius:24px;background:#12190ee6;border:1px solid #c5d5ac1f;padding:2px;z-index:7}
+ .minimal-zoom{left:auto;right:14px;bottom:var(--dock-top);flex-direction:column;gap:0;border-radius:24px;background:#12190ee6;border:1px solid #c5d5ac1f;padding:2px;z-index:7}
  .minimal-zoom>span{width:auto;height:1px;margin:0 9px;align-self:stretch;background:#aec49324}
  .minimal-zoom button{width:44px;height:44px;border:0;background:none}
  .minimal-zoom button+button{border-top:1px solid #aec49324}
  .minimal-zoom button,.minimal-zoom button+button{border-radius:0}
  .minimal-zoom button:first-child{border-radius:22px 22px 0 0}
  .minimal-zoom button:last-child{border-radius:0 0 22px 22px}
+ .locate-status{left:16px;right:76px;bottom:var(--dock-top);max-width:none}
+}
+/* Short frames: desktop browsers zoomed in, landscape phones. Pull the chrome towards the edges. */
+@media(max-height:620px) and (min-width:701px){
+ .minimal-header{top:20px}
+ .minimal-zoom{bottom:22px}
+ .locate-status{bottom:70px}
+ .side-stack{top:72px;max-height:calc(100dvh - 150px)}
 }
 
 /* loading screen */
