@@ -1,6 +1,7 @@
-// The viewer's position from the browser. Asked only when they press "My location"; if they granted it on an earlier
-// visit the marker returns quietly on load (no prompt, no camera move).
-const OPTIONS={enableHighAccuracy:false,timeout:12000,maximumAge:10*60*1000};
+// The viewer's position from the browser. First visit: asked once when the site opens. Allowed earlier: the marker
+// returns quietly (no camera move). Refused: never asked again unless they press "My location".
+// maximumAge 0: never reuse a cached fix, or someone who has moved (or a laptop that woke elsewhere) sees the old place.
+export const LOCATE_OPTIONS={enableHighAccuracy:false,timeout:12000,maximumAge:0};
 
 export function locationMessage(error){
  if(!error)return '';
@@ -17,11 +18,20 @@ export function locateUser(geo=globalThis.navigator?.geolocation){
    const lat=coords.latitude,lon=coords.longitude;
    if(!Number.isFinite(lat)||!Number.isFinite(lon)){reject({code:2});return;}
    resolve({lat,lon,accuracy:Number.isFinite(coords.accuracy)?coords.accuracy:null});
-  },error=>reject({code:error?.code??2}),OPTIONS);
+  },error=>reject({code:error?.code??2}),LOCATE_OPTIONS);
  });
 }
 
-// True only when permission was already granted, so checking never triggers a prompt.
-export async function locationGranted(permissions=globalThis.navigator?.permissions){
- try{return (await permissions?.query({name:'geolocation'}))?.state==='granted';}catch{return false;}
+// 'granted' | 'denied' | 'prompt', or 'unknown' where the browser cannot say. Checking never triggers a prompt.
+export async function locationPermission(permissions=globalThis.navigator?.permissions){
+ try{const state=(await permissions?.query({name:'geolocation'}))?.state;return ['granted','denied','prompt'].includes(state)?state:'unknown';}catch{return 'unknown';}
 }
+
+// Ask on open only if the browser has never been asked; 'unknown' (no Permissions API) falls back to our own note.
+export const ASKED_KEY='air-atlas.location-asked';
+export function shouldAskOnOpen(state,storage=globalThis.localStorage){
+ if(state==='prompt')return true;
+ if(state!=='unknown')return false;
+ try{return storage?.getItem(ASKED_KEY)!=='1';}catch{return false;}
+}
+export function saveAsked(storage=globalThis.localStorage){try{storage?.setItem(ASKED_KEY,'1');}catch{}}

@@ -18,7 +18,7 @@ import {fetchFrameManifest,fetchHistoryManifest,createTimeline,frameDataset,near
 import TimeBar from './TimeBar';
 import LayerPicker from './LayerPicker';
 import {loadOnboarded,saveOnboarded} from './onboarding';
-import {locateUser,locationGranted,locationMessage} from './userLocation';
+import {locateUser,locationMessage,locationPermission,saveAsked,shouldAskOnOpen} from './userLocation';
 import './styles/shell.css';
 
 const LOADER_TIMEOUT=20000,noop=()=>()=>{},CHROME_INSET=176;
@@ -74,8 +74,6 @@ function App(){
   if(bits)setFrameAir(current=>current?.frame===frameIndex?current:frameDataset(timeline.manifest,frameIndex,bits));
  },[timeline,frameIndex,timeline?.version,readout,probe]);
  useEffect(()=>{const timer=setTimeout(()=>setTimedOut(true),LOADER_TIMEOUT);return()=>clearTimeout(timer);},[]);
- // Permission granted on an earlier visit: show the marker again, without moving the camera or prompting.
- useEffect(()=>{if(EMBED)return;let live=true;locationGranted().then(ok=>ok?locateUser():null).then(found=>{if(live&&found)setUserLocation(found);}).catch(()=>{});return()=>{live=false;};},[]);
  useEffect(()=>{if(!locateError)return;const timer=setTimeout(()=>setLocateError(''),6000);return()=>clearTimeout(timer);},[locateError]);
  const clearProbe=()=>{setProbe(null);setProbeReset(n=>n+1);};
  const changeReadout=on=>{setReadout(on);saveReadout(on);if(!on)clearProbe();};
@@ -86,9 +84,10 @@ function App(){
  const interact=()=>setPanel(p=>p==='search'?null:p);
  const flyTo=(lat,lon,distance=1.6,pin)=>setFlyTarget(t=>({key:(t?.key??0)+1,lat,lon,distance,pin}));
  // My location: fly there and pin the air readout on it.
- const locate=()=>{
+ // quiet: asked on open rather than by a press, so a refusal shows no error.
+ const locate=({quiet=false}={})=>{
   if(locating)return;setLocating(true);setLocateError('');closeTransient();
-  locateUser().then(found=>{setUserLocation(found);setCity(null);flyTo(found.lat,found.lon,2.3,{mine:true});}).catch(e=>setLocateError(locationMessage(e))).finally(()=>setLocating(false));
+  locateUser().then(found=>{setUserLocation(found);setCity(null);flyTo(found.lat,found.lon,2.3,{mine:true});}).catch(e=>{if(!quiet)setLocateError(locationMessage(e));}).finally(()=>setLocating(false));
  };
  const cameraRange=next=>setRange(current=>current.atMin===next.atMin&&current.atMax===next.atMax?current:{atMin:!!next.atMin,atMax:!!next.atMax});
  const probeCard=readout&&!!probe&&(!panel||panel==='layers');
@@ -97,6 +96,16 @@ function App(){
  const noLayers=!PAINT_LAYERS.some(l=>paint[l.id]?.enabled);
  const ready=opened||timedOut||(globeReady&&(airVisible||globalAir.status==='error'||noLayers));
  useEffect(()=>{if(ready)setOpened(true);},[ready]);
+ // Once the globe is up: first visit asks for location; allowed earlier shows the marker without moving the camera.
+ useEffect(()=>{
+  if(EMBED||!opened)return;let live=true;
+  locationPermission().then(state=>{
+   if(!live)return;
+   if(state==='granted')return locateUser().then(found=>{if(live)setUserLocation(found);});
+   if(shouldAskOnOpen(state)){saveAsked();locate({quiet:true});}
+  }).catch(()=>{});
+  return()=>{live=false;};
+ },[opened]);
  const updatePaint=(id,change)=>setPaint(current=>({...current,[id]:{...current[id],...change}}));
  return <main className={`atlas-app${EMBED?' is-embed':''}${OPTIONS.bg?' has-bg':''}${panel==='layers'?' layers-open':''}${picking&&ready?' is-picking':''} surface-view-${surface}`} aria-busy={!ready||undefined}>
   <div className="atlas-interface" inert={!ready?true:undefined}>
@@ -113,7 +122,7 @@ function App(){
    <GlobalAirLegend surface={surface} onSurfaceChange={setSurface} panelOpen={panel==='layers'} onPanelChange={open=>{if(open){clearProbe();if(picking)finishPicking();}setPanel(open?'layers':null);}} onFlyTo={flyTo} detail={detail} regional={regionalAir} regionalError={regionalError} state={globalAir} paint={paint} weather={weather} weatherSettings={weatherSettings} onWeatherChange={(id,change)=>setWeatherSettings(current=>({...current,[id]:{...current[id],...change}}))} onChange={updatePaint}/>
    {picking&&ready&&<LayerPicker paint={paint} onChange={updatePaint} onDone={finishPicking}/>}
    {timeline&&<TimeBar timeline={timeline} mode={timeline.kind} modes={Object.keys(timelines).filter(k=>timelines[k])} onMode={changeMode}/>}
-   <div className="minimal-zoom" role="group" aria-label="Globe view"><button aria-label="Reset globe view" onClick={overview}><ArrowCounterClockwise size={17} weight="light"/></button><button className={`locate-button${locating?' is-locating':''}${userLocation?' is-found':''}`} aria-label="Show my location" aria-busy={locating||undefined} onClick={locate}><GpsFix size={17} weight={userLocation?'regular':'light'}/></button><span/><button aria-label="Zoom in" disabled={range.atMin} onClick={()=>{setZoom(z=>z+1);}}><Plus size={17} weight="light"/></button><button aria-label="Zoom out" disabled={range.atMax} onClick={()=>{setZoom(z=>z-1);}}><Minus size={17} weight="light"/></button></div>
+   <div className="minimal-zoom" role="group" aria-label="Globe view"><button aria-label="Reset globe view" onClick={overview}><ArrowCounterClockwise size={17} weight="light"/></button><button className={`locate-button${locating?' is-locating':''}${userLocation?' is-found':''}`} aria-label="Show my location" aria-busy={locating||undefined} onClick={()=>locate()}><GpsFix size={17} weight={userLocation?'regular':'light'}/></button><span/><button aria-label="Zoom in" disabled={range.atMin} onClick={()=>{setZoom(z=>z+1);}}><Plus size={17} weight="light"/></button><button aria-label="Zoom out" disabled={range.atMax} onClick={()=>{setZoom(z=>z-1);}}><Minus size={17} weight="light"/></button></div>
    <p className={`locate-status${locateError?' is-shown':''}`} role="status">{locateError}</p>
    </>}
   </div>
