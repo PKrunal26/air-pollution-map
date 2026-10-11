@@ -2,6 +2,7 @@
 Usage:
   python scripts/fetch-europe-history.py field ammonia /absolute/cache   # one field -> cache/europe-monthly-<field>.npz
   python scripts/fetch-europe-history.py build /absolute/cache           # -> public/data/europe-history*
+  python scripts/fetch-europe-history.py month /absolute/cache           # adds the months air-history.json gained
 The archive stores hourly 700x420 grids (north-to-south rows) in files of 193 hours
 (data/cams_europe/<field>/chunk_N.om, hour = N*193 + i). Months follow public/data/air-history.json one for one, so
 both timelines share frame indexes; months with no Europe data are null, and fields whose archive starts later are
@@ -31,13 +32,13 @@ def chunks(field):
     assert '<IsTruncated>false</IsTruncated>' in listing
     return sorted(int(k.split('chunk_')[1].split('.')[0]) for k in listing.split('<Key>')[1:] if 'chunk_' in k.split('<')[0])
 
-if mode == 'field':
-    field = sys.argv[2]
-    assert field in fields
-    start_h, stop_h = months[0][0], months[-1][1]
-    sums = np.zeros((len(months), 420, 700)); counts = np.zeros((len(months), 420, 700), np.uint16); negative = np.zeros(len(months), np.int64)
-    month_of = lambda h: next((k for k, (a, b) in enumerate(months) if a <= h < b), None)
-    for n in [n for n in chunks(field) if start_h // CHUNK <= n <= (stop_h - 1) // CHUNK]:
+def accumulate(field, ks):
+    """Per-cell sums and counts of valid hours for the months ks (indexes into months), one chunk at a time."""
+    sums = np.zeros((len(ks), 420, 700)); counts = np.zeros((len(ks), 420, 700), np.uint16); negative = np.zeros(len(ks), np.int64)
+    spans = [months[k] for k in ks]
+    month_of = lambda h: next((i for i, (a, b) in enumerate(spans) if a <= h < b), None)
+    wanted = {n for a, b in spans for n in range(a // CHUNK, (b - 1) // CHUNK + 1)}
+    for n in [n for n in chunks(field) if n in wanted]:
         path = cache / f'europe-{field}-{n}.om'
         if not path.exists():
             path.write_bytes(urllib.request.urlopen(f'{BASE}{field}/chunk_{n}.om', timeout=300).read())
@@ -53,23 +54,21 @@ if mode == 'field':
             sums[k][ok] += x[ok]; counts[k] += ok
         path.unlink()
         print(field, n, flush=True)
-    np.savez(cache / f'europe-monthly-{field}.npz', sums=sums, counts=counts, negative=negative)
-    sys.exit()
+    return sums, counts, negative
 
-# build: one float16 frame per month with data, layer-major in catalogue order; null where the archive has no month
-loaded = {f: np.load(cache / f'europe-monthly-{f}.npz') for f in fields}
-frames = []
-for k, (a, b) in enumerate(months):
+def write_frame(k, per_field):
+    """One float16 frame for month k, layer-major in catalogue order, or None when no field has the month."""
+    a, b = months[k]
     hours = b - a; layers, coverage, skipped = [], {}, {}
     for f in fields:
-        s, c = loaded[f]['sums'][k], loaded[f]['counts'][k].astype(float)
+        s, c, neg = per_field[f]; c = c.astype(float)
         assert c.max() <= hours
         mean = np.where(c > 0, s / np.maximum(c, 1), np.nan)
         # Cells with under 90% of the month's hours stay missing rather than becoming a biased mean.
         mean[c < .9 * hours] = np.nan
         assert np.isnan(mean).all() or np.nanmax(mean) < 65504
         coverage[f] = round(float(c.sum() / (hours * c.size)), 5)
-        skipped[f] = int(loaded[f]['negative'][k])
+        skipped[f] = int(neg)
         # 0.4° blocks: mean of the block's valid cells; a block with fewer than half valid stays missing.
         blocks = mean.reshape(105, 4, 175, 4)
         valid = np.isfinite(blocks).sum(axis=(1, 3))
@@ -77,23 +76,44 @@ for k, (a, b) in enumerate(months):
         layers.append(block.astype('<f4'))
     # Fields whose archive starts later stay NaN (missing, drawn as nothing) in the months before it starts.
     if max(coverage.values()) < .9:
-        frames.append(None)
         print(dt.datetime.fromtimestamp(a * 3600, dt.timezone.utc).strftime('%Y-%m'), 'no data', coverage)
-        continue
+        return None
     blob = np.stack(layers).astype('<f2').tobytes(order='C')
     name = f'europe-month-{k:02d}.bin'
     compressed = gzip.compress(blob, compresslevel=9, mtime=0)
     (out / (name + '.gz')).write_bytes(compressed)
-    frames.append({'validAt': a * 3600000, 'endAt': b * 3600000, 'hours': hours, 'coverage': coverage, 'negativeSkipped': skipped,
-                   'dataFile': name, 'compressedFile': name + '.gz', 'byteLength': len(blob),
-                   'compressedByteLength': len(compressed), 'sha256': hashlib.sha256(blob).hexdigest()})
     print(dt.datetime.fromtimestamp(a * 3600, dt.timezone.utc).strftime('%Y-%m'), len(compressed))
-manifest = {
-    'schema': 1, 'kind': 'modeled', 'domain': 'cams_europe', 'statistic': 'monthly mean',
-    'provider': 'CAMS European ensemble via Open-Meteo AWS Open Data', 'source': BASE, 'documentation': 'https://github.com/open-meteo/open-data',
-    'licence': 'CC BY 4.0', 'retrievedAt': dt.datetime.now(dt.timezone.utc).isoformat(), 'step': 'month',
-    'grid': {'width': 175, 'height': 105, 'step': .4, 'latStart': 30.2, 'lonStart': -24.8, 'order': 'south-to-north, west-to-east'},
-    'encoding': 'float16-le, layer-major', 'fieldOrder': fields, 'units': units, 'frames': frames,
-}
-(out / 'europe-history.json').write_text(json.dumps(manifest, separators=(',', ':')) + '\n')
-print(sum(f is not None for f in frames), 'of', len(frames), 'months')
+    return {'validAt': a * 3600000, 'endAt': b * 3600000, 'hours': hours, 'coverage': coverage, 'negativeSkipped': skipped,
+            'dataFile': name, 'compressedFile': name + '.gz', 'byteLength': len(blob),
+            'compressedByteLength': len(compressed), 'sha256': hashlib.sha256(blob).hexdigest()}
+
+def write_manifest(frames):
+    manifest = {
+        'schema': 1, 'kind': 'modeled', 'domain': 'cams_europe', 'statistic': 'monthly mean',
+        'provider': 'CAMS European ensemble via Open-Meteo AWS Open Data', 'source': BASE, 'documentation': 'https://github.com/open-meteo/open-data',
+        'licence': 'CC BY 4.0', 'retrievedAt': dt.datetime.now(dt.timezone.utc).isoformat(), 'step': 'month',
+        'grid': {'width': 175, 'height': 105, 'step': .4, 'latStart': 30.2, 'lonStart': -24.8, 'order': 'south-to-north, west-to-east'},
+        'encoding': 'float16-le, layer-major', 'fieldOrder': fields, 'units': units, 'frames': frames,
+    }
+    (out / 'europe-history.json').write_text(json.dumps(manifest, separators=(',', ':')) + '\n')
+    print(sum(f is not None for f in frames), 'of', len(frames), 'months')
+
+if mode == 'field':
+    field = sys.argv[2]
+    assert field in fields
+    sums, counts, negative = accumulate(field, range(len(months)))
+    np.savez(cache / f'europe-monthly-{field}.npz', sums=sums, counts=counts, negative=negative)
+elif mode == 'build':
+    loaded = {f: np.load(cache / f'europe-monthly-{f}.npz') for f in fields}
+    write_manifest([write_frame(k, {f: (loaded[f]['sums'][k], loaded[f]['counts'][k], loaded[f]['negative'][k]) for f in fields}) for k in range(len(months))])
+elif mode == 'month':
+    published = json.loads((out / 'europe-history.json').read_text())
+    assert published['fieldOrder'] == fields
+    frames = list(published['frames'])
+    assert all(f is None or f['validAt'] == a * 3600000 for f, (a, _) in zip(frames, months))
+    for k in range(len(frames), len(months)):
+        frames.append(write_frame(k, {f: tuple(x[0] for x in accumulate(f, [k])) for f in fields}))
+    if len(frames) > len(published['frames']):
+        write_manifest(frames)
+    else:
+        print('Europe history is up to date:', len(frames), 'months')
