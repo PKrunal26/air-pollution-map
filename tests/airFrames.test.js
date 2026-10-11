@@ -72,11 +72,11 @@ test('history manifest: consecutive calendar months, known fields, versioned fil
  line.dispose();
 });
 
-test('shipped history: 50 complete months from Aug 2022, PM2.5, dust and NO2, verified frames', async () => {
+test('shipped history: complete months from Aug 2022 (one more each month), PM2.5, dust and NO2, verified frames', async () => {
  const {parseHistoryManifest}=await import('../src/airFrames.js');
  const h=parseHistoryManifest(JSON.parse(readFileSync('public/data/air-history.json','utf8')));
  assert.equal(h.frames[0].validAt,Date.UTC(2022,7,1));
- assert.equal(h.frames.length,50);
+ assert.ok(h.frames.length>=50);
  assert.deepEqual(h.fieldOrder,['pm2_5','dust','nitrogen_dioxide']);
  const last=h.frames.at(-1),raw=gunzipSync(readFileSync(`public/data/${last.compressedFile}`));
  const bits=await decodeFrame(last,raw.buffer.slice(raw.byteOffset,raw.byteOffset+raw.byteLength));

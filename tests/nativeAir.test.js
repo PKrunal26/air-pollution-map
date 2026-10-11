@@ -11,7 +11,8 @@ const buffer=bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLeng
 test('native bulk fields preserve every finite nonnegative provider float on the full globe',async()=>{
  const data=await decodeNativeLayers(metadata,buffer);
  assert.deepEqual(data.grid,{width:900,height:451,step:.4,latStart:-90,lonStart:-180,order:'south-to-north, west-to-east'});
- assert.equal(data.validAt,Date.parse('2026-10-09T03:00:00Z'));
+ assert.equal(data.validAt,metadata.validAt);
+ assert.equal(data.validAt%(3*3600e3),0,'a 3-hourly hour');
  const view=new DataView(buffer),count=405900;
  metadata.fieldOrder.forEach((id,layer)=>{
   assert.equal(data.fields[id].length,count);
@@ -19,21 +20,15 @@ test('native bulk fields preserve every finite nonnegative provider float on the
  });
 });
 
-test('native grid orientation and units agree with independent API checks at seven geographic locations',async()=>{
+// The data is refreshed daily, so orientation is checked with contrasts that hold on any day: Saharan dust against the
+// Southern Ocean and the Pacific at the Sahara's latitude, and Southern Ocean sea salt against the Sahara.
+test('native grid orientation: Saharan dust and Southern Ocean sea salt sit where they belong',async()=>{
  const data=await decodeNativeLayers(metadata,buffer);
- const checks=[
-  [28.8,77.2,[78.9,34,85,135]],
-  [51.6,0,[4.6,5.2,62,0]],
-  [40,116.4,[109.7,83.3,28,7]],
-  [24,10.4,[6.8,.1,46,38]],
-  [0,-150,[3.8,0,25,0]],
-  [34,-118.4,[11.2,27.1,53,2]],
-  [-23.6,-46.8,[79.2,129.2,0,0]],
- ];
- for(const [lat,lon,values] of checks){
-  const index=Math.round((lat+90)/.4)*900+Math.round((lon+180)/.4);
-  LEGACY_FIELD_IDS.forEach((id,i)=>assert.ok(Math.abs(data.fields[id][index]-values[i])<.051));
- }
+ const mean=(id,lat0,lat1,lon0,lon1)=>{let sum=0,n=0;for(let lat=lat0;lat<=lat1;lat+=.4)for(let lon=lon0;lon<=lon1;lon+=.4){sum+=data.fields[id][Math.round((lat+90)/.4)*900+Math.round((lon+180)/.4)];n++;}return sum/n;};
+ const sahara=[18,28,-5,25],southernOcean=[-60,-50,-5,25],pacific=[18,28,-175,-145];
+ assert.ok(mean('dust',...sahara)>5*mean('dust',...southernOcean),'north and south swapped');
+ assert.ok(mean('dust',...sahara)>5*mean('dust',...pacific),'longitudes shifted');
+ assert.ok(mean('sea_salt_aerosol',...southernOcean)>mean('sea_salt_aerosol',...sahara),'north and south swapped');
 });
 
 test('truncated, altered and incorrectly labelled native data cannot render',async()=>{

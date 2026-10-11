@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {sphereSamples,sampleField,detailLevel,buildAirGeometry,WEIGHT_SCALE,DOT_COUNTS,REGIONAL_DOT_COUNTS,MIN_SPACING_PX,FULL_RADIUS,PLATE_OFFSET,dotSpacing,spacingPx,dotRadius,effectiveRadius,peakCoverage,plateOffset} from '../src/sphereSampling.js';
 import {LEGACY_FIELD_IDS,EUROPE_FIELD_IDS} from '../src/paintLayers.js';
-import {decodeEuropeLayers} from '../src/globalAir.js';
+import {decodeEuropeLayers,decodeNativeLayers} from '../src/globalAir.js';
 import {readFile} from 'node:fs/promises';
 
 test('equal-area dots have the same density in polar and equatorial bands, without repeated poles',()=>{
@@ -56,19 +56,25 @@ test('display sampling respects the date line, exact native nodes, and regional 
  data.domain='cams_europe';assert.equal(sampleField(data,'p',-90,180),30);
 });
 
-test('regional snapshot preserves floats, native orientation, shared time and API check values',async()=>{
+test('regional snapshot preserves floats, native orientation and shared time',async()=>{
  const meta=JSON.parse(await readFile(new URL('../public/data/europe-air-native.json',import.meta.url),'utf8'));
  const bytes=await readFile(new URL('../public/data/europe-air-native.bin',import.meta.url));
  const buffer=bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),data=await decodeEuropeLayers(meta,buffer);
- assert.equal(data.validAt,Date.parse('2026-10-09T03:00:00Z'));
+ const globalMeta=JSON.parse(await readFile(new URL('../public/data/global-air-native.json',import.meta.url),'utf8'));
+ const globalBytes=await readFile(new URL('../public/data/global-air-native.bin',import.meta.url));
+ const global=await decodeNativeLayers(globalMeta,globalBytes.buffer.slice(globalBytes.byteOffset,globalBytes.byteOffset+globalBytes.byteLength));
+ assert.equal(data.validAt,global.validAt);
  assert.deepEqual(meta.fieldOrder,EUROPE_FIELD_IDS);
  assert.equal(meta.units.grass_pollen,'grains/m³');
  assert.equal(meta.units.ammonia,'μg/m³');
  await assert.rejects(decodeEuropeLayers({...meta,units:{...meta.units,grass_pollen:'μg/m³'}},buffer),/unit/);
- assert.ok(data.fields.alder_pollen.every(v=>v===0),'Preserve true seasonal zeros');
  const view=new DataView(buffer);
  meta.fieldOrder.forEach((id,layer)=>{for(let i=0;i<294000;i++)assert.equal(data.fields[id][i],view.getFloat32((layer*294000+i)*4,true));});
- for(const [lat,lon,expected] of [[48.85,2.35,[6.5,12.9,41,0]],[60.15,24.95,[11.4,3.7,67,0]]])LEGACY_FIELD_IDS.forEach((id,i)=>assert.ok(Math.abs(sampleField(data,id,lat,lon)-expected[i])<.051));
+ // Data changes daily, so orientation is checked against the global model at the same hour: the two models agree
+ // over Europe (mean r 0.64 and 0.74 on the two days measured) and do not when the Europe grid is flipped (about 0).
+ const r=id=>{const a=[],b=[];for(let lat=36;lat<=70;lat++)for(let lon=-10;lon<=40;lon++){a.push(sampleField(global,id,lat,lon));b.push(sampleField(data,id,lat,lon));}
+  const m=v=>v.reduce((s,x)=>s+x,0)/v.length,ma=m(a),mb=m(b);let ab=0,aa=0,bb=0;a.forEach((x,i)=>{ab+=(x-ma)*(b[i]-mb);aa+=(x-ma)**2;bb+=(b[i]-mb)**2;});return ab/Math.sqrt(aa*bb);};
+ assert.ok(LEGACY_FIELD_IDS.reduce((s,id)=>s+r(id),0)/LEGACY_FIELD_IDS.length>.4,'Europe grid does not line up with the global grid');
  await assert.rejects(decodeEuropeLayers({...meta,grid:{...meta.grid,latStart:71.95}},buffer));
  const changed=buffer.slice(0);new Uint8Array(changed)[100]^=1;
  await assert.rejects(decodeEuropeLayers(meta,changed),/checksum/);

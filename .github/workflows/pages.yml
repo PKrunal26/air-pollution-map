@@ -1,18 +1,36 @@
 name: Deploy to GitHub Pages
+# Data is not in git: every run starts from the data published on the live site. The daily run replaces the forecast
+# with the newest model runs and adds any newly completed history month; a push only rebuilds the code around it.
 on:
   push:
     branches: [main]
+  schedule:
+    # After the 00 UTC CAMS global (about 10:00) and Europe (about 11:30) runs are published.
+    - cron: '30 12 * * *'
   workflow_dispatch:
+    inputs:
+      refresh:
+        description: Fetch the newest forecast and any new history month
+        type: boolean
+        default: true
+      rebuild_history:
+        description: Rebuild both histories from the archives (1-2 hours; only to recover lost data)
+        type: boolean
+        default: false
 permissions:
   contents: read
   pages: write
   id-token: write
+# Queued, never cancelled, so a push cannot cut a data refresh short.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      FETCH: ${{ github.event_name == 'schedule' || inputs.refresh || inputs.rebuild_history }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,6 +38,28 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Pull published data
+        run: npm run data:pull
+      - uses: actions/setup-python@v5
+        if: env.FETCH == 'true'
+        with:
+          python-version: '3.12'
+      - if: env.FETCH == 'true'
+        run: pip install omfiles==1.1.0 numpy==2.0.2
+      - name: Rebuild history
+        if: inputs.rebuild_history
+        run: |
+          printf '%s\n' pm2_5 dust nitrogen_dioxide | xargs -P 3 -I{} python scripts/fetch-air-history.py field {} "$RUNNER_TEMP/history"
+          python scripts/fetch-air-history.py build pm2_5,dust,nitrogen_dioxide "$RUNNER_TEMP/history"
+          python -c "import json;print('\n'.join(f['id'] for f in json.load(open('src/camsFields.json')) if f['coverage']=='europe'))" \
+            | xargs -P 4 -I{} python scripts/fetch-europe-history.py field {} "$RUNNER_TEMP/history"
+          python scripts/fetch-europe-history.py build "$RUNNER_TEMP/history"
+      - name: Refresh forecast and history
+        if: github.event_name == 'schedule' || inputs.refresh
+        run: |
+          python scripts/refresh-forecast.py "$RUNNER_TEMP/cams"
+          python scripts/fetch-air-history.py month pm2_5,dust,nitrogen_dioxide "$RUNNER_TEMP/history"
+          python scripts/fetch-europe-history.py month "$RUNNER_TEMP/history"
       - run: npm test
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
