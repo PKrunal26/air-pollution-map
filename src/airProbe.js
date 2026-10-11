@@ -41,6 +41,8 @@ export const WHO_GUIDELINES={
  carbon_monoxide:{level:4000,basis:'24-h'},
 };
 export const WHO_CAPTION='Compared with WHO 2021 24-hour guideline levels; a single hourly model value, not a daily average.';
+// Readout chip: only shown above the guideline, so clean air reads without clutter.
+export const whoTitle=who=>`${who.flag} ${who.basis} guideline (${formatAirValue(who.level)} µg/m³). ${WHO_CAPTION}`;
 export function whoTone(ratio){return ratio<=1?'ok':ratio<=2?'warn':'high';}
 export function formatWhoRatio(ratio){
  if(ratio>0&&ratio<.1)return '<0.1';
@@ -51,5 +53,5 @@ export function whoComparison(id,value,unit='μg/m³'){
  const guide=WHO_GUIDELINES[id];
  if(!guide||!Number.isFinite(value)||value<0||unit!=='μg/m³')return null;
  const ratio=value/guide.level;
- return {ratio,tone:whoTone(ratio),basis:guide.basis,level:guide.level,text:`×${formatWhoRatio(ratio)}`,label:`WHO ${guide.basis}`};
+ return {ratio,tone:whoTone(ratio),basis:guide.basis,level:guide.level,text:`×${formatWhoRatio(ratio)}`,label:`WHO ${guide.basis}`,flag:`${formatWhoRatio(ratio)}× WHO`};
 }

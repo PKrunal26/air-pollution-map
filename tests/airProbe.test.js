@@ -55,6 +55,7 @@ test('WHO 2021 guideline table and comparison tones',()=>{
  assert.equal(whoComparison('pm2_5',0).text,'×0.0');
  assert.equal(whoComparison('pm2_5',.1).text,'×<0.1');
  assert.equal(whoComparison('pm2_5',300).text,'×20');
+ assert.equal(whoComparison('pm2_5',18).flag,'1.2× WHO');
  assert.equal(whoTone(2),'warn');assert.equal(whoTone(2.01),'high');assert.equal(formatWhoRatio(.04),'<0.1');
 });
 test('no WHO comparison for fields without a guideline, other units or invalid values',()=>{

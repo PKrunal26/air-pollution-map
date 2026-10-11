@@ -4,7 +4,6 @@ import './styles.css';
 import {Plus,Minus,Info,ArrowCounterClockwise,GpsFix} from '@phosphor-icons/react';
 import Globe from './Globe';
 import CitySearch from './CitySearch';
-import AirQuality from './AirReadout.jsx';
 import AirComposition from './AirComposition';
 import ReadoutToggle from './ReadoutToggle';
 import {loadReadout,saveReadout} from './readoutPref';
@@ -23,7 +22,7 @@ import {guessRegion,locateUser,locationMessage,locationPermission} from './userL
 import {track} from './analytics';
 import './styles/shell.css';
 
-const LOADER_TIMEOUT=20000,noop=()=>()=>{},CHROME_INSET=176;
+const LOADER_TIMEOUT=20000,noop=()=>()=>{},CHROME_INSET=176,PHONE_HEADER=72;
 // ?embed=1 shows the globe only (for iframes); layers, surface and bg set the initial look.
 const OPTIONS=parseEmbedParams(typeof location!=='undefined'?location.search:''),EMBED=OPTIONS.embed;
 if(OPTIONS.bg)document.documentElement.style.setProperty('--embed-bg',OPTIONS.bg);
@@ -80,11 +79,11 @@ function App(){
  const frameIndex=useSyncExternalStore(timeline?.subscribe??noop,()=>timeline&&!timeline.atSnapshot?nearestFrame(timeline.position,timeline.count):-1);
  useEffect(()=>{
   if(!timeline||frameIndex<0){setFrameAir(null);setFrameEurope(null);return;}
-  if(!readout||!probe)return; // converted only while a readout is open
+  if(!(readout&&probe)&&!city)return; // converted only while a readout or place card is open
   const bits=timeline.bits(frameIndex),europeBits=timeline.europeBits(frameIndex);
   if(bits)setFrameAir(current=>current?.frame===frameIndex&&current.statistic===(timeline.manifest.statistic??null)?current:frameDataset(timeline.manifest,frameIndex,bits));
   setFrameEurope(current=>!europeBits?null:current?.frame===frameIndex&&current.statistic===(timeline.europe.statistic??null)?current:frameDataset(timeline.europe,frameIndex,europeBits));
- },[timeline,frameIndex,timeline?.version,readout,probe]);
+ },[timeline,frameIndex,timeline?.version,readout,probe,city]);
  // Europe frames download only while a Europe-only layer is on.
  const europeOn=EUROPE_ONLY_IDS.some(id=>paint[id]?.enabled);
  useEffect(()=>{Object.values(timelines).forEach(line=>line?.useEurope(europeOn));},[timelines,europeOn]);
@@ -110,9 +109,19 @@ function App(){
   locateUser().then(found=>{track('location/found');setUserLocation(found);setCity(null);flyTo(found.lat,found.lon,2.3,{mine:true});}).catch(e=>{track(`location/failed-${e?.code??'unknown'}`);setLocateError(locationMessage(e));}).finally(()=>setLocating(false));
  };
  const cameraRange=next=>setRange(current=>current.atMin===next.atMin&&current.atMax===next.atMax?current:{atMin:!!next.atMin,atMax:!!next.atMax});
- const probeCard=readout&&!!probe&&(!panel||panel==='layers');
+ // A searched place gets the same all-values card as a tapped spot; hovering elsewhere does not replace it.
+ const probeCard=readout&&!!probe&&(!panel||panel==='layers')&&(!!probe.pinned||!city);
+ const cityCard=!!city&&!(probeCard&&probe.pinned)&&(!panel||panel==='layers');
  const stacked=!!city||(probeCard&&!!probe.pinned);
  const viewShift=!EMBED&&desktop&&(panel==='layers'||stacked)?.14:0;
+ // Phones: the cards sit over the lower globe, so the globe rises to centre in the space between the header and them.
+ const stack=useRef(null),[viewLift,setViewLift]=useState(0),lifting=!EMBED&&!desktop&&stacked&&panel!=='layers';
+ useEffect(()=>{
+  const el=stack.current;if(!lifting||!el){setViewLift(0);return;}
+  const measure=()=>{const top=el.getBoundingClientRect().top;setViewLift(Math.max(0,Math.round(window.innerHeight/2-(PHONE_HEADER+top)/2)));};
+  const observer=new ResizeObserver(measure);observer.observe(el);window.addEventListener('resize',measure);measure();
+  return()=>{observer.disconnect();window.removeEventListener('resize',measure);};
+ },[lifting]);
  // Nothing to wait for when no enabled layer has data at the time shown.
  const noLayers=!PAINT_LAYERS.some(l=>paint[l.id]?.enabled&&(!frameFields||frameFields.has(l.id)));
  const ready=opened||timedOut||(globeReady&&(airVisible||globalAir.status==='error'||noLayers));
@@ -131,17 +140,22 @@ function App(){
  },[opened]);
  const updatePaint=(id,change)=>{if(change.enabled)track(`layer/${id}`);setPaint(current=>({...current,[id]:{...current[id],...change}}));};
  // Counts taps that keep a readout (not hover, not the viewer's own location).
- const probeChange=next=>{if(next?.pinned&&!next.mine)track('readout/pin');setProbe(next);};
+ // On phones a tapped spot also turns to the centre of the lifted globe, so the card never hides its pin.
+ const probeChange=next=>{
+  if(next?.pinned)setCity(null);
+  if(next?.pinned&&!next.mine&&!next.centred){track('readout/pin');if(!desktop&&!EMBED)setFlyTarget(t=>({key:(t?.key??0)+1,lat:next.lat,lon:next.lon,keepDistance:true,pin:{centred:true}}));}
+  setProbe(next);
+ };
  return <main className={`atlas-app${EMBED?' is-embed':''}${OPTIONS.bg?' has-bg':''}${panel==='layers'?' layers-open':''}${picking&&ready?' is-picking':''} surface-view-${surface}`} aria-busy={!ready||undefined}>
   <div className="atlas-interface" inert={!ready?true:undefined}>
-   <Globe onProbe={probeChange} readout={readout} probeEnabled={readout&&panel!=='search'} probeReset={probeReset} surface={surface} globalAir={globalAir.data} regionalAir={regionalAir} onDetail={setDetail} paint={paint} weatherData={weather.data} weatherSettings={weatherSettings} city={city} zoom={zoom} focus={focus} reset={reset} viewShift={viewShift} flyTarget={flyTarget} onCameraRange={cameraRange} onReady={()=>setGlobeReady(true)} onAirVisible={()=>setAirVisible(true)} onCity={chooseCity} onInteraction={interact} homeScale={OPTIONS.zoom} wheelModifier={EMBED} timeline={timeline} userLocation={userLocation} chromeInset={EMBED?0:CHROME_INSET}/>
+   <Globe onProbe={probeChange} readout={readout} probeEnabled={readout&&panel!=='search'} probeReset={probeReset} surface={surface} globalAir={globalAir.data} regionalAir={regionalAir} onDetail={setDetail} paint={paint} weatherData={weather.data} weatherSettings={weatherSettings} city={city} zoom={zoom} focus={focus} reset={reset} viewShift={viewShift} viewLift={viewLift} flyTarget={flyTarget} onCameraRange={cameraRange} onReady={()=>setGlobeReady(true)} onAirVisible={()=>setAirVisible(true)} onCity={chooseCity} onInteraction={interact} homeScale={OPTIONS.zoom} wheelModifier={EMBED} timeline={timeline} userLocation={userLocation} chromeInset={EMBED?0:CHROME_INSET}/>
    {!EMBED&&<>
    <header className="minimal-header">
     <button className="atlas-brand" aria-label="Return to overview" onClick={overview}><svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="12" stroke="currentColor" strokeWidth=".8"/><ellipse cx="16" cy="16" rx="6" ry="12" stroke="currentColor" strokeWidth=".8" transform="rotate(35 16 16)"/><path d="M4 16h24" stroke="currentColor" strokeWidth=".8"/></svg><span>Air Atlas</span></button>
     <nav aria-label="Explore the atlas"><CitySearch open={panel==='search'} onOpenChange={open=>setPanel(open?'search':null)} onChoose={chooseCity} onLocate={locate}/>{!touch&&<ReadoutToggle on={readout} onChange={changeReadout}/>}<a className="about-trigger" href="study.html" aria-label="About the data"><Info size={16} weight="light"/><span>About</span></a></nav>
    </header>
-   <div className="side-stack">
-    {city&&<AirQuality city={city} onClear={()=>setCity(null)} snapshotAt={globalAir.data?.validAt??null}/>}
+   <div ref={stack} className="side-stack">
+    {cityCard&&<AirComposition location={{lat:city.lat,lon:city.lon,pinned:true,name:city.name,country:city.country}} global={frameIndex>=0?{status:frameAir?'ready':'loading',data:frameAir}:globalAir} regional={frameIndex>=0?frameEurope:regionalAir} paint={paint} onClose={()=>setCity(null)}/>}
     {probeCard&&<AirComposition location={probe} global={frameIndex>=0?{status:frameAir?'ready':'loading',data:frameAir}:globalAir} regional={frameIndex>=0?frameEurope:regionalAir} paint={paint} onClose={clearProbe}/>}
    </div>
    <GlobalAirLegend surface={surface} onSurfaceChange={setSurface} panelOpen={panel==='layers'} onPanelChange={open=>{if(open){clearProbe();if(picking)finishPicking();}setPanel(open?'layers':null);}} onFlyTo={flyTo} detail={detail} regional={regionalAir} regionalError={regionalError} state={globalAir} paint={paint} weather={weather} weatherSettings={weatherSettings} onWeatherChange={(id,change)=>{if(change.enabled)track(`weather/${id}`);setWeatherSettings(current=>({...current,[id]:{...current[id],...change}}));}} onChange={updatePaint}/>
