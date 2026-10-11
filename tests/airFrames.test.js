@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
-import {parseFrameManifest,parseEuropeManifest,createTimeline,decodeFrame,halfToFloat,framePair,nearestFrame,frameDataset,FRAME_CELLS,EUROPE_CELLS} from '../src/airFrames.js';
+import {parseFrameManifest,parseEuropeManifest,createTimeline,decodeFrame,halfToFloat,framePair,nearestFrame,frameDataset,FRAME_CELLS} from '../src/airFrames.js';
 import {EUROPE_ONLY_IDS} from '../src/paintLayers.js';
 
 const manifest=JSON.parse(readFileSync('public/data/air-frames.json','utf8'));
@@ -97,7 +97,26 @@ test('Europe frames: one per forecast hour, and the snapshot hour decodes to the
  const data=frameDataset(europe,manifest.snapshotIndex,bits);
  const native=JSON.parse(readFileSync('public/data/europe-air-native.json','utf8')),values=new Float32Array(readFileSync('public/data/europe-air-native.bin').buffer.slice(0));
  assert.equal(data.domain,'cams_europe');
+ const EUROPE_CELLS=700*420;
  for(const id of EUROPE_ONLY_IDS){const layer=native.fieldOrder.indexOf(id);for(let i=0;i<EUROPE_CELLS;i+=331){const a=data.fields[id][i],b=values[layer*EUROPE_CELLS+i];assert.ok(Math.abs(a-b)<=Math.max(6e-8,Math.abs(b)*1e-3),`${id} ${i}: ${a} vs ${b}`);}}
+});
+
+test('Europe history months line up with the global months at 0.4°; months without Europe data are null', async () => {
+ const history=JSON.parse(readFileSync('public/data/air-history.json','utf8'));
+ const europe=parseEuropeManifest(JSON.parse(readFileSync('public/data/europe-history.json','utf8')),history,'history');
+ assert.equal(europe.grid.step,history.grid.step);
+ assert.ok(europe.frames.some(f=>f===null)&&europe.frames.filter(Boolean).length>=48);
+ assert.throws(()=>parseEuropeManifest(europe,history,'forecast'));
+ // Every field has values somewhere in the record (pollen is zero out of season, so months are checked together).
+ const seen=new Set();
+ for(const [k,entry] of europe.frames.entries()){
+  if(!entry)continue;
+  const raw=gunzipSync(readFileSync(`public/data/${entry.compressedFile}`));
+  const data=frameDataset(europe,k,await decodeFrame(entry,raw.buffer.slice(raw.byteOffset,raw.byteOffset+raw.byteLength)));
+  assert.equal(data.validAt,history.frames[k].validAt);
+  EUROPE_ONLY_IDS.forEach(id=>{if(data.fields[id].some(v=>v>0))seen.add(id);});
+ }
+ assert.deepEqual([...seen].sort(),[...EUROPE_ONLY_IDS].sort());
 });
 
 test('timeline fetches Europe frames only while a Europe-only layer is on', async () => {

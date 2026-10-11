@@ -56,9 +56,9 @@ function App(){
   if(globalAir.status!=='ready')return;
   const controller=new AbortController(),made=[],reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Forecast (48 h, 3-hourly) and history (monthly means since 2022) load independently; either can be missing.
-  // The forecast brings its Europe-only frames (same indexes) when they exist.
+  // Each timeline brings its Europe-only frames (same indexes) when they exist.
   const open=(kind,fetcher)=>fetcher(controller.signal).then(async manifest=>{
-   const europe=kind==='forecast'?await fetchEuropeManifest(manifest,controller.signal):null;
+   const europe=await fetchEuropeManifest(kind,manifest,controller.signal);
    const line=createTimeline(manifest,{reduced,kind,start:kind==='history'?manifest.frames.length-1:manifest.snapshotIndex,europe});made.push(line);
    const at=OPTIONS.time==null||OPTIONS.history!==(kind==='history')?-1:manifest.frames.findIndex(f=>f.validAt===OPTIONS.time);
    if(at>=0)line.seek(at);

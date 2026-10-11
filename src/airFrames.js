@@ -25,13 +25,16 @@ export function parseHistoryManifest(m){
  return m;
 }
 
-// Europe-only fields for the same forecast hours (europe-frames.json): one entry per global frame, same index and validAt.
-export const EUROPE_CELLS=700*420;
-export function parseEuropeManifest(m,global){
- const g=m?.grid;
- if(m?.schema!==1||m.kind!=='modeled'||m.domain!=='cams_europe'||m.encoding!=='float16-le, layer-major'||g?.width!==700||g.height!==420||g.step!==.1||g.latStart!==30.05||g.lonStart!==-24.95||JSON.stringify(m.fieldOrder)!==JSON.stringify(EUROPE_ONLY_IDS)||!Array.isArray(m.frames)||m.frames.length!==global.frames.length)throw new Error('Invalid Europe frame manifest');
+// Europe-only fields for the same forecast hours (europe-frames.json, 0.1° like the snapshot) or months
+// (europe-history.json, 0.4° like the global history): one entry per global frame, same index and validAt.
+// History months without Europe data are null.
+const EUROPE_GRIDS={forecast:{width:700,height:420,step:.1,latStart:30.05,lonStart:-24.95},history:{width:175,height:105,step:.4,latStart:30.2,lonStart:-24.8}};
+export function parseEuropeManifest(m,global,kind='forecast'){
+ const g=m?.grid,want=EUROPE_GRIDS[kind],prefix=kind==='history'?'europe-month':'europe-frame';
+ if(m?.schema!==1||m.kind!=='modeled'||m.domain!=='cams_europe'||m.encoding!=='float16-le, layer-major'||!want||Object.keys(want).some(k=>g?.[k]!==want[k])||JSON.stringify(m.fieldOrder)!==JSON.stringify(EUROPE_ONLY_IDS)||!Array.isArray(m.frames)||m.frames.length!==global.frames.length)throw new Error('Invalid Europe frame manifest');
  m.frames.forEach((f,i)=>{
-  if(f?.validAt!==global.frames[i].validAt||f.byteLength!==EUROPE_CELLS*m.fieldOrder.length*2||f.compressedFile!==`europe-frame-${String(i).padStart(2,'0')}.bin.gz`||!/^[a-f0-9]{64}$/.test(f.sha256??''))throw new Error('Invalid Europe frame entry');
+  if(f===null&&kind==='history')return;
+  if(f?.validAt!==global.frames[i].validAt||f.byteLength!==g.width*g.height*m.fieldOrder.length*2||f.compressedFile!==`${prefix}-${String(i).padStart(2,'0')}.bin.gz`||!/^[a-f0-9]{64}$/.test(f.sha256??''))throw new Error('Invalid Europe frame entry');
  });
  return m;
 }
@@ -164,11 +167,11 @@ export async function fetchFrameManifest(signal){
  return parseFrameManifest(await response.json());
 }
 
-// Europe frames for the forecast; null when absent or invalid (the Europe layers then show at the snapshot hour only).
-export async function fetchEuropeManifest(global,signal){
+// Europe frames for a timeline; null when absent or invalid (the Europe layers then show at the snapshot hour only).
+export async function fetchEuropeManifest(kind,global,signal){
  try{
-  const response=await fetch('data/europe-frames.json',{signal,cache:'no-cache'});
+  const response=await fetch(kind==='history'?'data/europe-history.json':'data/europe-frames.json',{signal,cache:'no-cache'});
   if(!response.ok)return null;
-  return parseEuropeManifest(await response.json(),global);
+  return parseEuropeManifest(await response.json(),global,kind);
  }catch(e){if(e.name==='AbortError')throw e;return null;}
 }
