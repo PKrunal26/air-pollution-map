@@ -22,7 +22,7 @@ export default function Loader({ready,progress,textureReady,downloaded,failed}){
   <div className="loader-mark">
    <svg width="88" height="88" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="12" stroke="currentColor" strokeWidth=".5"/><path d="M4 16h24M6.1 10.5h19.8M6.1 21.5h19.8" stroke="currentColor" strokeWidth=".4"/><g transform="rotate(35 16 16)"><ellipse className="loader-meridian" cx="16" cy="16" rx="6" ry="12" stroke="currentColor" strokeWidth=".5"/><ellipse className="loader-meridian loader-meridian-2" cx="16" cy="16" rx="6" ry="12" stroke="currentColor" strokeWidth=".5"/></g></svg>
   </div>
-  <p className="loader-name">Air Atlas</p>
+  <p className="loader-name">Who Owns the Air?</p>
   <div className="loader-bar" aria-hidden="true"><span style={{transform:`scaleX(${fraction})`}}/></div>
   <p className="loader-text">{label}</p>
  </div>;

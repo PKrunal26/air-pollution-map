@@ -37,7 +37,7 @@ test('client sends the key, retries 429 and maps auth errors',async()=>{
 test('dashboard splits pages from events and reads the detail lists',async()=>{
  const replies={
   'stats/total':{total:12,stats:[{day:'2026-10-11',daily:9}]},
-  'stats/hits':{hits:[{path:'/air-pollution-map/',path_id:11,title:'Air Atlas',count:10,event:false},{path:'study.html',path_id:12,title:'Study',count:2,event:false},{path:'layer/pm2_5',path_id:13,count:3,event:true}]},
+  'stats/hits':{hits:[{path:'/air-pollution-map/',path_id:11,title:'Who Owns the Air?',count:10,event:false},{path:'study.html',path_id:12,title:'Study',count:2,event:false},{path:'layer/pm2_5',path_id:13,count:3,event:true}]},
   'stats/locations':{stats:[{name:'India',count:7},{name:'',count:1}]},
  };
  const asked=[],client={get:async(path,params)=>{asked.push([path,params?.include_paths]);return replies[path]??{stats:[]};}};
@@ -45,7 +45,7 @@ test('dashboard splits pages from events and reads the detail lists',async()=>{
  assert.deepEqual(asked.find(([p])=>p==='stats/total')[1],'11,12');assert.equal(asked.find(([p])=>p==='stats/locations')[1],'11,12');
  assert.equal((await loadDashboard({get:async()=>({hits:[]})},'7d',NOW)).visitors,0);
  assert.equal(d.visitors,12);assert.equal(d.series.at(-1).value,9);assert.equal(d.series.length,7);
- assert.deepEqual(d.pages,[{name:'/air-pollution-map/',title:'Air Atlas',count:10},{name:'study.html',title:'Study',count:2}]);
+ assert.deepEqual(d.pages,[{name:'/air-pollution-map/',title:'Who Owns the Air?',count:10},{name:'study.html',title:'Study',count:2}]);
  assert.deepEqual(d.events,[{name:'layer/pm2_5',count:3}]);
  assert.deepEqual(d.locations,[{name:'India',count:7},{name:'Unknown',count:1}]);assert.equal(d.zone,'UTC');
  assert.deepEqual(d.toprefs,[]);

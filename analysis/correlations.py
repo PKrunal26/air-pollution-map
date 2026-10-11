@@ -1,4 +1,4 @@
-"""Spatial correlation study of the Air Atlas snapshot (CAMS global + Europe, ECMWF weather)."""
+"""Spatial correlation study of the Who Owns the Air? snapshot (CAMS global + Europe, ECMWF weather)."""
 import json, sys, numpy as np
 from pathlib import Path
 from PIL import Image
