@@ -1,5 +1,5 @@
 import catalog from './camsFields.json' with {type:'json'};
-import {WEATHER_LAYERS} from './weather.js';
+import {SUN_LAYER,WEATHER_LAYERS} from './weather.js';
 import {layerSpan} from './fieldStats.js';
 
 // Fixed display ranges, never health categories or comparable doses.
@@ -34,6 +34,6 @@ export function keyRows(paint,weatherSettings={},scales={}) {
   const s=mutedSpan(l,scales);
   return {id:l.id,label:l.label,name:l.name,colour:l.colour,hi:s?`${fmtSpan(s.floor)}–${fmtSpan(s.ceiling)} ${layerUnit(l)}`:`${l.range}+ ${layerUnit(l)}`,europe:l.coverage==='europe',muted:!!s};
  });
- const weather=WEATHER_LAYERS.filter(l=>weatherSettings?.[l.id]?.enabled).map(l=>({id:l.id,label:l.label,name:l.name,colour:l.colour,hi:l.hi,weather:true}));
+ const weather=[SUN_LAYER,...WEATHER_LAYERS].filter(l=>weatherSettings?.[l.id]?.enabled).map(l=>({id:l.id,label:l.label,name:l.name,colour:l.colour,hi:l.hi,weather:true}));
  return [...air,...weather];
 }

@@ -5,7 +5,10 @@ export const WEATHER_LAYERS=[
  {id:'temperature',label:'Temperature',name:'Temperature',colour:'#de9056',scale:'−40 — 40 °C',lo:'−40',hi:'40+ °C',defaultStrength:65},
  {id:'humidity',label:'Humidity',name:'Relative humidity',colour:'#1cb9cd',scale:'0 — 100 %',lo:'0',hi:'100 %',defaultStrength:55},
 ];
-export const initialWeather=()=>Object.fromEntries(WEATHER_LAYERS.map(l=>[l.id,{enabled:false,strength:l.defaultStrength}]));
+// Sun: day and night, the sun and the moon for the hour shown (SunLayer.js). Needs no data; kept with the weather
+// settings so it saves and clears with them. Strength is how dark night gets.
+export const SUN_LAYER={id:'sun',label:'Sun',name:'Sun',colour:'#e6d3a0',scale:'Day, night and the moon',defaultStrength:60};
+export const initialWeather=()=>Object.fromEntries([SUN_LAYER,...WEATHER_LAYERS].map(l=>[l.id,{enabled:false,strength:l.defaultStrength}]));
 export async function decodeWeather(meta,buffer){
  const g=meta?.grid,count=1440*721;
  if(meta?.schema!==1||meta.domain!=='ecmwf_ifs025'||meta.kind!=='modeled'||!Number.isFinite(meta.validAt)||meta.validAt<=0||g?.width!==1440||g.height!==721||g.step!==.25||g.latStart!==-90||g.lonStart!==-180||g.order!=='south-to-north, west-to-east'||meta.encoding!=='float32-le, layer-major'||meta.dataFile!=='weather-native.bin'||JSON.stringify(meta.fieldOrder)!==JSON.stringify(WEATHER_FIELDS)||meta.byteLength!==count*16||!(buffer instanceof ArrayBuffer)||buffer.byteLength!==meta.byteLength||!/^[a-f0-9]{64}$/.test(meta.sha256??''))throw new Error('Invalid weather encoding');

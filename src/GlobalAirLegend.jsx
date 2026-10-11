@@ -2,7 +2,7 @@ import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {SlidersHorizontal,X,CaretDown,ArrowSquareOut,ArrowRight} from '@phosphor-icons/react';
 import {PAINT_LAYERS,keyRows,layerUnit} from './paintLayers';
 import {scalesFor} from './fieldStats';
-import {WEATHER_LAYERS} from './weather';
+import {SUN_LAYER,WEATHER_LAYERS} from './weather';
 import GlobeSurface from './GlobeSurface';
 import './styles/panel.css';
 const TABS=[['air','Air quality'],['weather','Weather']],GROUPS=['Atmospheric context','Trace gases & aerosols','Europe only'];
@@ -27,6 +27,7 @@ function LayerRow({layer,setting,available,onChange,expanded,onExpand,weather=fa
    <label className="paint-strength"><span>Display intensity</span><output>{setting.strength}%</output><input type="range" min="0" max="100" step="5" value={setting.strength} aria-label={`${layer.name} display strength`} onChange={e=>onChange(layer.id,{strength:Number(e.target.value)})}/></label>
    {layer.id==='aerosol_optical_depth'&&<p className="layer-range">Whole atmospheric column at 550 nm.</p>}
    {layer.id==='pm10'&&<p className="layer-range">Includes fine particles; do not add to PM₂.₅.</p>}
+   {layer.id==='sun'&&<p className="layer-range">How dark night gets. Follows the time bar; off in History, which shows monthly means.</p>}
    {layer.id==='dust'&&<p className="layer-range">Overlaps particulate matter.</p>}
    {weather&&layer.id!=='wind'&&<div className={`weather-key key-${layer.id}`}/>}
   </div>}
@@ -55,11 +56,11 @@ export default function GlobalAirLegend({surface,onSurfaceChange,panelOpen,onPan
   const ids=TABS.map(t=>t[0]),i=ids.indexOf(id),next={ArrowRight:ids[(i+1)%ids.length],ArrowLeft:ids[(i-1+ids.length)%ids.length],Home:ids[0],End:ids[ids.length-1]}[e.key];
   if(!next)return;e.preventDefault();setTab(next);document.getElementById(`tab-${next}`)?.focus();
  };
- const row=(layer,weatherRow=false)=><LayerRow key={layer.id} layer={layer} setting={(weatherRow?weatherSettings:paint)[layer.id]} available={weatherRow?!!weather.data:!!(state.data?.fields[layer.id]||regional?.fields[layer.id])} weather={weatherRow} onChange={weatherRow?onWeatherChange:onChange} expanded={expanded===layer.id} onExpand={()=>setExpanded(current=>current===layer.id?null:layer.id)}/>;
+ const row=(layer,weatherRow=false)=><LayerRow key={layer.id} layer={layer} setting={(weatherRow?weatherSettings:paint)[layer.id]} available={layer===SUN_LAYER||(weatherRow?!!weather.data:!!(state.data?.fields[layer.id]||regional?.fields[layer.id]))} weather={weatherRow} onChange={weatherRow?onWeatherChange:onChange} expanded={expanded===layer.id} onExpand={()=>setExpanded(current=>current===layer.id?null:layer.id)}/>;
  return <>
   <button ref={launcher} className={`layers-launcher${panelOpen?' is-open':''}`} aria-controls="layer-controls" aria-expanded={panelOpen} onClick={()=>onPanelChange(!panelOpen)}><span className="launcher-icon">{panelOpen?<X size={17} weight="light"/>:<SlidersHorizontal size={17} weight="light"/>}</span><span>{panelOpen?'Hide layers':'Explore layers'}</span><small aria-label={`${active} active`}>{active}</small></button>
   <aside id="layer-controls" className={`layer-panel${panelOpen?' is-open':''}`} aria-label="Map layers" inert={!panelOpen?true:undefined}>
-   <div className="layer-panel-heading"><h2>Layers</h2><button className="layer-clear" disabled={!active} onClick={()=>{PAINT_LAYERS.forEach(l=>onChange(l.id,{enabled:false}));WEATHER_LAYERS.forEach(l=>onWeatherChange(l.id,{enabled:false}));}}>Clear</button><button className="icon-button" aria-label="Close layer panel" onClick={close}><X size={18} weight="light"/></button></div>
+   <div className="layer-panel-heading"><h2>Layers</h2><button className="layer-clear" disabled={!active} onClick={()=>{PAINT_LAYERS.forEach(l=>onChange(l.id,{enabled:false}));[SUN_LAYER,...WEATHER_LAYERS].forEach(l=>onWeatherChange(l.id,{enabled:false}));}}>Clear</button><button className="icon-button" aria-label="Close layer panel" onClick={close}><X size={18} weight="light"/></button></div>
    <div className="layer-tabs" role="tablist" aria-label="Layer categories">{TABS.map(([id,label])=><button key={id} id={`tab-${id}`} role="tab" aria-selected={tab===id} aria-controls={`panel-${id}`} tabIndex={tab===id?0:-1} onClick={()=>setTab(id)} onKeyDown={e=>moveTab(e,id)}>{label}</button>)}</div>
    <div className="layer-scroll scroll-fade" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
     {tab==='air'?<>
@@ -69,6 +70,7 @@ export default function GlobalAirLegend({surface,onSurfaceChange,panelOpen,onPan
      <div className="layer-group">{PAINT_LAYERS.filter(l=>l.group==='Pollutants').map(l=>row(l))}</div>
      {GROUPS.map(group=>{const on=groupActive(group),total=PAINT_LAYERS.filter(l=>l.group===group).length;return <details className={`layer-group-more${on?' has-active':''}`} key={group} open={openGroups.has(group)} onToggle={e=>{const open=e.currentTarget.open;setOpenGroups(current=>{if(current.has(group)===open)return current;const next=new Set(current);open?next.add(group):next.delete(group);return next;});}}><summary>{group}<span>{on>0&&<em className="group-active">{on} on</em>}<b>{total}</b><CaretDown size={13}/></span></summary>{group==='Europe only'&&!regional&&<p className="data-status" role="status">{regionalError?'European fields unavailable. Reload to retry.':'Loading European fields…'}</p>}{group==='Europe only'&&<p className="coverage-note">Pollen may be zero outside its season.</p>}{PAINT_LAYERS.filter(l=>l.group===group).map(l=>row(l))}</details>;})}
     </>:<>
+     {row(SUN_LAYER,true)}
      {WEATHER_LAYERS.map(l=>row(l,true))}
      {!weather.data&&<p className="data-status" role="status">{weather.status==='error'?'Weather unavailable. Reload to retry.':'Loading weather…'}</p>}
     </>}
