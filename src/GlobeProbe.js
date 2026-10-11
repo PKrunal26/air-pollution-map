@@ -46,6 +46,7 @@ export function createGlobeProbe({canvas,container,camera,onProbe,isEnabled}){
  return {
   clear,
   inspectCentre(){pendingCentre=true;},
+  showing:()=>!!location,
   // Pin a known place (e.g. the viewer's own position) without a pointer; extra fields ride along to onProbe.
   pinAt(point,extra){pointer=null;pendingCentre=false;worldPoint=point.clone().normalize();emit({...pointToLocation(worldPoint),pinned:true,...extra});},
   update({enabled,reset,time}){
