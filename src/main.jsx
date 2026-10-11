@@ -8,6 +8,7 @@ import AirQuality from './AirReadout.jsx';
 import AirComposition from './AirComposition';
 import ReadoutToggle from './ReadoutToggle';
 import {loadReadout,saveReadout} from './readoutPref';
+import {loadSettings,mergeLayers,saveSettings} from './settingsPref';
 import {fetchNativeLayers,fetchEuropeLayers} from './globalAir';
 import {initialPaint,PAINT_LAYERS,EUROPE_ONLY_IDS} from './paintLayers';
 import GlobalAirLegend from './GlobalAirLegend';
@@ -26,22 +27,29 @@ const LOADER_TIMEOUT=20000,noop=()=>()=>{},CHROME_INSET=176;
 // ?embed=1 shows the globe only (for iframes); layers, surface and bg set the initial look.
 const OPTIONS=parseEmbedParams(typeof location!=='undefined'?location.search:''),EMBED=OPTIONS.embed;
 if(OPTIONS.bg)document.documentElement.style.setProperty('--embed-bg',OPTIONS.bg);
+// Android in-app browsers (Reddit and others; "; wv)" in the user agent) lay a toolbar over the page bottom that only
+// hides on scroll, and this page never scrolls, so the phone dock sits higher there.
+if(typeof navigator!=='undefined'&&/; wv\)/.test(navigator.userAgent))document.documentElement.classList.add('in-app-browser');
+// Saved view from the last visit (not for embeds); URL options still win.
+const SAVED=EMBED?null:loadSettings();
 function useMedia(query){
  const [match,setMatch]=useState(()=>typeof matchMedia==='function'&&matchMedia(query).matches);
  useEffect(()=>{const list=matchMedia(query),update=()=>setMatch(list.matches);update();list.addEventListener('change',update);return()=>list.removeEventListener('change',update);},[query]);
  return match;
 }
 function App(){
- const [surface,setSurface]=useState(OPTIONS.surface??'charcoal');
- const [weather,setWeather]=useState({status:'loading',data:null}),[weatherSettings,setWeatherSettings]=useState(initialWeather);
+ const [surface,setSurface]=useState(OPTIONS.surface??SAVED?.surface??'charcoal');
+ const [weather,setWeather]=useState({status:'loading',data:null}),[weatherSettings,setWeatherSettings]=useState(()=>mergeLayers(initialWeather(),SAVED?.weather));
  const [regionalAir,setRegionalAir]=useState(null),[regionalError,setRegionalError]=useState(false),[detail,setDetail]=useState('overview');
- const [globalAir,setGlobalAir]=useState({status:'loading',data:null}),[paint,setPaint]=useState(()=>applyLayerSelection(initialPaint(),OPTIONS.layers));
+ const [globalAir,setGlobalAir]=useState({status:'loading',data:null}),[paint,setPaint]=useState(()=>OPTIONS.layers?applyLayerSelection(initialPaint(),OPTIONS.layers):mergeLayers(initialPaint(),SAVED?.paint));
  const [city,setCity]=useState(null),[zoom,setZoom]=useState(0),[focus,setFocus]=useState(0),[reset,setReset]=useState(0);
- const [panel,setPanel]=useState(null),[probe,setProbe]=useState(null),[probeReset,setProbeReset]=useState(0),[readout,setReadout]=useState(()=>!EMBED&&loadReadout());
+ const [panel,setPanel]=useState(null),[probe,setProbe]=useState(null),[probeReset,setProbeReset]=useState(0),[readoutPref,setReadout]=useState(()=>!EMBED&&loadReadout());
  const [flyTarget,setFlyTarget]=useState(null),[range,setRange]=useState({atMin:false,atMax:false});
  const [userLocation,setUserLocation]=useState(null),[locating,setLocating]=useState(false),[locateError,setLocateError]=useState('');
  const [globeReady,setGlobeReady]=useState(false),[airVisible,setAirVisible]=useState(false),[opened,setOpened]=useState(false),[timedOut,setTimedOut]=useState(false),[progress,setProgress]=useState({loaded:0,total:null});
  const desktop=useMedia('(min-width:701px)');
+ // Touch screens have no hover, so the readout is always on (tap to pin) and the toggle is hidden.
+ const touch=useMedia('(hover:none)'),readout=!EMBED&&(touch||readoutPref);
  // First visit only (not embedded, not when the URL picks layers): ask which pollutants to show.
  const [picking,setPicking]=useState(()=>!EMBED&&!OPTIONS.layers&&!loadOnboarded());
  const finishPicking=React.useCallback(()=>{saveOnboarded();setPicking(false);},[]);
@@ -82,6 +90,7 @@ function App(){
  useEffect(()=>{Object.values(timelines).forEach(line=>line?.useEurope(europeOn));},[timelines,europeOn]);
  // Layers with data at the time shown: the snapshot has every field; frames carry their own lists (null = snapshot).
  const frameFields=frameIndex>=0&&timeline?new Set([...timeline.manifest.fieldOrder,...(timeline.hasEurope(frameIndex)?timeline.europe.fieldOrder:[])]):null;
+ useEffect(()=>{if(!EMBED)saveSettings({paint,weather:weatherSettings,surface});},[paint,weatherSettings,surface]);
  useEffect(()=>{const timer=setTimeout(()=>setTimedOut(true),LOADER_TIMEOUT);return()=>clearTimeout(timer);},[]);
  useEffect(()=>{if(!locateError)return;const timer=setTimeout(()=>setLocateError(''),6000);return()=>clearTimeout(timer);},[locateError]);
  const touched=useRef(false);
@@ -129,7 +138,7 @@ function App(){
    {!EMBED&&<>
    <header className="minimal-header">
     <button className="atlas-brand" aria-label="Return to overview" onClick={overview}><svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="12" stroke="currentColor" strokeWidth=".8"/><ellipse cx="16" cy="16" rx="6" ry="12" stroke="currentColor" strokeWidth=".8" transform="rotate(35 16 16)"/><path d="M4 16h24" stroke="currentColor" strokeWidth=".8"/></svg><span>Air Atlas</span></button>
-    <nav aria-label="Explore the atlas"><CitySearch open={panel==='search'} onOpenChange={open=>setPanel(open?'search':null)} onChoose={chooseCity} onLocate={locate}/><ReadoutToggle on={readout} onChange={changeReadout}/><a className="about-trigger" href="study.html" aria-label="About the data"><Info size={16} weight="light"/><span>About</span></a></nav>
+    <nav aria-label="Explore the atlas"><CitySearch open={panel==='search'} onOpenChange={open=>setPanel(open?'search':null)} onChoose={chooseCity} onLocate={locate}/>{!touch&&<ReadoutToggle on={readout} onChange={changeReadout}/>}<a className="about-trigger" href="study.html" aria-label="About the data"><Info size={16} weight="light"/><span>About</span></a></nav>
    </header>
    <div className="side-stack">
     {city&&<AirQuality city={city} onClear={()=>setCity(null)} snapshotAt={globalAir.data?.validAt??null}/>}
