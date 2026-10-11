@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {LOCATE_OPTIONS,REGION_URL,guessRegion,locateUser,locationMessage,locationPermission} from '../src/userLocation.js';
+import {HOME_FALLBACK,LOCATE_OPTIONS,REGION_URL,guessRegion,homePoint,locateUser,locationMessage,locationPermission} from '../src/userLocation.js';
 
 const geo=result=>({getCurrentPosition:(ok,fail)=>result.error?fail(result.error):ok({coords:result.coords})});
 
@@ -42,4 +42,11 @@ test('guesses a rough region from the IP lookup',async()=>{
 test('always asks for a fresh fix, never a cached one',async()=>{
  let seen;await locateUser({getCurrentPosition:(ok,fail,options)=>{seen=options;ok({coords:{latitude:12.97,longitude:77.59}});}});
  assert.equal(seen,LOCATE_OPTIONS);assert.equal(seen.maximumAge,0);
+});
+
+test('home is the exact spot when known, else the IP region, else the default view',()=>{
+ const exact={lat:12.97,lon:77.59,accuracy:40},region={lat:13,lon:77.6};
+ assert.deepEqual(homePoint(exact,region),{lat:12.97,lon:77.59});
+ assert.deepEqual(homePoint(null,region),{lat:13,lon:77.6});
+ assert.deepEqual(homePoint(null,null),HOME_FALLBACK);
 });

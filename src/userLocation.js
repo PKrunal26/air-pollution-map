@@ -38,3 +38,8 @@ export async function guessRegion(fetchImpl=globalThis.fetch,signal){
   return {lat,lon};
  }catch{return null;}
 }
+
+// Where the overview button returns to: the viewer's exact spot if they shared it, otherwise their IP region,
+// otherwise the default view over Africa and Europe.
+export const HOME_FALLBACK={lat:18,lon:15};
+export const homePoint=(exact,region)=>{const p=exact??region;return p?{lat:p.lat,lon:p.lon}:HOME_FALLBACK;};

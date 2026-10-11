@@ -18,7 +18,7 @@ import {fetchFrameManifest,fetchHistoryManifest,fetchEuropeManifest,createTimeli
 import TimeBar from './TimeBar';
 import LayerPicker from './LayerPicker';
 import {loadOnboarded,saveOnboarded} from './onboarding';
-import {guessRegion,locateUser,locationMessage,locationPermission} from './userLocation';
+import {guessRegion,homePoint,locateUser,locationMessage,locationPermission} from './userLocation';
 import {track} from './analytics';
 import './styles/shell.css';
 
@@ -44,7 +44,7 @@ function App(){
  const [city,setCity]=useState(null),[zoom,setZoom]=useState(0),[focus,setFocus]=useState(0),[reset,setReset]=useState(0);
  const [panel,setPanel]=useState(null),[probe,setProbe]=useState(null),[probeReset,setProbeReset]=useState(0),[readoutPref,setReadout]=useState(()=>!EMBED&&loadReadout());
  const [flyTarget,setFlyTarget]=useState(null),[range,setRange]=useState({atMin:false,atMax:false});
- const [userLocation,setUserLocation]=useState(null),[locating,setLocating]=useState(false),[locateError,setLocateError]=useState('');
+ const [userLocation,setUserLocation]=useState(null),[region,setRegion]=useState(null),[locating,setLocating]=useState(false),[locateError,setLocateError]=useState('');
  const [globeReady,setGlobeReady]=useState(false),[airVisible,setAirVisible]=useState(false),[opened,setOpened]=useState(false),[timedOut,setTimedOut]=useState(false),[progress,setProgress]=useState({loaded:0,total:null});
  const desktop=useMedia('(min-width:701px)');
  // Touch screens have no hover, so the readout is always on (tap to pin) and the toggle is hidden.
@@ -134,7 +134,7 @@ function App(){
   locationPermission().then(state=>{
    if(!live)return;
    if(state==='granted')return locateUser().then(found=>{if(!live)return;setUserLocation(found);face(found);});
-   return guessRegion(fetch,controller.signal).then(face);
+   return guessRegion(fetch,controller.signal).then(found=>{if(live&&found)setRegion(found);face(found);});
   }).catch(()=>{});
   return()=>{live=false;controller.abort();};
  },[opened]);
@@ -148,7 +148,7 @@ function App(){
  };
  return <main className={`atlas-app${EMBED?' is-embed':''}${OPTIONS.bg?' has-bg':''}${panel==='layers'?' layers-open':''}${picking&&ready?' is-picking':''} surface-view-${surface}`} aria-busy={!ready||undefined}>
   <div className="atlas-interface" inert={!ready?true:undefined}>
-   <Globe onProbe={probeChange} readout={readout} probeEnabled={readout&&panel!=='search'} probeReset={probeReset} surface={surface} globalAir={globalAir.data} regionalAir={regionalAir} onDetail={setDetail} paint={paint} weatherData={weather.data} weatherSettings={weatherSettings} city={city} zoom={zoom} focus={focus} reset={reset} viewShift={viewShift} viewLift={viewLift} flyTarget={flyTarget} onCameraRange={cameraRange} onReady={()=>setGlobeReady(true)} onAirVisible={()=>setAirVisible(true)} onCity={chooseCity} onInteraction={interact} homeScale={OPTIONS.zoom} wheelModifier={EMBED} timeline={timeline} userLocation={userLocation} chromeInset={EMBED?0:CHROME_INSET}/>
+   <Globe home={homePoint(userLocation,region)} onProbe={probeChange} readout={readout} probeEnabled={readout&&panel!=='search'} probeReset={probeReset} surface={surface} globalAir={globalAir.data} regionalAir={regionalAir} onDetail={setDetail} paint={paint} weatherData={weather.data} weatherSettings={weatherSettings} city={city} zoom={zoom} focus={focus} reset={reset} viewShift={viewShift} viewLift={viewLift} flyTarget={flyTarget} onCameraRange={cameraRange} onReady={()=>setGlobeReady(true)} onAirVisible={()=>setAirVisible(true)} onCity={chooseCity} onInteraction={interact} homeScale={OPTIONS.zoom} wheelModifier={EMBED} timeline={timeline} userLocation={userLocation} chromeInset={EMBED?0:CHROME_INSET}/>
    {!EMBED&&<>
    <header className="minimal-header">
     <button className="atlas-brand" aria-label="Return to overview" onClick={overview}><svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="12" stroke="currentColor" strokeWidth=".8"/><ellipse cx="16" cy="16" rx="6" ry="12" stroke="currentColor" strokeWidth=".8" transform="rotate(35 16 16)"/><path d="M4 16h24" stroke="currentColor" strokeWidth=".8"/></svg><span>Who Owns the Air?</span></button>
