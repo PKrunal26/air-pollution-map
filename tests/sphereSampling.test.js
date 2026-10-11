@@ -38,6 +38,8 @@ test('detail level keeps lattice pitch on screen near or above the minimum, with
  }
  // Home view (1440x900: 454 px/unit at 1x, 908 at 2x) has an 7-10 px pitch, leaving real room for dot sizes.
  for(const ppu of [454,908]){const px=spacingPx(DOT_COUNTS[detailLevel(ppu,0)],ppu);assert.ok(px>=MIN_SPACING_PX&&px<10.5,`${px}`);}
+ // Europe-only layers are drawn from the regional set at every zoom, so at the home view its pitch matches the global one.
+ for(const ppu of [150,454,908])assert.equal(REGIONAL_DOT_COUNTS[detailLevel(ppu,0,REGIONAL_DOT_COUNTS)],DOT_COUNTS[detailLevel(ppu,0)]);
  assert.equal(detailLevel(10,3),0);
  assert.equal(detailLevel(1e6,0),DOT_COUNTS.length-1);
  const ppu=MIN_SPACING_PX*1.05/dotSpacing(DOT_COUNTS[3]);

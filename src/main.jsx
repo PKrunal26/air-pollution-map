@@ -9,12 +9,12 @@ import AirComposition from './AirComposition';
 import ReadoutToggle from './ReadoutToggle';
 import {loadReadout,saveReadout} from './readoutPref';
 import {fetchNativeLayers,fetchEuropeLayers} from './globalAir';
-import {initialPaint,PAINT_LAYERS} from './paintLayers';
+import {initialPaint,PAINT_LAYERS,EUROPE_ONLY_IDS} from './paintLayers';
 import GlobalAirLegend from './GlobalAirLegend';
 import Loader from './Loader';
 import {fetchWeather,initialWeather} from './weather';
 import {parseEmbedParams,applyLayerSelection} from './embedParams';
-import {fetchFrameManifest,fetchHistoryManifest,createTimeline,frameDataset,nearestFrame} from './airFrames';
+import {fetchFrameManifest,fetchHistoryManifest,fetchEuropeManifest,createTimeline,frameDataset,nearestFrame} from './airFrames';
 import TimeBar from './TimeBar';
 import LayerPicker from './LayerPicker';
 import {loadOnboarded,saveOnboarded} from './onboarding';
@@ -45,7 +45,7 @@ function App(){
  // First visit only (not embedded, not when the URL picks layers): ask which pollutants to show.
  const [picking,setPicking]=useState(()=>!EMBED&&!OPTIONS.layers&&!loadOnboarded());
  const finishPicking=React.useCallback(()=>{saveOnboarded();setPicking(false);},[]);
- const [timelines,setTimelines]=useState({forecast:null,history:null}),[mode,setMode]=useState(OPTIONS.history?'history':'forecast'),[frameAir,setFrameAir]=useState(null);
+ const [timelines,setTimelines]=useState({forecast:null,history:null}),[mode,setMode]=useState(OPTIONS.history?'history':'forecast'),[frameAir,setFrameAir]=useState(null),[frameEurope,setFrameEurope]=useState(null);
  const timeline=timelines[mode]??timelines.forecast;
  const changeMode=next=>{timeline?.pause();setMode(next);track(`time/${next}`);};
  useEffect(()=>{if(EMBED)return;const controller=new AbortController();fetchWeather(controller.signal).then(data=>setWeather({status:'ready',data})).catch(e=>{if(e.name!=='AbortError')setWeather({status:'error',data:null});});return()=>controller.abort();},[]);
@@ -56,8 +56,10 @@ function App(){
   if(globalAir.status!=='ready')return;
   const controller=new AbortController(),made=[],reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Forecast (48 h, 3-hourly) and history (monthly means since 2022) load independently; either can be missing.
-  const open=(kind,fetcher)=>fetcher(controller.signal).then(manifest=>{
-   const line=createTimeline(manifest,{reduced,kind,start:kind==='history'?manifest.frames.length-1:manifest.snapshotIndex});made.push(line);
+  // The forecast brings its Europe-only frames (same indexes) when they exist.
+  const open=(kind,fetcher)=>fetcher(controller.signal).then(async manifest=>{
+   const europe=kind==='forecast'?await fetchEuropeManifest(manifest,controller.signal):null;
+   const line=createTimeline(manifest,{reduced,kind,start:kind==='history'?manifest.frames.length-1:manifest.snapshotIndex,europe});made.push(line);
    const at=OPTIONS.time==null||OPTIONS.history!==(kind==='history')?-1:manifest.frames.findIndex(f=>f.validAt===OPTIONS.time);
    if(at>=0)line.seek(at);
    if(OPTIONS.play&&(kind==='history')===OPTIONS.history)line.play();
@@ -69,11 +71,17 @@ function App(){
  // Readout away from the snapshot hour: values from the nearest real frame (never a blend), labelled with its time.
  const frameIndex=useSyncExternalStore(timeline?.subscribe??noop,()=>timeline&&!timeline.atSnapshot?nearestFrame(timeline.position,timeline.count):-1);
  useEffect(()=>{
-  if(!timeline||frameIndex<0){setFrameAir(null);return;}
+  if(!timeline||frameIndex<0){setFrameAir(null);setFrameEurope(null);return;}
   if(!readout||!probe)return; // converted only while a readout is open
-  const bits=timeline.bits(frameIndex);
-  if(bits)setFrameAir(current=>current?.frame===frameIndex?current:frameDataset(timeline.manifest,frameIndex,bits));
+  const bits=timeline.bits(frameIndex),europeBits=timeline.europeBits(frameIndex);
+  if(bits)setFrameAir(current=>current?.frame===frameIndex&&current.statistic===(timeline.manifest.statistic??null)?current:frameDataset(timeline.manifest,frameIndex,bits));
+  setFrameEurope(current=>!europeBits?null:current?.frame===frameIndex&&current.statistic===(timeline.europe.statistic??null)?current:frameDataset(timeline.europe,frameIndex,europeBits));
  },[timeline,frameIndex,timeline?.version,readout,probe]);
+ // Europe frames download only while a Europe-only layer is on.
+ const europeOn=EUROPE_ONLY_IDS.some(id=>paint[id]?.enabled);
+ useEffect(()=>{Object.values(timelines).forEach(line=>line?.useEurope(europeOn));},[timelines,europeOn]);
+ // Layers with data at the time shown: the snapshot has every field; frames carry their own lists (null = snapshot).
+ const frameFields=frameIndex>=0&&timeline?new Set([...timeline.manifest.fieldOrder,...(timeline.hasEurope(frameIndex)?timeline.europe.fieldOrder:[])]):null;
  useEffect(()=>{const timer=setTimeout(()=>setTimedOut(true),LOADER_TIMEOUT);return()=>clearTimeout(timer);},[]);
  useEffect(()=>{if(!locateError)return;const timer=setTimeout(()=>setLocateError(''),6000);return()=>clearTimeout(timer);},[locateError]);
  const touched=useRef(false);
@@ -96,7 +104,8 @@ function App(){
  const probeCard=readout&&!!probe&&(!panel||panel==='layers');
  const stacked=!!city||(probeCard&&!!probe.pinned);
  const viewShift=!EMBED&&desktop&&(panel==='layers'||stacked)?.14:0;
- const noLayers=!PAINT_LAYERS.some(l=>paint[l.id]?.enabled);
+ // Nothing to wait for when no enabled layer has data at the time shown.
+ const noLayers=!PAINT_LAYERS.some(l=>paint[l.id]?.enabled&&(!frameFields||frameFields.has(l.id)));
  const ready=opened||timedOut||(globeReady&&(airVisible||globalAir.status==='error'||noLayers));
  useEffect(()=>{if(ready)setOpened(true);},[ready]);
  // Once the globe is up, turn it to the viewer's region without asking: their exact spot (and marker) if location was
@@ -124,7 +133,7 @@ function App(){
    </header>
    <div className="side-stack">
     {city&&<AirQuality city={city} onClear={()=>setCity(null)} snapshotAt={globalAir.data?.validAt??null}/>}
-    {probeCard&&<AirComposition location={probe} global={frameIndex>=0?{status:frameAir?'ready':'loading',data:frameAir}:globalAir} regional={frameIndex>=0?null:regionalAir} paint={paint} onClose={clearProbe}/>}
+    {probeCard&&<AirComposition location={probe} global={frameIndex>=0?{status:frameAir?'ready':'loading',data:frameAir}:globalAir} regional={frameIndex>=0?frameEurope:regionalAir} paint={paint} onClose={clearProbe}/>}
    </div>
    <GlobalAirLegend surface={surface} onSurfaceChange={setSurface} panelOpen={panel==='layers'} onPanelChange={open=>{if(open){clearProbe();if(picking)finishPicking();}setPanel(open?'layers':null);}} onFlyTo={flyTo} detail={detail} regional={regionalAir} regionalError={regionalError} state={globalAir} paint={paint} weather={weather} weatherSettings={weatherSettings} onWeatherChange={(id,change)=>{if(change.enabled)track(`weather/${id}`);setWeatherSettings(current=>({...current,[id]:{...current[id],...change}}));}} onChange={updatePaint}/>
    {picking&&ready&&<LayerPicker paint={paint} onChange={updatePaint} onDone={finishPicking}/>}

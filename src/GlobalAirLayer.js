@@ -21,13 +21,15 @@ function oklab([r,g,b]){
 }
 const LABS=PAINT_LAYERS.map(l=>oklab(l.rgb)),INK_L=LABS.reduce((s,v)=>s+v[0],0)/LABS.length;
 const REGIONAL_FAR=3.2,REGIONAL_KEEP_MS=8000;
-// Time bar: frames are 900x451 half-float texture arrays (one layer per global field), sampled per dot in the vertex
-// shader and blended with frameMix, so playback needs no geometry rebuild. Missing cells (NaN) draw nothing.
-const FRAME_W=900,FRAME_H=451,KEEP_TEXTURES=3;
-function frameTexture(bits){
- const t=new THREE.DataArrayTexture(bits,FRAME_W,FRAME_H,bits.length/(FRAME_W*FRAME_H));
+// Time bar: frames are half-float texture arrays (one layer per field; 900x451 global, 700x420 Europe-only), sampled
+// per dot in the vertex shader and blended with frameMix, so playback needs no geometry rebuild. Missing cells (NaN)
+// draw nothing. The global set wraps at the date line; the Europe box clamps.
+const FRAME_W=900,FRAME_H=451,KEEP_TEXTURES=6;
+const GLOBAL_FRAME_GRID={lonStart:-180,latStart:-90,step:.4,width:FRAME_W,height:FRAME_H};
+function frameTexture(bits,w=FRAME_W,h=FRAME_H,wrap=true){
+ const t=new THREE.DataArrayTexture(bits,w,h,bits.length/(w*h));
  t.format=THREE.RedFormat;t.type=THREE.HalfFloatType;t.internalFormat='R16F';
- t.minFilter=t.magFilter=THREE.LinearFilter;t.wrapS=THREE.RepeatWrapping;t.wrapT=THREE.ClampToEdgeWrapping;
+ t.minFilter=t.magFilter=THREE.LinearFilter;t.wrapS=wrap?THREE.RepeatWrapping:THREE.ClampToEdgeWrapping;t.wrapT=THREE.ClampToEdgeWrapping;
  t.generateMipmaps=false;t.unpackAlignment=2;t.needsUpdate=true;return t;
 }
 const reduced=()=>typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -71,7 +73,7 @@ function toGeometry(g) {
 }
 export function createGlobalAirLayer(scene) {
 const blank=frameTexture(new Uint16Array(FRAME_W*FRAME_H));
- const uniforms={halfView:{value:new THREE.Vector2(1,1)},spacing:{value:.01},regionMix:{value:0},isRegion:{value:0},regionBounds:{value:new THREE.Vector4(-25,30,45,72)},timeMode:{value:0},frameMix:{value:0},frameA:{value:blank},frameB:{value:blank}};
+ const uniforms={halfView:{value:new THREE.Vector2(1,1)},spacing:{value:.01},regionMix:{value:0},isRegion:{value:0},regionBounds:{value:new THREE.Vector4(-25,30,45,72)},timeMode:{value:0},frameMix:{value:0},frameA:{value:blank},frameB:{value:blank},frameOrigin:{value:new THREE.Vector3(-180,-90,.4)},frameSize:{value:new THREE.Vector2(FRAME_W,FRAME_H)}};
  for(let i=0;i<GROUPS;i++){
   for(const n of ['amount','regionalFields','globalFields','plateX','plateY','ink','frameLayer','frameLo','frameSpan'])uniforms[`${n}${i}`]={value:new THREE.Vector4()};
  }
@@ -82,7 +84,7 @@ const blank=frameTexture(new Uint16Array(FRAME_W*FRAME_H));
  const material=new THREE.ShaderMaterial({uniforms,
   vertexShader:`precision highp sampler2DArray;
    attribute vec2 location;uniform vec2 halfView;uniform float spacing;uniform float regionMix;uniform float isRegion;uniform vec4 regionBounds;varying vec4 invM;varying float spritePx;
-   uniform float timeMode;uniform float frameMix;uniform sampler2DArray frameA;uniform sampler2DArray frameB;
+   uniform float timeMode;uniform float frameMix;uniform sampler2DArray frameA;uniform sampler2DArray frameB;uniform vec3 frameOrigin;uniform vec2 frameSize;
    ${sequence(i=>`attribute vec4 sampleWeights${i};uniform vec4 amount${i};uniform vec4 regionalFields${i};uniform vec4 globalFields${i};uniform vec4 frameLayer${i};uniform vec4 frameLo${i};uniform vec4 frameSpan${i};varying vec4 radius${i};`)}
    // Display weight of one field at this dot: linear blend of the two frames' values, then the layer's display scale.
    float frameWeight(float layer,float lo,float span,float amount,vec2 uv){
@@ -92,7 +94,7 @@ const blank=frameTexture(new Uint16Array(FRAME_W*FRAME_H));
     return clamp((v-lo)/span,0.,1.);
    }
    void main(){
-    vec2 frameUv=vec2(((location.x+180.)/.4+.5)/${FRAME_W}.,((location.y+90.)/.4+.5)/${FRAME_H}.);
+    vec2 frameUv=((location-frameOrigin.xy)/frameOrigin.z+.5)/frameSize;
     vec4 mv=modelViewMatrix*vec4(position,1.);float w=-mv.z;mat3 rot=mat3(modelViewMatrix);
     float th=radians(location.x),ph=radians(location.y);float st=sin(th),ct=cos(th),sp=sin(ph),cp=cos(ph);
     vec3 e=rot*vec3(-st,0.,-ct),n=rot*vec3(-sp*ct,cp,sp*st);
@@ -175,9 +177,9 @@ const blank=frameTexture(new Uint16Array(FRAME_W*FRAME_H));
   renderer.setRenderTarget(previous);renderer.setClearColor(clear,alpha);
  };
  const builder=createBuilder(),geometries=new Map(),pending=new Set(),frameTextures=new Map();
- const textureFor=(index,bits)=>{ // index: '<timeline kind>:<frame>'
+ const textureFor=(index,bits,grid=GLOBAL_FRAME_GRID)=>{ // index: '[eu:]<timeline kind>:<frame>'
   let t=frameTextures.get(index);
-  if(!t||t.image.data!==bits){t?.dispose();t=frameTexture(bits);}
+  if(!t||t.image.data!==bits){t?.dispose();t=frameTexture(bits,grid.width,grid.height,grid===GLOBAL_FRAME_GRID);}
   frameTextures.delete(index);frameTextures.set(index,t);
   for(const [k,v] of frameTextures){if(frameTextures.size<=KEEP_TEXTURES)break;if(v!==t&&k!==index){v.dispose();frameTextures.delete(k);}}
   return t;
@@ -221,10 +223,12 @@ const blank=frameTexture(new Uint16Array(FRAME_W*FRAME_H));
    const pxPerUnit=height*pixelRatio/2/(Math.tan(camera.fov*Math.PI/360)*Math.max(.05,distance-1));
    level=detailLevel(pxPerUnit,level);regionalLevel=detailLevel(pxPerUnit,regionalLevel,REGIONAL_DOT_COUNTS);
    if(data){ensureLevel(level);display(shown(level));}
-   // While the time bar is away from the snapshot hour only the global frames are drawn (no European layer).
-   const regionAvailable=!frames&&!!(regional&&data&&regional.validAt===data.validAt);
-   const regionOnlyEnabled=regionAvailable&&PAINT_LAYERS.some((l,i)=>strengths[i]>0&&regional.fields[l.id]&&!data.fields[l.id]);
-   const bounds=regionAvailable?gridBounds(regional.grid):null;
+   // Away from the snapshot hour the frames are drawn: global frames on the global marks, Europe-only frames (when
+   // loaded) on the regional marks. The finer Europe copies of global fields exist only in the snapshot.
+   const regionReady=!!(regional&&data&&regional.validAt===data.validAt);
+   const regionAvailable=!frames&&regionReady,europe=regionReady?frames?.europe??null:null;
+   const regionOnlyEnabled=frames?!!europe&&PAINT_LAYERS.some((l,i)=>strengths[i]>0&&europe.fields.includes(l.id)):regionAvailable&&PAINT_LAYERS.some((l,i)=>strengths[i]>0&&regional.fields[l.id]&&!data.fields[l.id]);
+   const bounds=regionReady?gridBounds(regional.grid):null;
    // The regional set is small (~180k dots, ~15 MB) and rebuilds in the worker in well under a second, so it is
    // released after the camera has stayed far out for a while and rebuilt on the way back in (prefetch at 2.4).
    if(regionalGeometry&&distance>REGIONAL_FAR&&!regionOnlyEnabled){
@@ -232,25 +236,35 @@ const blank=frameTexture(new Uint16Array(FRAME_W*FRAME_H));
     if(now-farSince>REGIONAL_KEEP_MS){regionalMarks.geometry=new THREE.BufferGeometry();release(regionalGeometry);regionalGeometry=null;regionalBuilt=-1;regionalMarks.visible=false;farSince=0;}
    }else farSince=0;
    // Start the regional build before it is needed (well outside the 1.7 crossfade start).
-   if(regionAvailable&&(distance<2.4||regionOnlyEnabled))ensureRegional(bounds,regionalLevel);
+   if(regionReady&&((regionAvailable&&distance<2.4)||regionOnlyEnabled))ensureRegional(bounds,regionalLevel);
    // Global marks only fade once regional marks exist, and the crossfade eases in after a late build.
    const ramp=regionalGeometry?(reduced()?1:Math.min(1,(performance.now()-regionalReadyAt)/350)):0;
    const regionMix=regionAvailable?THREE.MathUtils.smoothstep(1.7-distance,0,.25)*ramp:0;
    if(regionalGeometry&&regionalMarks.geometry!==regionalGeometry)regionalMarks.geometry=regionalGeometry;
    const plate=PAINT_LAYERS.map((_,i)=>plateOffset(i));
    // Near-uniform fields (e.g. ozone) get muted ink: lower plate coverage (opacity), same hue, applied before the commutative mix.
-   const gs=scalesFor(data,PAINT_LAYERS),rs=scalesFor(regionAvailable?regional:null,PAINT_LAYERS,gs);
+   const gs=scalesFor(data,PAINT_LAYERS),rs=scalesFor(regionReady?regional:null,PAINT_LAYERS,gs);
    const inkOf=PAINT_LAYERS.map(l=>(gs[l.id]??rs[l.id])?.emphasis==='muted'?MUTED_INK:1);
    // Frames use the snapshot's display scales, so muted layers keep one fixed baseline through playback.
    // Texture layer per paint layer; -1 (draws nothing) for fields the frames do not carry, e.g. in the monthly history.
    const frameLayer=PAINT_LAYERS.map(l=>(frames?.fields??GLOBAL_FIELD_IDS).indexOf(l.id));
    const frameLo=PAINT_LAYERS.map(l=>gs[l.id]?.emphasis==='muted'?gs[l.id].floor:0);
    const frameSpan=PAINT_LAYERS.map(l=>gs[l.id]?.emphasis==='muted'?gs[l.id].ceiling-gs[l.id].floor:l.range);
-   material.uniforms.timeMode.value=frames?1:0;
+   const europeLayer=PAINT_LAYERS.map(l=>europe?europe.fields.indexOf(l.id):-1);
+   const europeLo=PAINT_LAYERS.map(l=>rs[l.id]?.emphasis==='muted'?rs[l.id].floor:0);
+   const europeSpan=PAINT_LAYERS.map(l=>rs[l.id]?.emphasis==='muted'?rs[l.id].ceiling-rs[l.id].floor:l.range);
+   material.uniforms.timeMode.value=frames?1:0;regionalMaterial.uniforms.timeMode.value=frames?1:0;
    if(frames){
     material.uniforms.frameA.value=textureFor(`${frames.key}:${frames.a}`,frames.bitsA);
     material.uniforms.frameB.value=textureFor(`${frames.key}:${frames.b}`,frames.bitsB);
     material.uniforms.frameMix.value=frames.t;
+   }
+   if(europe){
+    const g=europe.grid;
+    regionalMaterial.uniforms.frameA.value=textureFor(`eu:${frames.key}:${frames.a}`,europe.bitsA,g);
+    regionalMaterial.uniforms.frameB.value=textureFor(`eu:${frames.key}:${frames.b}`,europe.bitsB,g);
+    regionalMaterial.uniforms.frameMix.value=frames.t;
+    regionalMaterial.uniforms.frameOrigin.value.set(g.lonStart,g.latStart,g.step);regionalMaterial.uniforms.frameSize.value.set(g.width,g.height);
    }
    composite.material.uniforms.contrast.value=surface==='white'?1.8:surface==='charcoal'?.85:1;
    [material,regionalMaterial].forEach(m=>{
@@ -260,22 +274,23 @@ const blank=frameTexture(new Uint16Array(FRAME_W*FRAME_H));
     for(let i=0;i<GROUPS;i++){
      const lanes=Array.from({length:4},(_,j)=>i*4+j);
      m.uniforms[`amount${i}`].value.fromArray(lanes.map(k=>strengths[k]??0));
-     m.uniforms[`regionalFields${i}`].value.fromArray(lanes.map(k=>regionAvailable&&regional.fields[PAINT_LAYERS[k]?.id]?1:0));
+     m.uniforms[`regionalFields${i}`].value.fromArray(lanes.map(k=>(frames?europeLayer[k]>=0:regionAvailable&&regional.fields[PAINT_LAYERS[k]?.id])?1:0));
      m.uniforms[`globalFields${i}`].value.fromArray(lanes.map(k=>data?.fields[PAINT_LAYERS[k]?.id]?1:0));
      m.uniforms[`ink${i}`].value.fromArray(lanes.map(k=>inkOf[k]??1));
      m.uniforms[`plateX${i}`].value.fromArray(lanes.map(k=>plate[k]?.[0]??0));
      m.uniforms[`plateY${i}`].value.fromArray(lanes.map(k=>plate[k]?.[1]??0));
-     m.uniforms[`frameLayer${i}`].value.fromArray(lanes.map(k=>frameLayer[k]??-1));
-     m.uniforms[`frameLo${i}`].value.fromArray(lanes.map(k=>frameLo[k]??0));
-     m.uniforms[`frameSpan${i}`].value.fromArray(lanes.map(k=>frameSpan[k]??1));
+     const own=m===material;
+     m.uniforms[`frameLayer${i}`].value.fromArray(lanes.map(k=>(own?frameLayer[k]:europeLayer[k])??-1));
+     m.uniforms[`frameLo${i}`].value.fromArray(lanes.map(k=>(own?frameLo[k]:europeLo[k])??0));
+     m.uniforms[`frameSpan${i}`].value.fromArray(lanes.map(k=>(own?frameSpan[k]:europeSpan[k])??1));
     }
     if(bounds)m.uniforms.regionBounds.value.set(bounds.west,bounds.south,bounds.east,bounds.north);
    });
    marks.visible=!!data&&marks.geometry.getAttribute('position')!==undefined&&strengths.some((s,i)=>s>0&&data.fields[PAINT_LAYERS[i].id]);
-   // Reported after the frame that first draws global dots has been rendered.
-   if(!reported&&marks.visible){reported=true;requestAnimationFrame(()=>{if(!disposed)onVisible?.();});}
    regionalMarks.visible=!!regionalGeometry&&(regionMix>0||regionOnlyEnabled)&&strengths.some(s=>s>0);
    composite.visible=marks.visible||regionalMarks.visible;
+   // Reported after the frame that first draws dots has been rendered (regional ones when only Europe layers are on).
+   if(!reported&&composite.visible){reported=true;requestAnimationFrame(()=>{if(!disposed)onVisible?.();});}
    const centre=camera.position.clone().normalize(),lat=Math.asin(centre.y)*180/Math.PI,lon=Math.atan2(-centre.z,centre.x)*180/Math.PI;
    const regionInView=bounds&&lat>bounds.south&&lat<bounds.north&&lon>bounds.west&&lon<bounds.east;
    const detail=regionMix>.5&&regionInView?'regional':level<3?'overview':level<5?'medium':'native';

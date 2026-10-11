@@ -6,6 +6,8 @@ import {layerSpan} from './fieldStats.js';
 export const PAINT_LAYERS=catalog.map(layer=>({...layer,rgb:[1,3,5].map(i=>parseInt(layer.colour.slice(i,i+2),16)/255)}));
 export const LEGACY_FIELD_IDS=['pm2_5','nitrogen_dioxide','ozone','dust'];
 export const GLOBAL_FIELD_IDS=PAINT_LAYERS.filter(l=>l.coverage==='global').map(l=>l.id);
+// Fields only the CAMS Europe model has; the time bar carries them in separate Europe frames.
+export const EUROPE_ONLY_IDS=PAINT_LAYERS.filter(l=>l.coverage==='europe').map(l=>l.id);
 export const EUROPE_FIELD_IDS=PAINT_LAYERS.filter(l=>!['aerosol_optical_depth','uv_index','uv_index_clear_sky'].includes(l.id)).map(l=>l.id);
 export const layerUnit=l=>l.unit||(l.id==='aerosol_optical_depth'?'unitless':'index');
 export const initialPaint=()=>Object.fromEntries(PAINT_LAYERS.map(p=>[p.id,{enabled:p.defaultEnabled,strength:p.defaultStrength}]));

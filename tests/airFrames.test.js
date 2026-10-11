@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
-import {parseFrameManifest,decodeFrame,halfToFloat,framePair,nearestFrame,frameDataset,FRAME_CELLS} from '../src/airFrames.js';
+import {parseFrameManifest,parseEuropeManifest,createTimeline,decodeFrame,halfToFloat,framePair,nearestFrame,frameDataset,FRAME_CELLS,EUROPE_CELLS} from '../src/airFrames.js';
+import {EUROPE_ONLY_IDS} from '../src/paintLayers.js';
 
 const manifest=JSON.parse(readFileSync('public/data/air-frames.json','utf8'));
 const snapshot=JSON.parse(readFileSync('public/data/global-air-native.json','utf8'));
@@ -83,4 +84,34 @@ test('shipped history: 50 complete months from Aug 2022, PM2.5, dust and NO2, ve
  assert.equal(data.statistic,'monthly mean');
  const dust=data.fields.dust.filter(Number.isFinite);
  assert.ok(dust.length>FRAME_CELLS*.99&&dust.every(v=>v>=0));
+});
+
+test('Europe frames: one per forecast hour, and the snapshot hour decodes to the Europe snapshot', async () => {
+ const europe=parseEuropeManifest(JSON.parse(readFileSync('public/data/europe-frames.json','utf8')),manifest);
+ assert.deepEqual(europe.fieldOrder,EUROPE_ONLY_IDS);
+ europe.frames.forEach((f,i)=>assert.equal(f.validAt,manifest.frames[i].validAt));
+ assert.throws(()=>parseEuropeManifest({...europe,frames:europe.frames.slice(1)},manifest));
+ assert.throws(()=>parseEuropeManifest({...europe,frames:[europe.frames[1],...europe.frames.slice(1)]},manifest));
+ const entry=europe.frames[manifest.snapshotIndex],raw=gunzipSync(readFileSync(`public/data/${entry.compressedFile}`));
+ const bits=await decodeFrame(entry,raw.buffer.slice(raw.byteOffset,raw.byteOffset+raw.byteLength));
+ const data=frameDataset(europe,manifest.snapshotIndex,bits);
+ const native=JSON.parse(readFileSync('public/data/europe-air-native.json','utf8')),values=new Float32Array(readFileSync('public/data/europe-air-native.bin').buffer.slice(0));
+ assert.equal(data.domain,'cams_europe');
+ for(const id of EUROPE_ONLY_IDS){const layer=native.fieldOrder.indexOf(id);for(let i=0;i<EUROPE_CELLS;i+=331){const a=data.fields[id][i],b=values[layer*EUROPE_CELLS+i];assert.ok(Math.abs(a-b)<=Math.max(6e-8,Math.abs(b)*1e-3),`${id} ${i}: ${a} vs ${b}`);}}
+});
+
+test('timeline fetches Europe frames only while a Europe-only layer is on', async () => {
+ const europe=parseEuropeManifest(JSON.parse(readFileSync('public/data/europe-frames.json','utf8')),manifest);
+ const requested=[],realFetch=globalThis.fetch;
+ globalThis.fetch=async url=>{requested.push(url);return new Promise(()=>{});};
+ try{
+  const line=createTimeline(manifest,{kind:'forecast',europe});
+  line.seek(3);
+  assert.ok(requested.length&&requested.every(u=>u.includes('air-frame-')));
+  assert.equal(line.europeBits(3),null);
+  line.useEurope(true);
+  assert.ok(requested.some(u=>u.includes('europe-frame-03')));
+  assert.equal(line.hasEurope(3),true);
+  line.dispose();
+ }finally{globalThis.fetch=realFetch;}
 });

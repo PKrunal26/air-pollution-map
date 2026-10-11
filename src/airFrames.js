@@ -1,4 +1,4 @@
-import {GLOBAL_FIELD_IDS} from './paintLayers.js';
+import {GLOBAL_FIELD_IDS,EUROPE_ONLY_IDS} from './paintLayers.js';
 
 // 3-hourly CAMS global frames for the time bar: float16, layer-major, gzip, one file per valid hour.
 // Values are the provider's floats rounded to half precision; NaN marks the few cells the provider left missing.
@@ -25,6 +25,17 @@ export function parseHistoryManifest(m){
  return m;
 }
 
+// Europe-only fields for the same forecast hours (europe-frames.json): one entry per global frame, same index and validAt.
+export const EUROPE_CELLS=700*420;
+export function parseEuropeManifest(m,global){
+ const g=m?.grid;
+ if(m?.schema!==1||m.kind!=='modeled'||m.domain!=='cams_europe'||m.encoding!=='float16-le, layer-major'||g?.width!==700||g.height!==420||g.step!==.1||g.latStart!==30.05||g.lonStart!==-24.95||JSON.stringify(m.fieldOrder)!==JSON.stringify(EUROPE_ONLY_IDS)||!Array.isArray(m.frames)||m.frames.length!==global.frames.length)throw new Error('Invalid Europe frame manifest');
+ m.frames.forEach((f,i)=>{
+  if(f?.validAt!==global.frames[i].validAt||f.byteLength!==EUROPE_CELLS*m.fieldOrder.length*2||f.compressedFile!==`europe-frame-${String(i).padStart(2,'0')}.bin.gz`||!/^[a-f0-9]{64}$/.test(f.sha256??''))throw new Error('Invalid Europe frame entry');
+ });
+ return m;
+}
+
 // Verifies length and checksum of a decompressed frame; returns its half-float bits.
 export async function decodeFrame(entry,buffer){
  if(!(buffer instanceof ArrayBuffer)||buffer.byteLength!==entry.byteLength)throw new Error('Frame length mismatch');
@@ -43,9 +54,9 @@ const HALF=Float32Array.from({length:65536},(_,h)=>halfToFloat(h));
 
 // A float32 dataset for one frame, shaped like the snapshot (for the readout). Missing cells stay NaN.
 export function frameDataset(manifest,index,bits){
- const fields={},frame=manifest.frames[index];
- manifest.fieldOrder.forEach((id,layer)=>{const out=new Float32Array(FRAME_CELLS),o=layer*FRAME_CELLS;for(let i=0;i<FRAME_CELLS;i++)out[i]=HALF[bits[o+i]];fields[id]=out;});
- return {schema:5,kind:'modeled',domain:'cams_global',grid:manifest.grid,units:manifest.units,referenceTime:manifest.referenceTime,validAt:frame.validAt,endAt:frame.endAt,statistic:manifest.statistic??null,frame:index,fields};
+ const fields={},frame=manifest.frames[index],cells=manifest.grid.width*manifest.grid.height;
+ manifest.fieldOrder.forEach((id,layer)=>{const out=new Float32Array(cells),o=layer*cells;for(let i=0;i<cells;i++)out[i]=HALF[bits[o+i]];fields[id]=out;});
+ return {schema:5,kind:'modeled',domain:manifest.domain,grid:manifest.grid,units:manifest.units,referenceTime:manifest.referenceTime,validAt:frame.validAt,endAt:frame.endAt,statistic:manifest.statistic??null,frame:index,fields};
 }
 
 // Blend position (fractional frame index) -> the two frames and the mix between them.
@@ -68,24 +79,37 @@ async function fetchFrame(entry,signal){
 // Frames are fetched on demand; a few decoded frames are kept, the rest come back from the HTTP cache.
 const KEEP=5;
 // kind: 'forecast' (3-hourly, has the snapshot hour) or 'history' (monthly means; always drawn from frames).
-export function createTimeline(manifest,{reduced=false,kind='forecast',secondsPerStep=kind==='history'?.6:.9,start=manifest.snapshotIndex??0}={}){
+// europe: optional parsed Europe manifest; its frames load only while useEurope(true) (a Europe-only layer is on).
+export function createTimeline(manifest,{reduced=false,kind='forecast',secondsPerStep=kind==='history'?.6:.9,start=manifest.snapshotIndex??0,europe=null}={}){
  const n=manifest.frames.length,decoded=new Map(),loading=new Map(),listeners=new Set(),controller=new AbortController();
  let position=start,playing=false,failed=false,version=0;
  const emit=()=>{version++;listeners.forEach(f=>f());};
  const touch=i=>{const v=decoded.get(i);decoded.delete(i);decoded.set(i,v);};
+ const europeDecoded=new Map(),europeLoading=new Map();let europeWanted=false,europeFailed=false;
+ const europeEntry=i=>europeWanted&&!europeFailed?europe?.frames[i]??null:null;
+ const keep=map=>{for(const k of map.keys()){if(map.size<=KEEP)break;const {a,b}=framePair(position,n);if(k!==a&&k!==b&&k!==nearestFrame(position,n))map.delete(k);}};
+ const loadEurope=i=>{
+  const entry=europeEntry(i);
+  if(!entry||europeDecoded.has(i)||europeLoading.has(i))return;
+  // A missing Europe frame hides only the Europe layers; the global timeline keeps playing.
+  const job=fetchFrame(entry,controller.signal).then(bits=>{europeDecoded.set(i,bits);keep(europeDecoded);emit();})
+   .catch(e=>{if(e.name!=='AbortError'){europeFailed=true;emit();}}).finally(()=>europeLoading.delete(i));
+  europeLoading.set(i,job);
+ };
  const load=i=>{
+  if(i>=0&&i<n)loadEurope(i);
   if(i<0||i>=n||decoded.has(i)||loading.has(i)||failed)return;
   const job=fetchFrame(manifest.frames[i],controller.signal).then(bits=>{
-   decoded.set(i,bits);
-   for(const k of decoded.keys()){if(decoded.size<=KEEP)break;const {a,b}=framePair(position,n);if(k!==a&&k!==b&&k!==nearestFrame(position,n))decoded.delete(k);}
-   emit();
+   decoded.set(i,bits);keep(decoded);emit();
   }).catch(e=>{if(e.name!=='AbortError'){failed=true;playing=false;emit();}}).finally(()=>loading.delete(i));
   loading.set(i,job);
  };
  const want=()=>{const {a,b}=framePair(position,n);load(a);load(b);if(playing){load(b+1>=n?0:b+1);}};
- const ready=i=>decoded.has(i);
+ const ready=i=>decoded.has(i)&&(!europeEntry(i)||europeDecoded.has(i));
  return {
-  count:n,manifest,kind,
+  count:n,manifest,kind,europe,
+  // Europe frames are fetched only while a Europe-only layer is on.
+  useEurope(on){if(europeWanted===!!on)return;europeWanted=!!on;if(on)want();emit();},
   get position(){return position;},get playing(){return playing;},get failed(){return failed;},get version(){return version;},
   // Snapshot hour, paused: the exact float32 snapshot (and the European layer) is shown instead of frames.
   get atSnapshot(){return kind==='forecast'&&!playing&&position===manifest.snapshotIndex;},
@@ -111,12 +135,18 @@ export function createTimeline(manifest,{reduced=false,kind='forecast',secondsPe
    const {a,b,t}=framePair(position,n);
    if(!ready(a)||!ready(b)){want();return null;}
    touch(a);touch(b);
+   const ea=europeEntry(a)?europeDecoded.get(a):null,eb=europeEntry(b)?europeDecoded.get(b):null;
    // Reduced motion: no blend, show the nearest real frame.
    const tt=reduced?(t<.5?0:1):t;
-   return {a,b,t:tt,bitsA:decoded.get(a),bitsB:decoded.get(b),fields:manifest.fieldOrder,key:kind};
+   return {a,b,t:tt,bitsA:decoded.get(a),bitsB:decoded.get(b),fields:manifest.fieldOrder,key:kind,
+    europe:ea&&eb?{bitsA:ea,bitsB:eb,fields:europe.fieldOrder,grid:europe.grid}:null};
   },
   bits(i){if(!ready(i)){load(i);return null;}return decoded.get(i);},
-  dispose(){controller.abort();listeners.clear();decoded.clear();},
+  // Decoded Europe frame for the readout, or null (not wanted, no Europe frames, or still loading).
+  europeBits(i){if(!europeEntry(i))return null;if(!europeDecoded.has(i)){load(i);return null;}return europeDecoded.get(i);},
+  // Whether frame i has Europe data at all.
+  hasEurope(i){return !!europe?.frames[i]&&!europeFailed;},
+  dispose(){controller.abort();listeners.clear();decoded.clear();europeDecoded.clear();},
  };
 }
 
@@ -132,4 +162,13 @@ export async function fetchFrameManifest(signal){
  const response=await fetch('data/air-frames.json',{signal,cache:'no-cache'});
  if(!response.ok)throw new Error('Frame manifest unavailable');
  return parseFrameManifest(await response.json());
+}
+
+// Europe frames for the forecast; null when absent or invalid (the Europe layers then show at the snapshot hour only).
+export async function fetchEuropeManifest(global,signal){
+ try{
+  const response=await fetch('data/europe-frames.json',{signal,cache:'no-cache'});
+  if(!response.ok)return null;
+  return parseEuropeManifest(await response.json(),global);
+ }catch(e){if(e.name==='AbortError')throw e;return null;}
 }

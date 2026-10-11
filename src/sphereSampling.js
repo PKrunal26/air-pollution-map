@@ -2,9 +2,10 @@ import {displayWeight} from './fieldStats.js';
 const DEG=Math.PI/180;
 const GOLDEN_ANGLE=Math.PI*(3-Math.sqrt(5));
 // Zoom adds display samples, not new observations. Counts double per level so lattice pitch on screen
-// stays in a narrow band (see detailLevel). The regional sets are the same lattice over the CAMS Europe box.
+// stays in a narrow band (see detailLevel). The regional sets are the same lattice over the CAMS Europe box; they
+// start as coarse as the global ladder because Europe-only layers are drawn from them when zoomed out too.
 export const DOT_COUNTS=[16000,32000,64000,128000,256000,512000,1024000];
-export const REGIONAL_DOT_COUNTS=[1024000,2048000,4096000];
+export const REGIONAL_DOT_COUNTS=[...DOT_COUNTS,2048000,4096000];
 export const REGIONAL_DOT_COUNT=REGIONAL_DOT_COUNTS.at(-1);
 // Halftone constants (the shader mirrors them): radius is in units of the mean lattice spacing sqrt(4π/count).
 export const MIN_SPACING_PX=7,FULL_RADIUS=.56,PLATE_OFFSET=.26,PLATE_PHASE=Math.PI/2,GOLDEN_PLATE=Math.PI*(3-Math.sqrt(5));
