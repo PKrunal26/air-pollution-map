@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {ASKED_KEY,LOCATE_OPTIONS,locateUser,locationMessage,locationPermission,saveAsked,shouldAskOnOpen} from '../src/userLocation.js';
+import {LOCATE_OPTIONS,REGION_URL,guessRegion,locateUser,locationMessage,locationPermission} from '../src/userLocation.js';
 
 const geo=result=>({getCurrentPosition:(ok,fail)=>result.error?fail(result.error):ok({coords:result.coords})});
 
@@ -29,15 +29,14 @@ test('permission check never throws and reports unknown when the browser cannot 
  assert.equal(await locationPermission(undefined),'unknown');
 });
 
-test('asks on open only when never asked before',()=>{
- const m=new Map(),storage={getItem:k=>m.get(k)??null,setItem:(k,v)=>m.set(k,v)};
- assert.equal(shouldAskOnOpen('prompt',storage),true);
- assert.equal(shouldAskOnOpen('granted',storage),false);
- assert.equal(shouldAskOnOpen('denied',storage),false);
- assert.equal(shouldAskOnOpen('unknown',storage),true);
- saveAsked(storage);assert.equal(m.get(ASKED_KEY),'1');
- assert.equal(shouldAskOnOpen('unknown',storage),false);
- assert.equal(shouldAskOnOpen('unknown',{getItem:()=>{throw new Error('blocked');}}),false);
+test('guesses a rough region from the IP lookup',async()=>{
+ const reply=(body,ok=true)=>async url=>{assert.equal(url,REGION_URL);return {ok,json:async()=>body};};
+ assert.deepEqual(await guessRegion(reply({latitude:'12.9753',longitude:'77.591',city:'Bengaluru'})),{lat:12.9753,lon:77.591});
+ assert.equal(await guessRegion(reply({latitude:'nil',longitude:'77.5'})),null);
+ assert.equal(await guessRegion(reply({city:'Nowhere'})),null);
+ assert.equal(await guessRegion(reply({latitude:'95',longitude:'0'})),null);
+ assert.equal(await guessRegion(reply({},false)),null);
+ assert.equal(await guessRegion(async()=>{throw new TypeError('offline');}),null);
 });
 
 test('always asks for a fresh fix, never a cached one',async()=>{

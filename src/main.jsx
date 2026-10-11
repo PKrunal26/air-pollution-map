@@ -1,4 +1,4 @@
-import React,{useEffect,useState,useSyncExternalStore} from 'react';
+import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {createRoot} from 'react-dom/client';
 import './styles.css';
 import {Plus,Minus,Info,ArrowCounterClockwise,GpsFix} from '@phosphor-icons/react';
@@ -18,7 +18,7 @@ import {fetchFrameManifest,fetchHistoryManifest,createTimeline,frameDataset,near
 import TimeBar from './TimeBar';
 import LayerPicker from './LayerPicker';
 import {loadOnboarded,saveOnboarded} from './onboarding';
-import {locateUser,locationMessage,locationPermission,saveAsked,shouldAskOnOpen} from './userLocation';
+import {guessRegion,locateUser,locationMessage,locationPermission} from './userLocation';
 import {track} from './analytics';
 import './styles/shell.css';
 
@@ -76,19 +76,21 @@ function App(){
  },[timeline,frameIndex,timeline?.version,readout,probe]);
  useEffect(()=>{const timer=setTimeout(()=>setTimedOut(true),LOADER_TIMEOUT);return()=>clearTimeout(timer);},[]);
  useEffect(()=>{if(!locateError)return;const timer=setTimeout(()=>setLocateError(''),6000);return()=>clearTimeout(timer);},[locateError]);
+ const touched=useRef(false);
  const clearProbe=()=>{setProbe(null);setProbeReset(n=>n+1);};
  const changeReadout=on=>{setReadout(on);saveReadout(on);if(!on)clearProbe();};
  const closeTransient=()=>setPanel(p=>p==='search'?null:p);
- const chooseCity=place=>{clearProbe();setCity(place);setZoom(1);setFocus(f=>f+1);closeTransient();};
- const overview=()=>{clearProbe();setCity(null);setZoom(0);setFocus(0);setReset(n=>n+1);closeTransient();};
+ const chooseCity=place=>{touched.current=true;clearProbe();setCity(place);setZoom(1);setFocus(f=>f+1);closeTransient();};
+ const overview=()=>{touched.current=true;clearProbe();setCity(null);setZoom(0);setFocus(0);setReset(n=>n+1);closeTransient();};
  // Rotating or zooming the globe must not close the layer panel; only the search popover.
- const interact=()=>setPanel(p=>p==='search'?null:p);
- const flyTo=(lat,lon,distance=1.6,pin)=>setFlyTarget(t=>({key:(t?.key??0)+1,lat,lon,distance,pin}));
+ const interact=()=>{touched.current=true;setPanel(p=>p==='search'?null:p);};
+ const flyTo=(lat,lon,distance=1.6,pin)=>{touched.current=true;setFlyTarget(t=>({key:(t?.key??0)+1,lat,lon,distance,pin}));};
+ // Turn the globe to face a place without zooming.
+ const faceTo=(lat,lon)=>setFlyTarget(t=>({key:(t?.key??0)+1,lat,lon,keepDistance:true}));
  // My location: fly there and pin the air readout on it.
- // quiet: asked on open rather than by a press, so a refusal shows no error.
- const locate=({quiet=false}={})=>{
+ const locate=()=>{
   if(locating)return;setLocating(true);setLocateError('');closeTransient();
-  locateUser().then(found=>{track(quiet?'location/allowed-on-open':'location/found');setUserLocation(found);setCity(null);flyTo(found.lat,found.lon,2.3,{mine:true});}).catch(e=>{track(quiet?'location/refused-on-open':`location/failed-${e?.code??'unknown'}`);if(!quiet)setLocateError(locationMessage(e));}).finally(()=>setLocating(false));
+  locateUser().then(found=>{track('location/found');setUserLocation(found);setCity(null);flyTo(found.lat,found.lon,2.3,{mine:true});}).catch(e=>{track(`location/failed-${e?.code??'unknown'}`);setLocateError(locationMessage(e));}).finally(()=>setLocating(false));
  };
  const cameraRange=next=>setRange(current=>current.atMin===next.atMin&&current.atMax===next.atMax?current:{atMin:!!next.atMin,atMax:!!next.atMax});
  const probeCard=readout&&!!probe&&(!panel||panel==='layers');
@@ -97,15 +99,17 @@ function App(){
  const noLayers=!PAINT_LAYERS.some(l=>paint[l.id]?.enabled);
  const ready=opened||timedOut||(globeReady&&(airVisible||globalAir.status==='error'||noLayers));
  useEffect(()=>{if(ready)setOpened(true);},[ready]);
- // Once the globe is up: first visit asks for location; allowed earlier shows the marker without moving the camera.
+ // Once the globe is up, turn it to the viewer's region without asking: their exact spot (and marker) if location was
+ // allowed earlier, otherwise a rough guess from their IP. Never asks, and never moves a globe they have already touched.
  useEffect(()=>{
-  if(EMBED||!opened)return;let live=true;
+  if(EMBED||!opened)return;let live=true;const controller=new AbortController();
+  const face=place=>{if(live&&place&&!touched.current)faceTo(place.lat,place.lon);};
   locationPermission().then(state=>{
    if(!live)return;
-   if(state==='granted')return locateUser().then(found=>{if(live)setUserLocation(found);});
-   if(shouldAskOnOpen(state)){saveAsked();locate({quiet:true});}
+   if(state==='granted')return locateUser().then(found=>{if(!live)return;setUserLocation(found);face(found);});
+   return guessRegion(fetch,controller.signal).then(face);
   }).catch(()=>{});
-  return()=>{live=false;};
+  return()=>{live=false;controller.abort();};
  },[opened]);
  const updatePaint=(id,change)=>{if(change.enabled)track(`layer/${id}`);setPaint(current=>({...current,[id]:{...current[id],...change}}));};
  // Counts taps that keep a readout (not hover, not the viewer's own location).

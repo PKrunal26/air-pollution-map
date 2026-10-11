@@ -1,5 +1,5 @@
-// The viewer's position from the browser. First visit: asked once when the site opens. Allowed earlier: the marker
-// returns quietly (no camera move). Refused: never asked again unless they press "My location".
+// The viewer's position from the browser, asked only when they press "My location". Allowed earlier: the marker
+// returns quietly on open. On open the globe also turns to the viewer's rough region from their IP (see guessRegion).
 // maximumAge 0: never reuse a cached fix, or someone who has moved (or a laptop that woke elsewhere) sees the old place.
 export const LOCATE_OPTIONS={enableHighAccuracy:false,timeout:12000,maximumAge:0};
 
@@ -27,11 +27,14 @@ export async function locationPermission(permissions=globalThis.navigator?.permi
  try{const state=(await permissions?.query({name:'geolocation'}))?.state;return ['granted','denied','prompt'].includes(state)?state:'unknown';}catch{return 'unknown';}
 }
 
-// Ask on open only if the browser has never been asked; 'unknown' (no Permissions API) falls back to our own note.
-export const ASKED_KEY='air-atlas.location-asked';
-export function shouldAskOnOpen(state,storage=globalThis.localStorage){
- if(state==='prompt')return true;
- if(state!=='unknown')return false;
- try{return storage?.getItem(ASKED_KEY)!=='1';}catch{return false;}
+// Rough region from the IP address, with no permission prompt. City level on home wifi, often a few hundred km off on
+// mobile data or behind a VPN, so it only turns the globe and never places a marker. Sends the viewer's IP to GeoJS.
+export const REGION_URL='https://get.geojs.io/v1/ip/geo.json';
+export async function guessRegion(fetchImpl=globalThis.fetch,signal){
+ try{
+  const res=await fetchImpl(REGION_URL,{signal});if(!res.ok)return null;
+  const data=await res.json(),lat=Number(data?.latitude),lon=Number(data?.longitude);
+  if(data?.latitude==null||data?.longitude==null||!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return null;
+  return {lat,lon};
+ }catch{return null;}
 }
-export function saveAsked(storage=globalThis.localStorage){try{storage?.setItem(ASKED_KEY,'1');}catch{}}
