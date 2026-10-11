@@ -1,5 +1,6 @@
 """Download one complete CAMS native grid (pip install omfiles numpy).
-Usage: python scripts/fetch-native-air.py 2026-10-09T03:00 /absolute/cache/path
+Usage: python scripts/fetch-native-air.py 2026-10-09T03:00 /absolute/cache/path [--run 2026-10-08T12:00]
+Without --run the newest completed run is used.
 Run from the site checkout. No forecast interpolation or synthetic samples.
 """
 import argparse, datetime as dt, hashlib, json, pathlib, urllib.request
@@ -9,15 +10,19 @@ from omfiles import OmFileReader
 parser = argparse.ArgumentParser()
 parser.add_argument('hour')
 parser.add_argument('cache', type=pathlib.Path)
+parser.add_argument('--run')
 args = parser.parse_args()
 valid = dt.datetime.fromisoformat(args.hour).replace(tzinfo=dt.timezone.utc)
 assert valid.minute == valid.second == 0
 args.cache.mkdir(parents=True, exist_ok=True)
 base = 'https://openmeteo.s3.amazonaws.com/data_spatial/cams_global/'
-metadata = json.loads(urllib.request.urlopen(base+'latest.json', timeout=30).read())
-assert metadata['completed'] is True
-assert valid.strftime('%Y-%m-%dT%H:%MZ') in metadata['valid_times']
-run = dt.datetime.fromisoformat(metadata['reference_time'].replace('Z','+00:00'))
+if args.run:
+    run = dt.datetime.fromisoformat(args.run).replace(tzinfo=dt.timezone.utc)
+else:
+    metadata = json.loads(urllib.request.urlopen(base+'latest.json', timeout=30).read())
+    assert metadata['completed'] is True
+    assert valid.strftime('%Y-%m-%dT%H:%MZ') in metadata['valid_times']
+    run = dt.datetime.fromisoformat(metadata['reference_time'].replace('Z','+00:00'))
 source = base+run.strftime('%Y/%m/%d/%H%MZ/')+valid.strftime('%Y-%m-%dT%H%M.om')
 cache_file = args.cache / (run.strftime('%Y-%m-%dT%H%MZ-')+valid.strftime('%Y-%m-%dT%H%M.om'))
 if not cache_file.exists():
