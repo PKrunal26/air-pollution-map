@@ -112,13 +112,14 @@ function App(){
  // A searched place gets the same all-values card as a tapped spot; hovering elsewhere does not replace it.
  const probeCard=readout&&!!probe&&(!panel||panel==='layers')&&(!!probe.pinned||!city);
  const cityCard=!!city&&!(probeCard&&probe.pinned)&&(!panel||panel==='layers');
- const stacked=!!city||(probeCard&&!!probe.pinned);
+ // A kept card (a searched place or a pinned spot) holds the globe's offset even while search briefly hides it.
+ const stacked=!!city||(readout&&!!probe?.pinned);
  const viewShift=!EMBED&&desktop&&(panel==='layers'||stacked)?.14:0;
  // Phones: the cards sit over the lower globe, so the globe rises to centre in the space between the header and them.
  const stack=useRef(null),[viewLift,setViewLift]=useState(0),lifting=!EMBED&&!desktop&&stacked&&panel!=='layers';
  useEffect(()=>{
   const el=stack.current;if(!lifting||!el){setViewLift(0);return;}
-  const measure=()=>{const top=el.getBoundingClientRect().top;setViewLift(Math.max(0,Math.round(window.innerHeight/2-(PHONE_HEADER+top)/2)));};
+  const measure=()=>{if(!el.firstElementChild)return;const top=el.getBoundingClientRect().top;setViewLift(Math.max(0,Math.round(window.innerHeight/2-(PHONE_HEADER+top)/2)));};
   const observer=new ResizeObserver(measure);observer.observe(el);window.addEventListener('resize',measure);measure();
   return()=>{observer.disconnect();window.removeEventListener('resize',measure);};
  },[lifting]);
