@@ -48,9 +48,12 @@ test('truncated, altered and incorrectly labelled native data cannot render',asy
 test('provider gaps load as NaN only when the metadata declares them',async()=>{
  const gap=buffer.slice(0);new DataView(gap).setFloat32(12,NaN,true);
  const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',gap)),b=>b.toString(16).padStart(2,'0')).join('');
- const declared=await decodeNativeLayers({...metadata,sha256:hash,missing:{pm2_5:1}},gap);
- assert.equal(declared.fields.pm2_5.filter(Number.isNaN).length,1);
- await assert.rejects(decodeNativeLayers({...metadata,sha256:hash,missing:{pm2_5:2}},gap),/Invalid PM/);
+ const before=new Float32Array(buffer,0,900*451);
+ const known=before.reduce((n,v)=>n+Number.isNaN(v),0),missing=metadata.missing??{};
+ const declared=await decodeNativeLayers({...metadata,sha256:hash,missing:{...missing,pm2_5:known+(Number.isNaN(before[3])?0:1)}},gap);
+ assert.ok(Number.isNaN(declared.fields.pm2_5[3]));
+ await assert.rejects(decodeNativeLayers({...metadata,sha256:hash,missing:{...missing,pm2_5:known+2}},gap),/Invalid PM/);
+ await assert.rejects(decodeNativeLayers({...metadata,sha256:hash,missing:Object.fromEntries(Object.entries(missing).filter(([id])=>id!=='pm2_5'))},gap),/Invalid PM/);
 });
 
 test('all 15 global CAMS fields carry correct individual units and stay separate',async()=>{
@@ -60,8 +63,9 @@ test('all 15 global CAMS fields carry correct individual units and stay separate
  assert.equal(metadata.units.uv_index,'');
  assert.equal(metadata.units.carbon_monoxide,'μg/m³');
  for(const id of GLOBAL_FIELD_IDS){
-  assert.ok(data.fields[id].every(v=>Number.isFinite(v)&&v>=0));
-  assert.equal(Math.min(...data.fields[id].subarray(0,1000))>=metadata.statistics[id].min,true);
+  assert.ok(data.fields[id].every(v=>Number.isNaN(v)||(Number.isFinite(v)&&v>=0)));
+  assert.equal(data.fields[id].filter(Number.isNaN).length,metadata.missing?.[id]??0);
+  assert.equal(Math.min(...data.fields[id].subarray(0,1000).filter(v=>!Number.isNaN(v)))>=metadata.statistics[id].min,true);
  }
  for(const id of ['aerosol_optical_depth','uv_index','carbon_monoxide']){
   await assert.rejects(decodeNativeLayers({...metadata,units:{...metadata.units,[id]:'ppm'}},buffer),/unit/);
