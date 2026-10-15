@@ -45,6 +45,14 @@ test('truncated, altered and incorrectly labelled native data cannot render',asy
  }
 });
 
+test('provider gaps load as NaN only when the metadata declares them',async()=>{
+ const gap=buffer.slice(0);new DataView(gap).setFloat32(12,NaN,true);
+ const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',gap)),b=>b.toString(16).padStart(2,'0')).join('');
+ const declared=await decodeNativeLayers({...metadata,sha256:hash,missing:{pm2_5:1}},gap);
+ assert.equal(declared.fields.pm2_5.filter(Number.isNaN).length,1);
+ await assert.rejects(decodeNativeLayers({...metadata,sha256:hash,missing:{pm2_5:2}},gap),/Invalid PM/);
+});
+
 test('all 15 global CAMS fields carry correct individual units and stay separate',async()=>{
  const data=await decodeNativeLayers(metadata,buffer);
  assert.deepEqual(Object.keys(data.fields),GLOBAL_FIELD_IDS);

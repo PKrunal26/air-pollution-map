@@ -15,11 +15,18 @@ export function sampleGlobalAir(data,lat,lon) {
 }
 import {PAINT_LAYERS,LEGACY_FIELD_IDS,GLOBAL_FIELD_IDS,EUROPE_FIELD_IDS} from './paintLayers.js';
 
+// Provider gaps are NaN and stay missing, never zero. They are valid only when the metadata declares exactly that many; any other non-finite or negative value is -1.
+function countGaps(values) {
+ let gaps=0;
+ for(const v of values){if(Number.isNaN(v))gaps++;else if(!Number.isFinite(v)||v<0)return -1;}
+ return gaps;
+}
+
 export function parseGlobalLayers(payload) {
  const g=payload?.grid;
  const supportedGrid=payload?.schema===2?g?.width===72&&g.height===37&&g.step===5:[3,5].includes(payload?.schema)&&g?.width===900&&g.height===451&&g.step===.4;
  if(!supportedGrid||(payload.schema!==5&&payload.unit!=='μg/m³')||payload.domain!=='cams_global'||payload.kind!=='modeled'||!Number.isFinite(payload.validAt)||payload.validAt<=0||g.latStart!==-90||g.lonStart!==-180||g.order!=='south-to-north, west-to-east')throw new Error('Invalid global layer metadata');
- for(const id of (payload.schema===5?GLOBAL_FIELD_IDS:LEGACY_FIELD_IDS)){const layer=PAINT_LAYERS.find(l=>l.id===id);if(payload.schema===5&&payload.units?.[id]!==layer.unit)throw new Error(`Invalid ${layer.label} unit`);const values=payload.fields?.[id];if(!(Array.isArray(values)||values instanceof Float32Array)||values.length!==g.width*g.height||values.some(v=>!Number.isFinite(v)||v<0))throw new Error(`Invalid ${layer.label} field`);}
+ for(const id of (payload.schema===5?GLOBAL_FIELD_IDS:LEGACY_FIELD_IDS)){const layer=PAINT_LAYERS.find(l=>l.id===id);if(payload.schema===5&&payload.units?.[id]!==layer.unit)throw new Error(`Invalid ${layer.label} unit`);const values=payload.fields?.[id];if(!(Array.isArray(values)||values instanceof Float32Array)||values.length!==g.width*g.height||countGaps(values)!==(payload.missing?.[id]??0))throw new Error(`Invalid ${layer.label} field`);}
  return payload;
 }
 

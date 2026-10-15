@@ -31,7 +31,7 @@ catalog = json.loads(pathlib.Path('src/camsFields.json').read_text())
 fields = [f for f in catalog if f['coverage'] == 'global']
 variables = [f['id'] for f in fields]
 units = {f['id']: f['unit'] for f in fields}
-arrays, stats = [], {}
+arrays, stats, missing = [], {}, {}
 with OmFileReader(str(cache_file)) as root:
     assert root.get_child_by_name('valid_time').read_scalar() == int(valid.timestamp())
     assert root.get_child_by_name('forecast_reference_time').read_scalar() == int(run.timestamp())
@@ -43,9 +43,12 @@ with OmFileReader(str(cache_file)) as root:
         assert reader.shape == (451,900)
         assert reader.get_child_by_name('unit').read_scalar() == units[name]
         array = reader.read_array((...))
-        assert np.all(np.isfinite(array)) and np.all(array >= 0)
+        # A few provider cells can be NaN; they stay NaN (missing, never zero) and are counted.
+        gaps = int(np.isnan(array).sum())
+        assert gaps < 1000 and np.all(np.isfinite(array[~np.isnan(array)])) and np.nanmin(array) >= 0, name
+        if gaps: missing[name] = gaps
         arrays.append(array.astype('<f4').tobytes(order='C'))
-        stats[name] = {'min':float(array.min()),'max':float(array.max()),'count':int(array.size)}
+        stats[name] = {'min':float(np.nanmin(array)),'max':float(np.nanmax(array)),'count':int(array.size)}
 blob = b''.join(arrays)
 asset = pathlib.Path('public/data')
 asset.mkdir(parents=True,exist_ok=True)
@@ -60,6 +63,7 @@ snapshot = {
     'byteLength':len(blob),'sha256':hashlib.sha256(blob).hexdigest(),
     'sourceSha256':hashlib.sha256(cache_file.read_bytes()).hexdigest(),'statistics':stats,
 }
+if missing: snapshot['missing'] = missing
 (asset/'global-air-native.bin').write_bytes(blob)
 (asset/'global-air-native.json').write_text(json.dumps(snapshot,separators=(',',':')))
 print(json.dumps(snapshot,indent=2))
