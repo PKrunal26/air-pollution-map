@@ -60,8 +60,8 @@ export function createClient({key,site=SITE,fetchImpl=(...a)=>fetch(...a),spacin
  return {get(path,params={}){const run=queue.then(()=>once(path,params));queue=run.catch(()=>{}).then(()=>sleep(spacing));return run;}};
 }
 
-// Account time zone, read once per key; a key without access to it falls back to UTC.
-export async function loadZone(client){try{return zoneFromSetting((await client.get('me'))?.user?.settings?.timezone);}catch{return 'UTC';}}
+// Account time zone, read once per key; a key without access to it falls back to UTC. strict: fail instead, so a snapshot never mixes zones.
+export async function loadZone(client,{strict=false}={}){try{return zoneFromSetting((await client.get('me'))?.user?.settings?.timezone);}catch(error){if(strict)throw error;return 'UTC';}}
 
 // Detail rows: GoatCounter leaves some names empty (screen sizes, visits without a referrer).
 export function detailRows(page,stats){

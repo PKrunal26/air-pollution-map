@@ -7,7 +7,7 @@ import {summarizeEvents} from '../src/stats/events.js';
 
 const key=process.env.GOATCOUNTER_KEY,out=process.argv[2];
 if(!key||!out){console.error('Usage: GOATCOUNTER_KEY=<key with "Read statistics"> node scripts/stats-snapshot.mjs <out-dir>');process.exit(1);}
-const client=createClient({key}),zone=await loadZone(client),now=new Date();
+const client=createClient({key}),zone=await loadZone(client,{strict:true}),now=new Date();
 const summary=[],breakdowns=[],actions=[];let daily=[];
 const DIMENSIONS=[['pages','Pages'],['toprefs','Referrers'],['locations','Countries'],['sizes','Screens'],['systems','Systems'],['browsers','Browsers']];
 for(const {id:range} of RANGES){

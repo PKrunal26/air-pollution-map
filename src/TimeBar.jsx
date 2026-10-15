@@ -7,7 +7,7 @@ import './styles/time-bar.css';
 const dayFormat=new Intl.DateTimeFormat('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
 const hourFormat=new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'UTC'});
 const monthFormat=new Intl.DateTimeFormat('en-GB',{month:'short',year:'numeric',timeZone:'UTC'});
-const MODES={forecast:{label:'48 h',name:'48-hour forecast'},history:{label:'History',name:'Monthly means since 2022'}};
+const MODES={forecast:{label:'Hourly',name:'Forecast for the next 2 days, every 3 hours'},history:{label:'Monthly',name:'Monthly averages since 2022'}};
 
 // Play/pause, the frame time, a scrubber and the mode switch (48-hour forecast or monthly history).
 // The thumb follows playback through a ref (no re-render per animation frame); the label shows the nearest real frame.
