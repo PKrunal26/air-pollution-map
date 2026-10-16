@@ -63,3 +63,36 @@ export function validateDeck(deck){
  }
  return deck;
 }
+
+const monthIndex=m=>{const [y,mo]=m.split('-').map(Number);return y*12+mo-1;};
+const wrap=d=>{const r=((d+180)%360+360)%360-180;return r===-180?180:r;};
+
+// Footprint test in a local flat frame centred on the pin (km): fine at the scale of a buffer of a few hundred km.
+// The outline is first made continuous (no jump at the date line), then moved by whole turns to sit nearest the pin.
+function inside(card,lat,lon){
+ const xs=[];card.footprint.forEach(([x],i)=>xs.push(i?xs[i-1]+wrap(x-card.footprint[i-1][0]):x));
+ const mid=xs.reduce((a,b)=>a+b,0)/xs.length,shift=wrap(mid-lon)-mid;
+ const k=Math.cos(lat*Math.PI/180),pts=card.footprint.map(([,y],i)=>[(xs[i]+shift)*k*111.32,(y-lat)*110.57]);
+ let within=false,best=Infinity;
+ for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+  const [xi,yi]=pts[i],[xj,yj]=pts[j];
+  if((yi>0)!==(yj>0)&&0<(xj-xi)*(0-yi)/(yj-yi)+xi)within=!within;
+  const dx=xj-xi,dy=yj-yi,t=Math.max(0,Math.min(1,dx||dy?-(xi*dx+yi*dy)/(dx*dx+dy*dy):0));
+  best=Math.min(best,Math.hypot(xi+t*dx,yi+t*dy));
+ }
+ return within||best<=card.bufferKm;
+}
+
+// What a pin finds: a CO variant (CO layer on, base card owned), the card itself, a hint one month off, or nothing.
+// layers: Set of enabled field ids; owned: Set of collected base card ids. First match in deck order wins.
+export function cardAt(deck,{lat,lon,month,layers,owned}){
+ const at=monthIndex(month);
+ for(const card of deck){
+  if(!inside(card,lat,lon))continue;
+  const variant=(card.variants??[]).find(v=>v.months.includes(month)&&layers.has(v.field)&&owned.has(card.id));
+  if(variant)return {status:'variant',card,variant};
+  if(card.months.includes(month))return {status:'found',card,variant:null};
+  if(card.months.some(m=>Math.abs(monthIndex(m)-at)===1))return {status:'near-month',card,variant:null};
+ }
+ return {status:'none',card:null,variant:null};
+}

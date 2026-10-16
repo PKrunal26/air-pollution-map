@@ -39,3 +39,44 @@ test('deck only grows',()=>{
  assert.deepEqual(ids.slice(0,order.length),order,'order.json must be a prefix of the deck ids, in order');
  assert.ok(ids.every(id=>order.includes(id)),'every deck id must be recorded in order.json');
 });
+
+import {cardAt} from '../src/cards/deck.js';
+const at=(lat,lon,month,extra={})=>cardAt(fixture(),{lat,lon,month,layers:new Set(),owned:new Set(),...extra});
+// Kilometres per degree of latitude, for placing points a set distance outside an edge.
+const KM=110.57;
+
+test('inside, right month → found',()=>{
+ const hit=at(0,113,'2026-09');
+ assert.equal(hit.status,'found');assert.equal(hit.card.id,'test-fire');assert.equal(hit.variant,null);
+});
+test('inside, wrong month two away → none',()=>{
+ assert.equal(at(0,113,'2026-11').status,'none');
+});
+test('inside, month one after → near-month',()=>{
+ assert.equal(at(0,113,'2026-10').status,'near-month');
+ assert.equal(at(0,113,'2026-08').status,'near-month');
+});
+test('100 km outside edge → found',()=>{
+ assert.equal(at(4+100/KM,113,'2026-09').status,'found');
+});
+test('200 km outside → none',()=>{
+ assert.equal(at(4+200/KM,113,'2026-09').status,'none');
+});
+test('date line footprint matches both sides',()=>{
+ assert.equal(at(-15,179.5,'2024-07').card?.id,'test-dateline');
+ assert.equal(at(-15,-179.5,'2024-07').card?.id,'test-dateline');
+ assert.equal(at(-15,0,'2024-07').status,'none');
+});
+test('polar pin does not match tropical card',()=>{
+ assert.equal(at(89,114,'2026-09').status,'none');
+});
+test('variant needs CO layer and owned base',()=>{
+ assert.equal(at(0,113,'2026-09',{owned:new Set(['test-fire'])}).status,'found');
+ assert.equal(at(0,113,'2026-09',{layers:new Set(['carbon_monoxide'])}).status,'found');
+ const hit=at(0,113,'2026-09',{layers:new Set(['carbon_monoxide']),owned:new Set(['test-fire'])});
+ assert.equal(hit.status,'variant');assert.equal(hit.variant.kind,'co');
+});
+test('first matching card wins',()=>{
+ const deck=fixture();deck[2]={...deck[0],id:'later',number:9};
+ assert.equal(cardAt(deck,{lat:0,lon:113,month:'2026-09',layers:new Set(),owned:new Set()}).card.id,'test-fire');
+});
