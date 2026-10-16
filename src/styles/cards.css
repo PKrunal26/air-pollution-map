@@ -39,3 +39,43 @@ button.event-card:active:not(:disabled){transform:none}
 .card-blamed p:first-child{font-size:10.5px;color:#9aa58c;margin-bottom:4px}
 .card-sources{margin:auto 0 0;padding-top:18px;font-size:10px;color:#7f8a72;line-height:1.5}
 .card-foot{display:flex;justify-content:space-between;margin:12px 0 0;padding-top:12px;border-top:1px solid #e1e7d51f;font-size:10.5px;color:#9aa58c;font-variant-numeric:tabular-nums}
+
+/* Face-down card: halftone back, number in the middle, rarity colour on the edge. */
+.card-facedown{position:relative;display:inline-grid;place-items:center;flex:none;border-radius:6px;border:1.5px solid var(--rarity);background:#0a0d0c radial-gradient(circle,color-mix(in srgb,var(--rarity) 35%,transparent) 28%,transparent 30%) 0 0/7% 3.5%;box-shadow:0 8px 24px #0008}
+.card-facedown b{display:grid;place-items:center;width:58%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#0a0d0c 60%,transparent 72%);color:var(--rarity);font-weight:600;font-size:max(9px,2.2em);font-variant-numeric:tabular-nums}
+
+/* The readout row: only on a pinned readout, in Monthly mode. */
+.card-row{margin-top:10px;padding-top:10px;border-top:1px solid var(--glass-border)}
+.card-row-main{display:flex;gap:10px;align-items:center}
+.card-row-title{margin:0;font-size:12.5px;font-weight:600}
+.card-row-note{margin:1px 0 0;font-size:11px;color:var(--text-muted)}
+.card-row-button{width:100%;margin-top:9px;padding:7px 12px;border-radius:99px;font-size:12px;border:1px solid #e1e7d54a}
+.card-row-button.is-primary{background:var(--text);color:#0b0e0d;border-color:transparent;font-weight:600}
+.card-row-button.is-primary:hover:not(:disabled){color:#0b0e0d}
+.card-row-hint{margin:10px 0 0;padding-top:10px;border-top:1px solid var(--glass-border);font-size:11.5px;color:var(--text-muted)}
+
+/* The focused question. */
+.card-question-backdrop{position:fixed;inset:0;z-index:var(--modal);display:grid;place-items:center;padding:16px;background:#05070699;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.card-question{display:flex;gap:22px;width:min(640px,100%);max-height:calc(100dvh - 32px);overflow:auto;padding:22px;border-radius:var(--radius-card);background:var(--glass-bg);border:1px solid var(--glass-border);box-shadow:0 20px 60px #000c;color:var(--text)}
+.card-question-card{flex:none;display:grid;place-items:start center}
+.card-question-body{flex:1;min-width:0;display:flex;flex-direction:column}
+.card-question h2{margin:4px 0 10px;font-size:16px;font-weight:600;line-height:1.3}
+.card-question-meta{margin:8px 0 0;font-size:11.5px;color:var(--text-muted)}
+.card-question-body>.card-question-meta:first-child{margin-top:0}
+.card-question-text{margin:0;font-size:13px;line-height:1.55;color:#cdd6bf}
+.card-question-text b{color:var(--text)}
+.card-question-options{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+.card-question-options button{justify-content:flex-start;gap:10px;padding:9px 12px;border-radius:10px;border:1px solid var(--glass-border);font-size:13px;text-align:left}
+.card-question-options button:hover:not(:disabled){background:var(--hover-bg)}
+.card-question-options button:disabled{opacity:1}
+.card-question-options span{color:var(--text-muted)}
+.card-question-options .is-picked{border-color:#d9785f;background:#d9785f14}
+.card-question-options em{margin-left:auto;font-style:normal;font-size:11.5px;color:#d9785f}
+.card-question-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:14px}
+.card-question-actions button{padding:7px 15px;border-radius:99px;border:1px solid #e1e7d54a;font-size:12.5px}
+.card-question-actions .is-primary{background:var(--text);color:#0b0e0d;border-color:transparent;font-weight:600}
+.card-question-actions .is-primary:hover:not(:disabled){color:#0b0e0d}
+.card-reveal{animation:card-reveal .75s var(--motion) both}
+@keyframes card-reveal{from{transform:perspective(900px) rotateY(90deg)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.card-reveal{animation:none}}
+@media (max-width:700px){.card-question{flex-direction:column;align-items:center}.card-question-body{width:100%}}

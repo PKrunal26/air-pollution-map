@@ -19,6 +19,8 @@ function questionProblem(q){
  if(!Number.isInteger(q.answer)||q.answer<0||q.answer>3)return 'answer out of range';
  if(!isText(q.explanation))return 'question without explanation';
  if(!isText(q.source))return 'question without source';
+ // Optional one line shown after a wrong answer: corrects the common belief without giving the answer away.
+ if(q.wrongNote!==undefined&&!isText(q.wrongNote))return 'empty wrongNote';
  return null;
 }
 function statsProblem(s){

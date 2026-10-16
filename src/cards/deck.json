@@ -88,7 +88,8 @@
     ],
     "answer": 1,
     "explanation": "A cluster of dry thunderstorms on 1 June lit more than 30 fires across western Quebec after an unusually dry spring.",
-    "source": "NWS Burlington, June 2023 smoke summary: https://weather.gov/media/btv/awareness/firewx/JuneSmoke23.pdf"
+    "source": "NWS Burlington, June 2023 smoke summary: https://weather.gov/media/btv/awareness/firewx/JuneSmoke23.pdf",
+    "wrongNote": "Most of these fires were lit by dry thunderstorms, not by people."
    },
    {
     "prompt": "Why did New York's sky turn orange in early June 2023?",
@@ -100,7 +101,8 @@
     ],
     "answer": 2,
     "explanation": "More than 150 fires were burning in Quebec on 6 June, and northerly winds carried their smoke hundreds of kilometres south.",
-    "source": "AP via Fox 10, June 2023: https://www.fox10phoenix.com/news/quebec-evacuations-wildfires-canada"
+    "source": "AP via Fox 10, June 2023: https://www.fox10phoenix.com/news/quebec-evacuations-wildfires-canada",
+    "wrongNote": "The smoke did not start in the United States."
    }
   ],
   "back": [
@@ -215,7 +217,8 @@
     ],
     "answer": 1,
     "explanation": "Singapore's environment agency detected numerous hotspots across Kalimantan and central and southern Sumatra, where dense smoke had hung since late August.",
-    "source": "Malay Mail, 4 September 2026: https://www.malaymail.com/news/singapore/2026/09/04/singapore-haze-tips-air-quality-into-unhealthy-range-for-first-time-since-2023/233833"
+    "source": "Malay Mail, 4 September 2026: https://www.malaymail.com/news/singapore/2026/09/04/singapore-haze-tips-air-quality-into-unhealthy-range-for-first-time-since-2023/233833",
+    "wrongNote": "Singapore's own emissions do not change much from month to month; this haze comes and goes with fires elsewhere."
    },
    {
     "prompt": "Why is peat haze so hard to put out?",
@@ -227,7 +230,8 @@
     ],
     "answer": 1,
     "explanation": "Peat is old, waterlogged plant matter. Drained for plantations it dries out, and once lit it smoulders below the surface for weeks.",
-    "source": "Page et al., Nature 420, 61–65 (2002), on Indonesia's 1997 peat fires"
+    "source": "Page et al., Nature 420, 61–65 (2002), on Indonesia's 1997 peat fires",
+    "wrongNote": "Rain does reach the surface, but this kind of fire is not burning on the surface."
    }
   ],
   "back": [
@@ -346,7 +350,8 @@
     ],
     "answer": 1,
     "explanation": "Farm fires in Punjab and Haryana add a large share on peak days, by Delhi's Decision Support System over a third on some days; the rest is the region's own traffic, industry and dust, held near the ground by cold, still air.",
-    "source": "CSE, citing Delhi DSS daily estimates: https://www.cseindia.org/cse-in-news?page=339"
+    "source": "CSE, citing Delhi DSS daily estimates: https://www.cseindia.org/cse-in-news?page=339",
+    "wrongNote": "Fireworks spike the air for a night or two around Diwali; this haze lasts the whole month."
    },
    {
     "prompt": "Where is the November haze densest in this record?",
@@ -358,7 +363,8 @@
     ],
     "answer": 1,
     "explanation": "In the November 2024 monthly mean the highest cell sits in Pakistani Punjab; the haze covers both sides of the border.",
-    "source": "CAMS monthly mean PM2.5, November 2024, as shown in this atlas"
+    "source": "CAMS monthly mean PM2.5, November 2024, as shown in this atlas",
+    "wrongNote": "The densest haze is not where most people assume."
    }
   ],
   "back": [

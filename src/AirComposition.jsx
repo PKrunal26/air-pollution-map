@@ -16,7 +16,8 @@ function Fields({fields,regional,keyId,who:showWho=true}){
  })}</dl>;
 }
 
-export default function AirComposition({location,global,regional,paint,onClose}){
+// footer: extra content for a pinned card (the event-card row).
+export default function AirComposition({location,global,regional,paint,onClose,footer=null}){
  const card=useRef(null),close=useRef(null);
  const [expanded,setExpanded]=useState(false);
  const sample=useMemo(()=>sampleAirAt(global.data,regional,location.lat,location.lon),[global.data,regional,location.lat,location.lon]);
@@ -45,5 +46,6 @@ export default function AirComposition({location,global,regional,paint,onClose})
    </div>
    {location.pinned&&sample.fields.length>1&&<button className="composition-expand" aria-expanded={expanded} onClick={()=>setExpanded(v=>!v)}>{expanded?'Fewer values':'All values'}<CaretDown size={14} weight="bold"/></button>}
   </>:<p className="composition-empty" role="status">{global.status==='error'?'Air data is unavailable here. Reload to retry.':'Loading air composition…'}</p>}
+  {location.pinned&&footer}
  </section>;
 }

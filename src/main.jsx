@@ -21,6 +21,11 @@ import {loadOnboarded,saveOnboarded} from './onboarding';
 import {guessRegion,homePoint,locateUser,locationMessage,locationPermission} from './userLocation';
 import {track} from './analytics';
 import './styles/shell.css';
+import DECK_JSON from './cards/deck.json';
+import {validateDeck,cardAt,monthKey} from './cards/deck';
+import {loadCollection,saveCollection,markFound,questionFor,answer,waitLeft,variantKey} from './cards/collection';
+import ReadoutCardRow from './cards/ReadoutCardRow';
+import CardQuestion from './cards/CardQuestion';
 
 const LOADER_TIMEOUT=20000,noop=()=>()=>{},CHROME_INSET=176,PHONE_HEADER=72;
 // ?embed=1 shows the globe only (for iframes); layers, surface and bg set the initial look.
@@ -31,6 +36,9 @@ if(OPTIONS.bg)document.documentElement.style.setProperty('--embed-bg',OPTIONS.bg
 if(typeof navigator!=='undefined'&&/; wv\)/.test(navigator.userAgent))document.documentElement.classList.add('in-app-browser');
 // Saved view from the last visit (not for embeds); URL options still win.
 const SAVED=EMBED?null:loadSettings();
+// Event cards: the hand-written deck. A broken deck turns the game off rather than the atlas.
+const DECK=(()=>{try{return validateDeck(DECK_JSON);}catch(e){console.error(e);return [];}})();
+const cardKey=hit=>hit.status==='variant'?variantKey(hit.card.id,hit.variant.kind):hit.card.id;
 function useMedia(query){
  const [match,setMatch]=useState(()=>typeof matchMedia==='function'&&matchMedia(query).matches);
  useEffect(()=>{const list=matchMedia(query),update=()=>setMatch(list.matches);update();list.addEventListener('change',update);return()=>list.removeEventListener('change',update);},[query]);
@@ -54,6 +62,8 @@ function App(){
  const finishPicking=React.useCallback(()=>{saveOnboarded();setPicking(false);},[]);
  const [timelines,setTimelines]=useState({forecast:null,history:null}),[mode,setMode]=useState(OPTIONS.history?'history':'forecast'),[frameAir,setFrameAir]=useState(null),[frameEurope,setFrameEurope]=useState(null);
  const timeline=timelines[mode]??timelines.forecast;
+ const [cards,setCards]=useState(()=>EMBED?null:loadCollection()),[asking,setAsking]=useState(null),[now,setNow]=useState(()=>Date.now());
+ useEffect(()=>{if(cards)saveCollection(cards);},[cards]);
  const changeMode=next=>{timeline?.pause();setMode(next);track(`time/${next}`);};
  useEffect(()=>{if(EMBED)return;const controller=new AbortController();fetchWeather(controller.signal).then(data=>setWeather({status:'ready',data})).catch(e=>{if(e.name!=='AbortError')setWeather({status:'error',data:null});});return()=>controller.abort();},[]);
  useEffect(()=>{const controller=new AbortController();fetchEuropeLayers(controller.signal).then(setRegionalAir).catch(e=>{if(e.name!=='AbortError')setRegionalError(true);});return()=>controller.abort();},[]);
@@ -92,6 +102,32 @@ function App(){
  useEffect(()=>{if(!EMBED)saveSettings({paint,weather:weatherSettings,surface});},[paint,weatherSettings,surface]);
  useEffect(()=>{const timer=setTimeout(()=>setTimedOut(true),LOADER_TIMEOUT);return()=>clearTimeout(timer);},[]);
  useEffect(()=>{if(!locateError)return;const timer=setTimeout(()=>setLocateError(''),6000);return()=>clearTimeout(timer);},[locateError]);
+ // A pinned spot in Monthly mode may hold a card, a CO print of one, or a hint that a card is a month away.
+ const enabledLayers=Object.keys(paint).filter(id=>paint[id]?.enabled).join(',');
+ const ownedIds=cards?Object.keys(cards.collected).filter(k=>!k.includes(':')).join(','):'';
+ const cardHit=React.useMemo(()=>{
+  if(!cards||!DECK.length||!probe?.pinned||timeline?.kind!=='history'||frameIndex<0)return null;
+  const hit=cardAt(DECK,{lat:probe.lat,lon:probe.lon,month:monthKey(timeline.manifest.frames[frameIndex].validAt),layers:new Set(enabledLayers.split(',')),owned:new Set(ownedIds.split(','))});
+  return hit.status==='none'?null:hit;
+ },[probe?.pinned,probe?.lat,probe?.lon,timeline,frameIndex,enabledLayers,ownedIds,!!cards]);
+ const hitKey=cardHit&&cardHit.status!=='near-month'?cardKey(cardHit):null;
+ useEffect(()=>{
+  if(!hitKey)return;
+  setCards(current=>{
+   if(hitKey in current.found||hitKey in current.collected)return current;
+   track(`card-found/${hitKey}`);return markFound(current,hitKey,Date.now());
+  });
+ },[hitKey]);
+ const hitWait=hitKey&&cards?waitLeft(cards,hitKey,now):0;
+ // The countdown in the readout row ticks while a wait is showing.
+ useEffect(()=>{if(!hitWait)return;const timer=setInterval(()=>setNow(Date.now()),30000);return()=>clearInterval(timer);},[hitWait>0]);
+ const answerCard=choice=>{
+  const {card,key}=asking,result=answer(cards,key,card,choice,Date.now());
+  setCards(result.state);setNow(Date.now());track(`card-${result.correct?'collected':'wrong'}/${key}`);
+  return result.correct;
+ };
+ const cardRow=cardHit&&<ReadoutCardRow hit={cardHit} collected={!!hitKey&&hitKey in cards.collected} waitMs={hitWait}
+  onAnswer={()=>setAsking({card:cardHit.card,variant:cardHit.variant?.kind??null,key:hitKey,question:questionFor(cardHit.card,cards,hitKey).question})} onView={()=>setAsking({card:cardHit.card,variant:cardHit.variant?.kind??null,key:hitKey,view:true})}/>;
  const touched=useRef(false);
  const clearProbe=()=>{setProbe(null);setProbeReset(n=>n+1);};
  const changeReadout=on=>{setReadout(on);saveReadout(on);if(!on)clearProbe();};
@@ -157,7 +193,7 @@ function App(){
    </header>
    <div ref={stack} className="side-stack">
     {cityCard&&<AirComposition location={{lat:city.lat,lon:city.lon,pinned:true,name:city.name,country:city.country}} global={frameIndex>=0?{status:frameAir?'ready':'loading',data:frameAir}:globalAir} regional={frameIndex>=0?frameEurope:regionalAir} paint={paint} onClose={()=>setCity(null)}/>}
-    {probeCard&&<AirComposition location={probe} global={frameIndex>=0?{status:frameAir?'ready':'loading',data:frameAir}:globalAir} regional={frameIndex>=0?frameEurope:regionalAir} paint={paint} onClose={clearProbe}/>}
+    {probeCard&&<AirComposition location={probe} global={frameIndex>=0?{status:frameAir?'ready':'loading',data:frameAir}:globalAir} regional={frameIndex>=0?frameEurope:regionalAir} paint={paint} onClose={clearProbe} footer={cardRow}/>}
    </div>
    <GlobalAirLegend surface={surface} onSurfaceChange={setSurface} panelOpen={panel==='layers'} onPanelChange={open=>{if(open){clearProbe();if(picking)finishPicking();}setPanel(open?'layers':null);}} onFlyTo={flyTo} detail={detail} regional={regionalAir} regionalError={regionalError} state={globalAir} paint={paint} weather={weather} weatherSettings={weatherSettings} onWeatherChange={(id,change)=>{if(change.enabled)track(`weather/${id}`);setWeatherSettings(current=>({...current,[id]:{...current[id],...change}}));}} onChange={updatePaint}/>
    {picking&&ready&&<LayerPicker paint={paint} onChange={updatePaint} onDone={finishPicking}/>}
@@ -166,6 +202,7 @@ function App(){
    <p className={`locate-status${locateError?' is-shown':''}`} role="status">{locateError}</p>
    </>}
   </div>
+  {asking&&!asking.view&&<CardQuestion key={asking.key} card={asking.card} variant={asking.variant} question={asking.question} total={DECK.length} onAnswer={answerCard} onClose={()=>setAsking(null)}/>}
   <Loader ready={ready} progress={progress} textureReady={globeReady} downloaded={globalAir.status!=='loading'} failed={globalAir.status==='error'}/>
  </main>;
 }

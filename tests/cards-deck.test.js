@@ -86,3 +86,8 @@ test('art block is optional but must hold three numbers',()=>{
  assert.throws(()=>validateDeck(changed(c=>{c.art={lon0:97.5,lon1:116.5};})),/Invalid card/);
  assert.throws(()=>validateDeck(changed(c=>{c.art={lon0:120,lon1:100,latCenter:2};})),/Invalid card/);
 });
+
+test('wrongNote is optional text on a question',()=>{
+ assert.doesNotThrow(()=>validateDeck(changed(c=>{c.questions[0].wrongNote='Fireworks add a night or two; this haze lasts the month.';})));
+ assert.throws(()=>validateDeck(changed(c=>{c.questions[0].wrongNote='';})),/Invalid card/);
+});
