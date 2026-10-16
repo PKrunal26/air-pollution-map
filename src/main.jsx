@@ -1,7 +1,7 @@
 import React,{useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import {createRoot} from 'react-dom/client';
 import './styles.css';
-import {Plus,Minus,Info,ArrowCounterClockwise,GpsFix} from '@phosphor-icons/react';
+import {Plus,Minus,Info,ArrowCounterClockwise,GpsFix,Cards} from '@phosphor-icons/react';
 import Globe from './Globe';
 import CitySearch from './CitySearch';
 import AirComposition from './AirComposition';
@@ -23,9 +23,14 @@ import {track} from './analytics';
 import './styles/shell.css';
 import DECK_JSON from './cards/deck.json';
 import {validateDeck,cardAt,monthKey} from './cards/deck';
-import {loadCollection,saveCollection,markFound,questionFor,answer,waitLeft,variantKey} from './cards/collection';
+import {loadCollection,saveCollection,markFound,questionFor,answer,waitLeft,variantKey,mergeCollected} from './cards/collection';
 import ReadoutCardRow from './cards/ReadoutCardRow';
 import CardQuestion from './cards/CardQuestion';
+import CardsPanel from './cards/CardsPanel';
+import CardViewer from './cards/CardViewer';
+import ORDER from './cards/order.json';
+import {encodeDeck,decodeDeck} from './cards/recovery';
+import {parseCardParams} from './cards/cardParams';
 
 const LOADER_TIMEOUT=20000,noop=()=>()=>{},CHROME_INSET=176,PHONE_HEADER=72;
 // ?embed=1 shows the globe only (for iframes); layers, surface and bg set the initial look.
@@ -38,6 +43,8 @@ if(typeof navigator!=='undefined'&&/; wv\)/.test(navigator.userAgent))document.d
 const SAVED=EMBED?null:loadSettings();
 // Event cards: the hand-written deck. A broken deck turns the game off rather than the atlas.
 const DECK=(()=>{try{return validateDeck(DECK_JSON);}catch(e){console.error(e);return [];}})();
+// ?card=<id> shows a shared card; ?deck=<code> restores a collection (not in embeds).
+const CARD_OPTIONS=EMBED||typeof location==='undefined'?{card:null,deck:null}:parseCardParams(location.search,new Set(DECK.map(c=>c.id)));
 const cardKey=hit=>hit.status==='variant'?variantKey(hit.card.id,hit.variant.kind):hit.card.id;
 function useMedia(query){
  const [match,setMatch]=useState(()=>typeof matchMedia==='function'&&matchMedia(query).matches);
@@ -63,6 +70,13 @@ function App(){
  const [timelines,setTimelines]=useState({forecast:null,history:null}),[mode,setMode]=useState(OPTIONS.history?'history':'forecast'),[frameAir,setFrameAir]=useState(null),[frameEurope,setFrameEurope]=useState(null);
  const timeline=timelines[mode]??timelines.forecast;
  const [cards,setCards]=useState(()=>EMBED?null:loadCollection()),[asking,setAsking]=useState(null),[now,setNow]=useState(()=>Date.now());
+ const [viewing,setViewing]=useState(()=>{const card=DECK.find(c=>c.id===CARD_OPTIONS.card);return card?{card,variant:null,shared:true}:null;}),[clueFor,setClueFor]=useState(null);
+ // A restore link merges into what this browser already holds, then leaves the address bar.
+ useEffect(()=>{
+  if(!CARD_OPTIONS.deck||!cards)return;
+  setCards(current=>mergeCollected(current,decodeDeck(CARD_OPTIONS.deck,ORDER)));setPanel('cards');
+  const url=new URL(location.href);url.searchParams.delete('deck');history.replaceState(null,'',url);
+ },[]);
  useEffect(()=>{if(cards)saveCollection(cards);},[cards]);
  const changeMode=next=>{timeline?.pause();setMode(next);track(`time/${next}`);};
  useEffect(()=>{if(EMBED)return;const controller=new AbortController();fetchWeather(controller.signal).then(data=>setWeather({status:'ready',data})).catch(e=>{if(e.name!=='AbortError')setWeather({status:'error',data:null});});return()=>controller.abort();},[]);
@@ -102,6 +116,14 @@ function App(){
  useEffect(()=>{if(!EMBED)saveSettings({paint,weather:weatherSettings,surface});},[paint,weatherSettings,surface]);
  useEffect(()=>{const timer=setTimeout(()=>setTimedOut(true),LOADER_TIMEOUT);return()=>clearTimeout(timer);},[]);
  useEffect(()=>{if(!locateError)return;const timer=setTimeout(()=>setLocateError(''),6000);return()=>clearTimeout(timer);},[locateError]);
+ const sharedShown=useRef(false);
+ useEffect(()=>{
+  const card=DECK.find(c=>c.id===CARD_OPTIONS.card),line=timelines.history;
+  if(!card||!line||sharedShown.current)return;sharedShown.current=true;
+  const at=line.manifest.frames.findIndex(f=>monthKey(f.validAt)===(card.featuredMonth??card.months[0]));
+  setMode('history');if(at>=0)line.seek(at);
+  flyTo(card.sourcePoint[1],card.sourcePoint[0],2.3);
+ },[timelines.history]);
  // A pinned spot in Monthly mode may hold a card, a CO print of one, or a hint that a card is a month away.
  const enabledLayers=Object.keys(paint).filter(id=>paint[id]?.enabled).join(',');
  const ownedIds=cards?Object.keys(cards.collected).filter(k=>!k.includes(':')).join(','):'';
@@ -127,7 +149,7 @@ function App(){
   return result.correct;
  };
  const cardRow=cardHit&&<ReadoutCardRow hit={cardHit} collected={!!hitKey&&hitKey in cards.collected} waitMs={hitWait}
-  onAnswer={()=>setAsking({card:cardHit.card,variant:cardHit.variant?.kind??null,key:hitKey,question:questionFor(cardHit.card,cards,hitKey).question})} onView={()=>setAsking({card:cardHit.card,variant:cardHit.variant?.kind??null,key:hitKey,view:true})}/>;
+  onAnswer={()=>setAsking({card:cardHit.card,variant:cardHit.variant?.kind??null,key:hitKey,question:questionFor(cardHit.card,cards,hitKey).question})} onView={()=>setViewing({card:cardHit.card,variant:cardHit.variant?.kind??null})}/>;
  const touched=useRef(false);
  const clearProbe=()=>{setProbe(null);setProbeReset(n=>n+1);};
  const changeReadout=on=>{setReadout(on);saveReadout(on);if(!on)clearProbe();};
@@ -189,8 +211,10 @@ function App(){
    {!EMBED&&<>
    <header className="minimal-header">
     <button className="atlas-brand" aria-label="Return to overview" onClick={overview}><svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="12" stroke="currentColor" strokeWidth=".8"/><ellipse cx="16" cy="16" rx="6" ry="12" stroke="currentColor" strokeWidth=".8" transform="rotate(35 16 16)"/><path d="M4 16h24" stroke="currentColor" strokeWidth=".8"/></svg><span>Who Owns the Air?</span></button>
-    <nav aria-label="Explore the atlas"><CitySearch open={panel==='search'} onOpenChange={open=>setPanel(open?'search':null)} onChoose={chooseCity} onLocate={locate}/>{!touch&&<ReadoutToggle on={readout} onChange={changeReadout}/>}<a className="about-trigger" href="study.html" aria-label="About the data"><Info size={16} weight="light"/><span>About</span></a></nav>
+    <nav aria-label="Explore the atlas">{cards&&DECK.length>0&&<button type="button" className="cards-trigger" aria-expanded={panel==='cards'} aria-label={`Cards, ${DECK.filter(c=>c.id in cards.collected).length} of ${DECK.length} collected`} onClick={()=>{clearProbe();setNow(Date.now());setPanel(p=>p==='cards'?null:'cards');}}><Cards size={16} weight="light"/><span>Cards</span><small>{DECK.filter(c=>c.id in cards.collected).length}/{DECK.length}</small></button>}<CitySearch open={panel==='search'} onOpenChange={open=>setPanel(open?'search':null)} onChoose={chooseCity} onLocate={locate}/>{!touch&&<ReadoutToggle on={readout} onChange={changeReadout}/>}<a className="about-trigger" href="study.html" aria-label="About the data"><Info size={16} weight="light"/><span>About</span></a></nav>
    </header>
+   {panel==='cards'&&cards&&<CardsPanel key={clueFor??'cards'} deck={DECK} cards={cards} now={now} total={DECK.length} clueFor={clueFor} onClose={()=>{setPanel(null);setClueFor(null);}} onOpen={card=>setViewing({card,variant:null})}
+    saveLink={()=>`${location.origin}${location.pathname}?deck=${encodeDeck(Object.keys(cards.collected),ORDER)}`}/>}
    <div ref={stack} className="side-stack">
     {cityCard&&<AirComposition location={{lat:city.lat,lon:city.lon,pinned:true,name:city.name,country:city.country}} global={frameIndex>=0?{status:frameAir?'ready':'loading',data:frameAir}:globalAir} regional={frameIndex>=0?frameEurope:regionalAir} paint={paint} onClose={()=>setCity(null)}/>}
     {probeCard&&<AirComposition location={probe} global={frameIndex>=0?{status:frameAir?'ready':'loading',data:frameAir}:globalAir} regional={frameIndex>=0?frameEurope:regionalAir} paint={paint} onClose={clearProbe} footer={cardRow}/>}
@@ -202,7 +226,9 @@ function App(){
    <p className={`locate-status${locateError?' is-shown':''}`} role="status">{locateError}</p>
    </>}
   </div>
-  {asking&&!asking.view&&<CardQuestion key={asking.key} card={asking.card} variant={asking.variant} question={asking.question} total={DECK.length} onAnswer={answerCard} onClose={()=>setAsking(null)}/>}
+  {asking&&<CardQuestion key={asking.key} card={asking.card} variant={asking.variant} question={asking.question} total={DECK.length} onAnswer={answerCard} onClose={()=>setAsking(null)} onShowCards={()=>{setAsking(null);clearProbe();setPanel('cards');}}/>}
+  {viewing&&<CardViewer key={viewing.card.id} card={viewing.card} variant={viewing.variant} shared={!!viewing.shared} total={DECK.length} foundAt={cards?.collected[viewing.variant?variantKey(viewing.card.id,viewing.variant):viewing.card.id]??null}
+   onClose={()=>setViewing(null)} onHunt={()=>{setClueFor(viewing.card.id);setViewing(null);clearProbe();setPanel('cards');}}/>}
   <Loader ready={ready} progress={progress} textureReady={globeReady} downloaded={globalAir.status!=='loading'} failed={globalAir.status==='error'}/>
  </main>;
 }

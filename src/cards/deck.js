@@ -34,6 +34,8 @@ function cardProblem(c){
  if(!RARITIES.includes(c.rarity))return `unknown rarity ${c.rarity}`;
  if(!isText(c.field))return 'missing field';
  if(!Array.isArray(c.months)||!c.months.length||!c.months.every(isMonth))return 'bad months';
+ // Optional: the month shown on the card's art and opened by shared links (default: the first month).
+ if(c.featuredMonth!==undefined&&!c.months.includes(c.featuredMonth))return 'featuredMonth not in months';
  if(!Array.isArray(c.footprint)||c.footprint.length<3||!c.footprint.every(isPoint))return 'footprint needs at least 3 points';
  if(!(c.bufferKm>=0))return 'bad bufferKm';
  if(!isPoint(c.sourcePoint))return 'bad sourcePoint';

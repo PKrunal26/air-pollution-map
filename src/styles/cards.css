@@ -79,3 +79,54 @@ button.event-card:active:not(:disabled){transform:none}
 @keyframes card-reveal{from{transform:perspective(900px) rotateY(90deg)}to{transform:none}}
 @media (prefers-reduced-motion:reduce){.card-reveal{animation:none}}
 @media (max-width:700px){.card-question{flex-direction:column;align-items:center}.card-question-body{width:100%}}
+
+/* A card shown large: one you hold, or a shared one. */
+.card-viewer{display:flex;flex-direction:column;align-items:center;gap:14px;max-height:calc(100dvh - 32px);overflow:auto;color:var(--text)}
+.card-viewer .card-question-actions{padding-top:0;justify-content:center}
+.card-viewer-note{margin:0;font-size:12px;color:var(--text-muted)}
+@media (max-height:760px){.card-viewer .event-card{--card-scale:.8!important}}
+
+/* Header button. */
+.cards-trigger{display:inline-flex;align-items:center;gap:9px;min-height:40px;font-size:12px}
+.cards-trigger small{color:var(--text-muted);font-size:12px;font-variant-numeric:tabular-nums}
+@media (max-width:700px){.cards-trigger span{display:none}}
+
+/* The Cards panel (Compendium). */
+.cards-panel{position:fixed;z-index:var(--drawer);top:78px;right:24px;width:380px;max-height:calc(100dvh - 190px);display:flex;flex-direction:column;border-radius:var(--radius-card);background:var(--glass-bg);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow),0 20px 60px #0009;color:var(--text);backdrop-filter:blur(var(--glass-blur));-webkit-backdrop-filter:blur(var(--glass-blur))}
+@media (max-width:700px){.cards-panel{top:70px;left:10px;right:10px;width:auto;max-height:calc(100dvh - 170px)}}
+.cards-head{display:flex;align-items:center;gap:10px;padding:16px 16px 10px 18px}
+.cards-head h2{font-size:16px;font-weight:600;margin-right:auto}
+.cards-head span{font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.cards-scroll{flex:1;min-height:0;overflow:auto;padding:0 18px 12px}
+.cards-progress{display:flex;gap:12px;margin-bottom:10px}
+.cards-progress div{flex:1}
+.cards-progress p{display:flex;justify-content:space-between;margin:0;font-size:10.5px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.cards-progress i{display:block;height:3px;border-radius:2px;background:#e1e7d51a;margin-top:3px;overflow:hidden}
+.cards-progress b{display:block;height:100%}
+.cards-filters{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.cards-filters button{font-size:11.5px;padding:4px 10px;border-radius:99px;border:1px solid #e1e7d51f;color:var(--text-muted)}
+.cards-filters button[aria-pressed=true]{background:#e1e7d524;color:var(--text);border-color:transparent}
+.cards-grid{display:grid;grid-template-columns:repeat(3,90px);justify-content:space-between;gap:12px 0}
+.cards-slot{position:relative;display:block;padding:0;border-radius:6px}
+.cards-slot .event-card{box-shadow:0 8px 24px #0008}
+.cards-more{position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:#7fb7d9;border:2px solid #141a16}
+.cards-seen{position:relative;display:grid;place-items:center;width:90px;height:180px;border-radius:6px;border:1.5px dashed var(--rarity);overflow:hidden;background:#0a0d0c}
+.cards-seen img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.18;filter:grayscale(1)}
+.cards-seen b{position:relative;color:var(--rarity);font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+.cards-wait{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:9.5px;color:#e3c76a}
+.cards-clue{display:flex;flex-direction:column}
+.cards-back{align-self:flex-start;font-size:11.5px;color:var(--text-muted);padding:0;margin-bottom:12px}
+.cards-clue-card{display:flex;justify-content:center;margin-bottom:14px}
+.cards-meta{margin:10px 0 4px;font-size:10.5px;color:var(--text-muted)}
+.cards-riddle{margin:0;font-size:14px;line-height:1.45}
+.cards-steps{display:flex;flex-direction:column;gap:6px}
+.cards-step{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:8px;font-size:12px;border:1px dashed #e1e7d52a;color:var(--text-muted)}
+.cards-step span{color:var(--text-muted)}
+.cards-step.is-open{border-style:solid;border-color:transparent;background:#e1e7d50d;color:var(--text)}
+.cards-months{display:flex;gap:2px;margin-top:8px;opacity:.45}
+.cards-months.is-open{opacity:1}
+.cards-months span{flex:1;text-align:center;font-size:9px;padding:3px 0;border-radius:3px;color:#5d6852}
+.cards-months span.is-on{background:#e3c76a33;color:#e3c76a}
+.cards-foot{display:flex;align-items:center;gap:10px;padding:12px 18px 14px;border-top:1px solid var(--glass-border)}
+.cards-foot p{flex:1;margin:0;font-size:10.5px;line-height:1.4;color:var(--text-muted)}
+.cards-foot button{flex:none;font-size:11.5px;padding:6px 12px;border-radius:99px;border:1px solid #e1e7d54a}

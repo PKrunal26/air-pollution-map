@@ -91,3 +91,8 @@ test('wrongNote is optional text on a question',()=>{
  assert.doesNotThrow(()=>validateDeck(changed(c=>{c.questions[0].wrongNote='Fireworks add a night or two; this haze lasts the month.';})));
  assert.throws(()=>validateDeck(changed(c=>{c.questions[0].wrongNote='';})),/Invalid card/);
 });
+
+test('featuredMonth is optional and must be one of the months',()=>{
+ assert.doesNotThrow(()=>validateDeck(changed(c=>{c.featuredMonth='2026-09';})));
+ assert.throws(()=>validateDeck(changed(c=>{c.featuredMonth='2026-10';})),/Invalid card/);
+});
