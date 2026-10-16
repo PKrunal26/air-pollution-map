@@ -2,13 +2,14 @@ import React,{useEffect,useRef,useState} from 'react';
 import CardView from './CardView';
 import {FaceDown} from './ReadoutCardRow';
 import {RARITY_COLOURS} from './deck';
+import ShareButton from './ShareButton';
 
 const RARITY_NAMES={common:'Common',uncommon:'Uncommon',rare:'Rare'};
 const LETTERS='ABCD';
 
 // The focused question: the face-down card beside its question, then the outcome. One try per question.
 // onAnswer(choice) applies the answer and returns whether it was right.
-export default function CardQuestion({card,variant,question,total,foundCount,onAnswer,onClose,onShare,onShowCards}){
+export default function CardQuestion({card,variant,question,total,foundCount,onAnswer,onClose,onShowCards}){
  const [pick,setPick]=useState(null),[right,setRight]=useState(null),[flipped,setFlipped]=useState(false);
  const box=useRef(null);
  useEffect(()=>{
@@ -17,10 +18,11 @@ export default function CardQuestion({card,variant,question,total,foundCount,onA
   return()=>opener?.focus?.({preventScroll:true});
  },[]);
  // Escape closes from anywhere: answering disables the options, which can drop focus out of the dialog.
+ const close=useRef(onClose);close.current=onClose; // the parent passes a new onClose on every render
  useEffect(()=>{
-  const escape=e=>{if(e.key==='Escape'){e.stopPropagation();onClose();}};
+  const escape=e=>{if(e.key==='Escape'){e.stopPropagation();close.current();}};
   document.addEventListener('keydown',escape,true);return()=>document.removeEventListener('keydown',escape,true);
- },[onClose]);
+ },[]);
  // After answering, focus moves to the outcome's first button.
  useEffect(()=>{if(pick!==null)box.current?.querySelector('.card-question-actions button')?.focus({preventScroll:true});},[pick,right]);
  const keys=e=>{
@@ -42,7 +44,7 @@ export default function CardQuestion({card,variant,question,total,foundCount,onA
      <p className="card-question-text">{question.explanation}</p>
      {Number.isFinite(foundCount)&&<p className="card-question-meta">{foundCount.toLocaleString('en-US')} {foundCount===1?'person has':'people have'} found this card.</p>}
      <div className="card-question-actions">
-      {onShare&&<button type="button" className="is-primary" onClick={onShare}>Share</button>}
+      <ShareButton card={card} variant={variant}/>
       {onShowCards&&<button type="button" onClick={onShowCards}>See your cards</button>}
       <button type="button" onClick={onClose}>Keep exploring</button>
      </div>

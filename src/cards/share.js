@@ -65,23 +65,27 @@ export function drawStory(ctx,{card,variant=null,images},layout=storyLayout()){
 
 const load=src=>new Promise((resolve,reject)=>{const img=new Image();img.decoding='async';img.onload=()=>resolve(img);img.onerror=reject;img.src=src;});
 
-// Renders the PNG and opens the share sheet where files can be shared; downloads it otherwise.
-export async function shareCard(card,variant=null,base=import.meta.env?.BASE_URL??'./'){
+// Renders the story PNG ahead of time: iOS only opens the share sheet straight from a tap, so the tap must not wait.
+export async function prepareStory(card,variant=null,base=import.meta.env?.BASE_URL??'./'){
  try{
   const name=`${card.id}${variant?`-${variant}`:''}`;
   const [wide,art]=await Promise.all([load(`${base}cards/${name}-wide.svg`),load(`${base}cards/${name}.svg`)]);
   const layout=storyLayout(),canvas=document.createElement('canvas');canvas.width=layout.width;canvas.height=layout.height;
   drawStory(canvas.getContext('2d'),{card,variant,images:{wide,art}},layout);
   const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
-  const file=new File([blob],`${name}.png`,{type:'image/png'});
-  track(`card-shared/${name}`);
-  if(navigator.canShare?.({files:[file]})){
-   try{await navigator.share({files:[file],title:card.name,text:`Find it yourself: https://${SITE}/?card=${card.id}`});return 'shared';}
-   catch(e){if(e?.name==='AbortError')return 'shared';}
-  }
-  const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
-  return 'downloaded';
- }catch{return 'failed';}
+  return blob?new File([blob],`${name}.png`,{type:'image/png'}):null;
+ }catch{return null;}
+}
+
+// Opens the share sheet where files can be shared, otherwise downloads the PNG. 'shared' | 'cancelled' | 'downloaded'.
+export async function shareStory(file,card){
+ const name=file.name.replace(/\.png$/,'');
+ if(navigator.canShare?.({files:[file]})){
+  try{await navigator.share({files:[file],title:card.name,text:`Find it yourself: https://${SITE}/?card=${card.id}`});track(`card-shared/${name}`);return 'shared';}
+  catch(e){if(e?.name==='AbortError')return 'cancelled';}
+ }
+ const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+ track(`card-shared/${name}`);return 'downloaded';
 }
 
 // "N people found this card", from GoatCounter's public counter; null whenever it is unavailable (the line is hidden).

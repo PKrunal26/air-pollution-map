@@ -76,3 +76,24 @@ test('mergeCollected keeps existing dates',()=>{
  assert.equal(m.collected['test-fire:co'],null);
  assert.equal(s.collected['test-dust'],undefined,'input state is not changed');
 });
+
+test('blocked localStorage getter does not crash load or save',()=>{
+ const had=Object.getOwnPropertyDescriptor(globalThis,'localStorage');
+ Object.defineProperty(globalThis,'localStorage',{configurable:true,get(){throw new Error('SecurityError');}});
+ try{
+  assert.deepEqual(loadCollection(),emptyState());
+  assert.doesNotThrow(()=>saveCollection(emptyState()));
+ }finally{
+  if(had)Object.defineProperty(globalThis,'localStorage',had);else delete globalThis.localStorage;
+ }
+});
+test('saving merges with what another tab saved',()=>{
+ const store=memory();
+ const tabA=answer(emptyState(),'test-fire',fire,fire.questions[0].answer,50).state;
+ saveCollection(tabA,store);
+ const tabB=markFound(emptyState(),'test-dust',60); // older tab, never saw test-fire
+ saveCollection(tabB,store);
+ const saved=loadCollection(store);
+ assert.equal(saved.collected['test-fire'],50,'tab A\'s card survives');
+ assert.equal(saved.found['test-dust'],60);
+});

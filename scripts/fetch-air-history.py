@@ -98,7 +98,13 @@ elif mode == 'build':
     write_manifest([write_frame(k, {f: (loaded[f]['sums'][k], loaded[f]['counts'][k], loaded[f]['negative'][k]) for f in fields}) for k in range(len(months))])
 elif mode == 'month':
     published = json.loads((out / 'air-history.json').read_text())
-    assert published['fieldOrder'] == fields
+    if published['fieldOrder'] != fields:
+        # The workflow's list grew (e.g. pm10, carbon_monoxide) before the history was rebuilt with it: keep adding
+        # months for the published fields so the daily refresh still deploys, until `rebuild_history` is run.
+        assert fields[:len(published['fieldOrder'])] == published['fieldOrder'], (published['fieldOrder'], fields)
+        print('warning: published history has', ','.join(published['fieldOrder']), '- run the workflow with',
+              'rebuild_history to add', ','.join(fields[len(published['fieldOrder']):]), flush=True)
+        fields = published['fieldOrder']
     frames = list(published['frames'])
     assert [f['validAt'] for f in frames] == [int(a.timestamp() * 1000) for a, _ in months[:len(frames)]]
     for k in range(len(frames), len(months)):

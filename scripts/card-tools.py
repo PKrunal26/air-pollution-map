@@ -146,7 +146,8 @@ def svg(card, month, frame, lon0, lon1, lat_center, width, height, step=0.5):
     land = subprocess.run(['node', str(ROOT / 'scripts' / 'card-land.mjs'), *map(str, (lon0, lon1, lat0, lat1, width, height))],
                           capture_output=True, text=True, check=True).stdout
     step_px = step / (lat1 - lat0) * height
-    out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid slice">',
+    # Explicit width/height: Firefox cannot draw a viewBox-only SVG onto a canvas (share image).
+    out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid slice">',
            f'<rect width="{width}" height="{height}" fill="#0a0d0c"/><path d="{land}" fill="#36433a"/>']
 
     def sample(la, lo):

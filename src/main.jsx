@@ -23,7 +23,7 @@ import {track} from './analytics';
 import './styles/shell.css';
 import DECK_JSON from './cards/deck.json';
 import {validateDeck,cardAt,monthKey} from './cards/deck';
-import {loadCollection,saveCollection,markFound,questionFor,answer,waitLeft,variantKey,mergeCollected} from './cards/collection';
+import {loadCollection,saveCollection,markFound,questionFor,answer,waitLeft,variantKey,mergeCollected,mergeStates,STORAGE_KEY} from './cards/collection';
 import ReadoutCardRow from './cards/ReadoutCardRow';
 import CardQuestion from './cards/CardQuestion';
 import CardsPanel from './cards/CardsPanel';
@@ -31,7 +31,7 @@ import CardViewer from './cards/CardViewer';
 import ORDER from './cards/order.json';
 import {encodeDeck,decodeDeck} from './cards/recovery';
 import {parseCardParams} from './cards/cardParams';
-import {shareCard,fetchFoundCount} from './cards/share';
+import {fetchFoundCount} from './cards/share';
 
 const LOADER_TIMEOUT=20000,noop=()=>()=>{},CHROME_INSET=176,PHONE_HEADER=72;
 // ?embed=1 shows the globe only (for iframes); layers, surface and bg set the initial look.
@@ -82,6 +82,12 @@ function App(){
   const url=new URL(location.href);url.searchParams.delete('deck');history.replaceState(null,'',url);
  },[]);
  useEffect(()=>{if(cards)saveCollection(cards);},[cards]);
+ // Another tab collected or found something: fold it in, so neither tab's save loses the other's cards.
+ useEffect(()=>{
+  if(!cards)return;
+  const sync=e=>{if(e.key===STORAGE_KEY)setCards(current=>mergeStates(current,loadCollection()));};
+  window.addEventListener('storage',sync);return()=>window.removeEventListener('storage',sync);
+ },[!!cards]);
  const changeMode=next=>{timeline?.pause();setMode(next);track(`time/${next}`);};
  useEffect(()=>{if(EMBED)return;const controller=new AbortController();fetchWeather(controller.signal).then(data=>setWeather({status:'ready',data})).catch(e=>{if(e.name!=='AbortError')setWeather({status:'error',data:null});});return()=>controller.abort();},[]);
  useEffect(()=>{const controller=new AbortController();fetchEuropeLayers(controller.signal).then(setRegionalAir).catch(e=>{if(e.name!=='AbortError')setRegionalError(true);});return()=>controller.abort();},[]);
@@ -132,10 +138,10 @@ function App(){
  const enabledLayers=Object.keys(paint).filter(id=>paint[id]?.enabled).join(',');
  const ownedIds=cards?Object.keys(cards.collected).filter(k=>!k.includes(':')).join(','):'';
  const cardHit=React.useMemo(()=>{
-  if(!cards||!DECK.length||!probe?.pinned||timeline?.kind!=='history'||frameIndex<0)return null;
+  if(!cards||!DECK.length||!probe?.pinned||!readout||(panel&&panel!=='layers')||timeline?.kind!=='history'||frameIndex<0)return null;
   const hit=cardAt(DECK,{lat:probe.lat,lon:probe.lon,month:monthKey(timeline.manifest.frames[frameIndex].validAt),layers:new Set(enabledLayers.split(',')),owned:new Set(ownedIds.split(','))});
   return hit.status==='none'?null:hit;
- },[probe?.pinned,probe?.lat,probe?.lon,timeline,frameIndex,enabledLayers,ownedIds,!!cards]);
+ },[probe?.pinned,probe?.lat,probe?.lon,readout,panel,timeline,frameIndex,enabledLayers,ownedIds,!!cards]);
  const hitKey=cardHit&&cardHit.status!=='near-month'?cardKey(cardHit):null;
  useEffect(()=>{
   if(!hitKey)return;
@@ -144,6 +150,7 @@ function App(){
    track(`card-found/${hitKey}`);return markFound(current,hitKey,Date.now());
   });
  },[hitKey]);
+ useEffect(()=>{setNow(Date.now());},[hitKey,panel]);
  const hitWait=hitKey&&cards?waitLeft(cards,hitKey,now):0;
  // The countdown in the readout row ticks while a wait is showing.
  useEffect(()=>{if(!hitWait)return;const timer=setInterval(()=>setNow(Date.now()),30000);return()=>clearInterval(timer);},[hitWait>0]);
@@ -230,9 +237,9 @@ function App(){
    <p className={`locate-status${locateError?' is-shown':''}`} role="status">{locateError}</p>
    </>}
   </div>
-  {asking&&<CardQuestion key={asking.key} card={asking.card} variant={asking.variant} question={asking.question} total={DECK.length} foundCount={foundCount} onShare={()=>shareCard(asking.card,asking.variant)} onAnswer={answerCard} onClose={()=>setAsking(null)} onShowCards={()=>{setAsking(null);clearProbe();setPanel('cards');}}/>}
+  {asking&&<CardQuestion key={asking.key} card={asking.card} variant={asking.variant} question={asking.question} total={DECK.length} foundCount={foundCount} onAnswer={answerCard} onClose={()=>setAsking(null)} onShowCards={()=>{setAsking(null);clearProbe();setPanel('cards');}}/>}
   {viewing&&<CardViewer key={viewing.card.id} card={viewing.card} variant={viewing.variant} shared={!!viewing.shared} total={DECK.length} foundAt={cards?.collected[viewing.variant?variantKey(viewing.card.id,viewing.variant):viewing.card.id]??null}
-   onClose={()=>setViewing(null)} onShare={()=>shareCard(viewing.card,viewing.variant)} onHunt={()=>{setClueFor(viewing.card.id);setViewing(null);clearProbe();setPanel('cards');}}/>}
+   onClose={()=>setViewing(null)} onHunt={()=>{setClueFor(viewing.card.id);setViewing(null);clearProbe();setPanel('cards');}}/>}
   <Loader ready={ready} progress={progress} textureReady={globeReady} downloaded={globalAir.status!=='loading'} failed={globalAir.status==='error'}/>
  </main>;
 }

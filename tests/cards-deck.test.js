@@ -96,3 +96,9 @@ test('featuredMonth is optional and must be one of the months',()=>{
  assert.doesNotThrow(()=>validateDeck(changed(c=>{c.featuredMonth='2026-09';})));
  assert.throws(()=>validateDeck(changed(c=>{c.featuredMonth='2026-10';})),/Invalid card/);
 });
+
+test('a real find beats an earlier card\'s one-month-off hint',()=>{
+ const deck=fixture();deck[1]={...deck[0],id:'later',number:9,months:['2026-10']};
+ const hit=cardAt(deck,{lat:0,lon:113,month:'2026-10',layers:new Set(),owned:new Set()});
+ assert.equal(hit.status,'found');assert.equal(hit.card.id,'later');
+});

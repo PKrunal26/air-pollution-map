@@ -93,13 +93,13 @@ function inside(card,lat,lon){
 // What a pin finds: a CO variant (CO layer on, base card owned), the card itself, a hint one month off, or nothing.
 // layers: Set of enabled field ids; owned: Set of collected base card ids. First match in deck order wins.
 export function cardAt(deck,{lat,lon,month,layers,owned}){
- const at=monthIndex(month);
- for(const card of deck){
-  if(!inside(card,lat,lon))continue;
+ // Two passes: a card that is here this month always beats another card's one-month-off hint.
+ const at=monthIndex(month),here=deck.filter(card=>inside(card,lat,lon));
+ for(const card of here){
   const variant=(card.variants??[]).find(v=>v.months.includes(month)&&layers.has(v.field)&&owned.has(card.id));
   if(variant)return {status:'variant',card,variant};
   if(card.months.includes(month))return {status:'found',card,variant:null};
-  if(card.months.some(m=>Math.abs(monthIndex(m)-at)===1))return {status:'near-month',card,variant:null};
  }
- return {status:'none',card:null,variant:null};
+ const near=here.find(card=>card.months.some(m=>Math.abs(monthIndex(m)-at)===1));
+ return near?{status:'near-month',card:near,variant:null}:{status:'none',card:null,variant:null};
 }

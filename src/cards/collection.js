@@ -41,12 +41,28 @@ export function mergeCollected(state,keys){
 }
 
 const isMap=v=>v&&typeof v==='object'&&!Array.isArray(v);
-export function loadCollection(storage=globalThis.localStorage){
+// localStorage itself can throw on access (site data blocked), so it is looked up inside the try.
+const resolve=storage=>storage===undefined?globalThis.localStorage:storage;
+export function loadCollection(storage){
  try{
-  const s=JSON.parse(storage?.getItem(STORAGE_KEY)??'null');
+  const s=JSON.parse(resolve(storage)?.getItem(STORAGE_KEY)??'null');
   return s?.v===1&&isMap(s.collected)&&isMap(s.found)&&isMap(s.attempts)?s:emptyState();
  }catch{return emptyState();}
 }
-export function saveCollection(state,storage=globalThis.localStorage){
- try{storage?.setItem(STORAGE_KEY,JSON.stringify(state));}catch{}
+
+// Two tabs each hold their own copy: union what was collected and found (earliest date wins, a known date beats
+// none); attempts come from `mine` where it has them.
+const earliest=(a,b)=>a==null?b??null:b==null?a:Math.min(a,b);
+function union(a,b){
+ const out={...a};
+ for(const [k,v] of Object.entries(b))out[k]=k in out?earliest(out[k],v):v;
+ return out;
+}
+export const mergeStates=(mine,other)=>({v:1,collected:union(mine.collected,other.collected),found:union(mine.found,other.found),attempts:{...other.attempts,...mine.attempts}});
+
+export function saveCollection(state,storage){
+ try{
+  const store=resolve(storage);
+  store?.setItem(STORAGE_KEY,JSON.stringify(mergeStates(state,loadCollection(store))));
+ }catch{}
 }
