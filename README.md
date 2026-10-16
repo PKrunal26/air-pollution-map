@@ -118,6 +118,13 @@ Data-boundary tests (fixtures in `tests/fixtures/`) cover units and UTC timestam
 
 For local work, run `npm run data:pull` once (and again for newer data). Scheduled workflows pause after 60 days without commits; re-enable from the Actions tab.
 
+## Event cards
+
+Collectible cards of air-pollution events, found on the globe in the monthly history (see `docs/superpowers/specs/2026-10-16-event-cards-design.md`). The deck is hand-written in `src/cards/deck.json`; `src/cards/order.json` records every card id ever published, in order, and only grows (recovery links depend on it). Card art and stats come from a hand-run tool that is not part of the build (needs `npm run data:pull` and numpy):
+
+- `python scripts/card-tools.py stats <id> [--co]` prints Peak, × WHO, Area and Reach measured on the card's footprint; copy them into the deck with their notes.
+- `python scripts/card-tools.py art <id> [--co]` writes `public/cards/<id>.svg` (the card) and `<id>-wide.svg` (the share-image background) from the card's `art` crop and `scale`; commit both.
+
 ## Lossless data transfers
 
 Run `python scripts/compress-native.py` after regenerating snapshots. The browser prefers deterministic `.bin.gz` assets when `DecompressionStream` is available and otherwise fetches the uncompressed binary. It verifies the original decoded length, SHA-256, units, grid and every value before rendering. Compression preserves all float values; it does not reduce grid resolution.

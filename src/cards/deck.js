@@ -36,6 +36,8 @@ function cardProblem(c){
  if(!isPoint(c.sourcePoint))return 'bad sourcePoint';
  const stats=statsProblem(c.stats);if(stats)return stats;
  if(!(c.scale>0))return 'bad scale';
+ // Optional crop for scripts/card-tools.py art: longitudes west to east, centre latitude.
+ if(c.art!==undefined&&!(['lon0','lon1','latCenter'].every(k=>Number.isFinite(c.art?.[k]))&&c.art.lon0<c.art.lon1))return 'bad art crop';
  if(!['riddle','region','country','month'].every(k=>isText(c.clues?.[k])))return 'clues incomplete';
  if(!Array.isArray(c.questions)||c.questions.length<2||c.questions.length>3)return 'needs 2 or 3 questions';
  for(const q of c.questions){const p=questionProblem(q);if(p)return p;}

@@ -80,3 +80,9 @@ test('first matching card wins',()=>{
  const deck=fixture();deck[2]={...deck[0],id:'later',number:9};
  assert.equal(cardAt(deck,{lat:0,lon:113,month:'2026-09',layers:new Set(),owned:new Set()}).card.id,'test-fire');
 });
+
+test('art block is optional but must hold three numbers',()=>{
+ assert.doesNotThrow(()=>validateDeck(changed(c=>{c.art={lon0:97.5,lon1:116.5,latCenter:2};})));
+ assert.throws(()=>validateDeck(changed(c=>{c.art={lon0:97.5,lon1:116.5};})),/Invalid card/);
+ assert.throws(()=>validateDeck(changed(c=>{c.art={lon0:120,lon1:100,latCenter:2};})),/Invalid card/);
+});
