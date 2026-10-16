@@ -93,6 +93,11 @@ def footprint_mask(card):
     return mask
 
 
+def pick_month(card, mask, frame):
+    """The card's month with the highest footprint mean; stats and art both use it."""
+    return max(card['months'], key=lambda m: float(np.nanmean(frame(m, card['field'])[mask])))
+
+
 def who_field(card, co):
     if co:
         return 'carbon_monoxide'
@@ -106,7 +111,7 @@ def stats(card_id, co):
     field = card['field']
     if field not in json.loads((DATA / 'air-history.json').read_text())['fieldOrder']:
         fail(f'{field} is not in the monthly history yet')
-    month = max(card['months'], key=lambda m: float(np.nanmean(frame(m, field)[mask])))
+    month = pick_month(card, mask, frame)
     v = frame(month, field)
     usual = median(field)
     elevated = mask & (v >= 2 * np.maximum(usual, 0.5))
@@ -175,7 +180,7 @@ def art(card_id, co):
     months, frame, _ = load_history()
     if frame(card['months'][0], card['field']) is None:
         fail(f'{card["field"]} is not in the monthly history yet')
-    month = max(card['months'], key=lambda m: float(np.nanmean(frame(m, card['field']))))
+    month = pick_month(card, footprint_mask(base), frame)
     out = ROOT / 'public' / 'cards'
     out.mkdir(exist_ok=True)
     name = card_id + ('-co' if co else '')

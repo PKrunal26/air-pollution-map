@@ -1,1 +1,375 @@
-[]
+[
+ {
+  "id": "canada-2023",
+  "number": 1,
+  "name": "Canadian wildfire smoke",
+  "type": "Wildfire",
+  "rarity": "rare",
+  "rarityNote": "Canada's worst fire season on record; nothing in the 2022–2026 record matches this smoke over the US north-east. Draft: verify.",
+  "field": "pm2_5",
+  "months": [
+   "2023-06"
+  ],
+  "footprint": [
+   [
+    -90,
+    44
+   ],
+   [
+    -80,
+    40.5
+   ],
+   [
+    -70,
+    40
+   ],
+   [
+    -62,
+    45
+   ],
+   [
+    -62,
+    54
+   ],
+   [
+    -75,
+    55
+   ],
+   [
+    -88,
+    52
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   -76,
+   50
+  ],
+  "stats": {
+   "peak": {
+    "value": 138.1,
+    "unit": "µg/m³",
+    "note": "Highest 2023-06 monthly-mean pm2_5 cell in the footprint (+150 km), CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 1.35,
+    "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
+   },
+   "areaKm2": {
+    "value": 3144000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 1385,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 60,
+  "region": "Quebec and the US north-east",
+  "art": {
+   "lon0": -92,
+   "lon1": -58,
+   "latCenter": 48
+  },
+  "clues": {
+   "riddle": "Dry thunderstorms lit a forest, and a city to the south turned orange.",
+   "region": "North America",
+   "country": "Canada",
+   "month": "June"
+  },
+  "questions": [
+   {
+    "prompt": "What started most of the fires behind this smoke?",
+    "options": [
+     "Fires spreading north from the United States",
+     "Dry thunderstorms over Quebec's forests",
+     "Factory emissions in Ontario",
+     "Controlled burns that got out of hand"
+    ],
+    "answer": 1,
+    "explanation": "A cluster of dry thunderstorms on 1 June lit more than 30 fires across western Quebec after an unusually dry spring.",
+    "source": "NWS Burlington, June 2023 smoke summary: https://weather.gov/media/btv/awareness/firewx/JuneSmoke23.pdf"
+   },
+   {
+    "prompt": "Why did New York's sky turn orange in early June 2023?",
+    "options": [
+     "Smoke from wildfires in the US",
+     "Industrial smog trapped over the city",
+     "Smoke from Quebec carried south on northerly winds",
+     "Dust blown in from the Sahara"
+    ],
+    "answer": 2,
+    "explanation": "More than 150 fires were burning in Quebec on 6 June, and northerly winds carried their smoke hundreds of kilometres south.",
+    "source": "AP via Fox 10, June 2023: https://www.fox10phoenix.com/news/quebec-evacuations-wildfires-canada"
+   }
+  ],
+  "back": [
+   "After an unusually dry spring, dry thunderstorms on 1 June lit dozens of fires in Quebec's boreal forest; within a week more than 150 were burning.",
+   "Northerly winds pushed the smoke south over Ontario and the US north-east, and on 7 June New York's sky turned orange."
+  ],
+  "blamed": "Fires in the US.",
+  "actual": "The smoke came from Quebec, hundreds of kilometres north.",
+  "sources": [
+   "NWS Burlington, June 2023 smoke summary",
+   "NOAA climate.gov, 7 June 2023"
+  ]
+ },
+ {
+  "id": "indonesia-2026",
+  "number": 2,
+  "name": "Indonesian peat haze",
+  "type": "Peat fire",
+  "rarity": "rare",
+  "rarityNote": "The highest September in the 2022–2026 record, 2.4× the 2023 haze year. Draft: compare with 2015 and 2019 before calling it rare.",
+  "field": "pm2_5",
+  "months": [
+   "2026-09"
+  ],
+  "footprint": [
+   [
+    98,
+    3
+   ],
+   [
+    104,
+    2
+   ],
+   [
+    109,
+    2
+   ],
+   [
+    115,
+    1
+   ],
+   [
+    119,
+    -1
+   ],
+   [
+    117,
+    -4.5
+   ],
+   [
+    110,
+    -4
+   ],
+   [
+    106,
+    -6
+   ],
+   [
+    101,
+    -4
+   ],
+   [
+    97,
+    1
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   114,
+   -2
+  ],
+  "stats": {
+   "peak": {
+    "value": 659.0,
+    "unit": "µg/m³",
+    "note": "Highest 2026-09 monthly-mean pm2_5 cell in the footprint (+150 km), CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 2.9,
+    "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
+   },
+   "areaKm2": {
+    "value": 1625000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 1965,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 90,
+  "region": "Kalimantan and Sumatra",
+  "art": {
+   "lon0": 97.5,
+   "lon1": 116.5,
+   "latCenter": 2
+  },
+  "clues": {
+   "riddle": "Ground that burns from below fills a strait with smoke.",
+   "region": "South-east Asia",
+   "country": "Indonesia",
+   "month": "September"
+  },
+  "questions": [
+   {
+    "prompt": "Where did Singapore's haze in September 2026 come from?",
+    "options": [
+     "Singapore's own factories and traffic",
+     "Fires in Sumatra and Kalimantan, carried on the wind",
+     "Volcanic eruptions in Java",
+     "Ships in the Strait of Malacca"
+    ],
+    "answer": 1,
+    "explanation": "Singapore's environment agency detected numerous hotspots across Kalimantan and central and southern Sumatra, where dense smoke had hung since late August.",
+    "source": "Malay Mail, 4 September 2026: https://www.malaymail.com/news/singapore/2026/09/04/singapore-haze-tips-air-quality-into-unhealthy-range-for-first-time-since-2023/233833"
+   },
+   {
+    "prompt": "Why is peat haze so hard to put out?",
+    "options": [
+     "Lightning relights the fires every day",
+     "Drained peat smoulders underground, where rain rarely reaches it",
+     "Tall buildings trap the smoke",
+     "Firefighters cannot reach the islands"
+    ],
+    "answer": 1,
+    "explanation": "Peat is old, waterlogged plant matter. Drained for plantations it dries out, and once lit it smoulders below the surface for weeks.",
+    "source": "Page et al., Nature 420, 61–65 (2002), on Indonesia's 1997 peat fires"
+   }
+  ],
+  "back": [
+   "Fires in drained peatland across Kalimantan and southern Sumatra filled the region with smoke from late August. Drained peat dries out and smoulders underground for weeks, so rain rarely puts it out.",
+   "Winds carried the smoke to Singapore and Malaysia; on 4 September Singapore's air reached the unhealthy range for the first time since 2023."
+  ],
+  "blamed": "Singapore's own industry.",
+  "actual": "The smoke is carried in from fires hundreds of kilometres away.",
+  "sources": [
+   "Malay Mail, 4 September 2026",
+   "Business Today, 14 September 2026",
+   "Page et al., Nature 2002"
+  ]
+ },
+ {
+  "id": "igp-november",
+  "number": 3,
+  "name": "North Indian and Pakistani smog",
+  "type": "Crop burning",
+  "rarity": "common",
+  "rarityNote": "Every November; 2024 was the worst of the four in the record.",
+  "field": "pm2_5",
+  "months": [
+   "2022-11",
+   "2023-11",
+   "2024-11",
+   "2025-11"
+  ],
+  "footprint": [
+   [
+    71,
+    29
+   ],
+   [
+    73,
+    33
+   ],
+   [
+    76,
+    32.5
+   ],
+   [
+    78,
+    30.5
+   ],
+   [
+    84,
+    27.5
+   ],
+   [
+    88,
+    26
+   ],
+   [
+    88,
+    24
+   ],
+   [
+    84,
+    24.5
+   ],
+   [
+    78,
+    26.5
+   ],
+   [
+    74,
+    28
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   75,
+   30.5
+  ],
+  "stats": {
+   "peak": {
+    "value": 136.8,
+    "unit": "µg/m³",
+    "note": "Highest 2024-11 monthly-mean pm2_5 cell in the footprint (+150 km), CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 4.79,
+    "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
+   },
+   "areaKm2": {
+    "value": 589000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 1581,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 200,
+  "region": "Punjab, Haryana and the Gangetic plain",
+  "art": {
+   "lon0": 69,
+   "lon1": 87,
+   "latCenter": 27
+  },
+  "clues": {
+   "riddle": "After the rice harvest, the plain fills with smoke and cold air holds it down.",
+   "region": "South Asia",
+   "country": "India and Pakistan",
+   "month": "November"
+  },
+  "questions": [
+   {
+    "prompt": "What drives most of this month-long November haze?",
+    "options": [
+     "Diwali fireworks",
+     "Crop stubble burning plus local pollution, held down by cold still air",
+     "Dust from the Thar desert",
+     "Forest fires in the Himalaya"
+    ],
+    "answer": 1,
+    "explanation": "Farm fires in Punjab and Haryana add a large share on peak days, by Delhi's Decision Support System over a third on some days; the rest is the region's own traffic, industry and dust, held near the ground by cold, still air.",
+    "source": "CSE, citing Delhi DSS daily estimates: https://www.cseindia.org/cse-in-news?page=339"
+   },
+   {
+    "prompt": "Where is the November haze densest in this record?",
+    "options": [
+     "Over central Delhi",
+     "Over Punjab in Pakistan",
+     "Over the Thar desert",
+     "Over Kolkata"
+    ],
+    "answer": 1,
+    "explanation": "In the November 2024 monthly mean the highest cell sits in Pakistani Punjab; the haze covers both sides of the border.",
+    "source": "CAMS monthly mean PM2.5, November 2024, as shown in this atlas"
+   }
+  ],
+  "back": [
+   "After the rice harvest, farmers in Punjab and Haryana, and in Pakistani Punjab, burn the leftover stubble to clear their fields.",
+   "Cold, still November air traps that smoke together with the region's traffic, industry and dust across the whole plain."
+  ],
+  "blamed": "Diwali fireworks.",
+  "actual": "Fireworks add a night or two; the month-long smog is crop smoke and local pollution held down by winter air.",
+  "sources": [
+   "CSE, Delhi DSS estimates",
+   "Govardhan et al., Geosci. Model Dev. 17, 2617 (2024)"
+  ]
+ }
+]
