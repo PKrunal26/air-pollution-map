@@ -1,0 +1,41 @@
+/* Event cards: the card itself (front, back, flip), the readout row, the question, the Cards panel. */
+
+.event-card{--card-scale:1;position:relative;display:block;width:calc(300px * var(--card-scale));height:calc(600px * var(--card-scale));padding:0;border-radius:calc(18px * var(--card-scale));color:#f2f5ec;text-align:left;perspective:1600px;flex:none;box-shadow:0 24px 48px #0006,0 2px 6px #0004}
+button.event-card:hover:not(:disabled){color:#f2f5ec}
+button.event-card:active:not(:disabled){transform:none}
+.card-scaler{width:300px;height:600px;transform:scale(var(--card-scale));transform-origin:top left}
+.card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .75s var(--motion)}
+.card-inner.is-flipped{transform:rotateY(180deg)}
+@media (prefers-reduced-motion:reduce){.card-inner{transition:none}}
+.card-face{position:absolute;inset:0;border-radius:18px;overflow:hidden;background:#0a0d0c;font-size:12px;line-height:1.5}
+.event-card:not(.is-thumb) .card-face{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.card-back{transform:rotateY(180deg);display:flex;flex-direction:column}
+.card-ring{position:absolute;inset:0;border:2px solid var(--rarity);border-radius:18px;pointer-events:none;z-index:5}
+
+.card-art{position:absolute;top:0;left:0;width:300px;height:460px;object-fit:cover}
+.card-fade{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 62%,#0a0d0c 75%)}
+.card-pills{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;font-size:11px}
+.card-pills span{background:#0b0e0dd9;padding:4px 9px;border-radius:99px;border:1px solid #e1e7d51f;display:inline-flex;align-items:center;gap:5px}
+.card-rarity{color:var(--rarity)}
+.card-dots{display:inline-flex;align-items:center;gap:3px}
+.card-dots i{display:block;border-radius:50%;border:1px solid currentColor}
+.card-front-text{position:absolute;left:20px;right:20px;bottom:30px}
+.card-month{margin:0 0 3px;font-size:12px;color:#9aa58c}
+.card-title{margin:0 0 20px;font-size:21px;font-weight:600;letter-spacing:-.01em;line-height:1.2}
+.card-stats{display:grid;grid-template-columns:repeat(4,auto);justify-content:space-between;margin:0}
+.card-stats div{display:flex;flex-direction:column-reverse}
+.card-stats dd{margin:0;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.card-stats small{font-size:10px;font-weight:400;color:#9aa58c;margin-left:2px}
+.card-stats dt{font-size:10px;color:#9aa58c;margin-top:1px}
+
+.card-strip{position:relative;height:96px;flex:none}
+.card-strip img{width:100%;height:100%;object-fit:cover;display:block}
+.card-strip::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,#0a0d0c00 0%,#0a0d0c99 55%,#0a0d0c 100%)}
+.card-back-body{padding:0 20px 30px;display:flex;flex-direction:column;flex:1;min-height:0}
+.card-back .card-title{font-size:18px;margin-bottom:14px;line-height:1.25}
+.card-para{margin:0 0 12px;font-size:12.5px;line-height:1.55;color:#d3dbc6}
+.card-blamed{border-top:1px solid #e1e7d51f;padding-top:12px;margin-top:4px}
+.card-blamed p{margin:0;font-size:12px;line-height:1.5;color:#d3dbc6}
+.card-blamed p:first-child{font-size:10.5px;color:#9aa58c;margin-bottom:4px}
+.card-sources{margin:auto 0 0;padding-top:18px;font-size:10px;color:#7f8a72;line-height:1.5}
+.card-foot{display:flex;justify-content:space-between;margin:12px 0 0;padding-top:12px;border-top:1px solid #e1e7d51f;font-size:10.5px;color:#9aa58c;font-variant-numeric:tabular-nums}

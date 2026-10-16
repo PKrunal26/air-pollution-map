@@ -2,6 +2,7 @@
 
 export const TYPES=['Wildfire','Peat fire','Crop burning','Savanna burning','Dust storm'];
 export const RARITIES=['common','uncommon','rare'];
+export const RARITY_COLOURS={common:'#8e9a84',uncommon:'#a9bccc',rare:'#e3c76a'};
 export const VARIANT_KINDS=['co'];
 // The monthly history starts here; a card's months must be inside it.
 export const HISTORY_START='2022-08';
