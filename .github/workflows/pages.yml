@@ -49,8 +49,8 @@ jobs:
       - name: Rebuild history
         if: inputs.rebuild_history
         run: |
-          printf '%s\n' pm2_5 dust nitrogen_dioxide | xargs -P 3 -I{} python scripts/fetch-air-history.py field {} "$RUNNER_TEMP/history"
-          python scripts/fetch-air-history.py build pm2_5,dust,nitrogen_dioxide "$RUNNER_TEMP/history"
+          printf '%s\n' pm2_5 dust nitrogen_dioxide pm10 carbon_monoxide | xargs -P 5 -I{} python scripts/fetch-air-history.py field {} "$RUNNER_TEMP/history"
+          python scripts/fetch-air-history.py build pm2_5,dust,nitrogen_dioxide,pm10,carbon_monoxide "$RUNNER_TEMP/history"
           python -c "import json;print('\n'.join(f['id'] for f in json.load(open('src/camsFields.json')) if f['coverage']=='europe'))" \
             | xargs -P 4 -I{} python scripts/fetch-europe-history.py field {} "$RUNNER_TEMP/history"
           python scripts/fetch-europe-history.py build "$RUNNER_TEMP/history"
@@ -58,7 +58,7 @@ jobs:
         if: github.event_name == 'schedule' || inputs.refresh
         run: |
           python scripts/refresh-forecast.py "$RUNNER_TEMP/cams"
-          python scripts/fetch-air-history.py month pm2_5,dust,nitrogen_dioxide "$RUNNER_TEMP/history"
+          python scripts/fetch-air-history.py month pm2_5,dust,nitrogen_dioxide,pm10,carbon_monoxide "$RUNNER_TEMP/history"
           python scripts/fetch-europe-history.py month "$RUNNER_TEMP/history"
       - run: npm test
       - run: npm run build
