@@ -31,6 +31,7 @@ import CardViewer from './cards/CardViewer';
 import ORDER from './cards/order.json';
 import {encodeDeck,decodeDeck} from './cards/recovery';
 import {parseCardParams} from './cards/cardParams';
+import {shareCard,fetchFoundCount} from './cards/share';
 
 const LOADER_TIMEOUT=20000,noop=()=>()=>{},CHROME_INSET=176,PHONE_HEADER=72;
 // ?embed=1 shows the globe only (for iframes); layers, surface and bg set the initial look.
@@ -70,6 +71,9 @@ function App(){
  const [timelines,setTimelines]=useState({forecast:null,history:null}),[mode,setMode]=useState(OPTIONS.history?'history':'forecast'),[frameAir,setFrameAir]=useState(null),[frameEurope,setFrameEurope]=useState(null);
  const timeline=timelines[mode]??timelines.forecast;
  const [cards,setCards]=useState(()=>EMBED?null:loadCollection()),[asking,setAsking]=useState(null),[now,setNow]=useState(()=>Date.now());
+ const [foundCount,setFoundCount]=useState(null);
+ // How many people have collected the card being asked about; hidden when the counter is unavailable.
+ useEffect(()=>{if(!asking)return;let live=true;setFoundCount(null);fetchFoundCount(asking.key).then(n=>{if(live)setFoundCount(n);});return()=>{live=false;};},[asking?.key]);
  const [viewing,setViewing]=useState(()=>{const card=DECK.find(c=>c.id===CARD_OPTIONS.card);return card?{card,variant:null,shared:true}:null;}),[clueFor,setClueFor]=useState(null);
  // A restore link merges into what this browser already holds, then leaves the address bar.
  useEffect(()=>{
@@ -226,9 +230,9 @@ function App(){
    <p className={`locate-status${locateError?' is-shown':''}`} role="status">{locateError}</p>
    </>}
   </div>
-  {asking&&<CardQuestion key={asking.key} card={asking.card} variant={asking.variant} question={asking.question} total={DECK.length} onAnswer={answerCard} onClose={()=>setAsking(null)} onShowCards={()=>{setAsking(null);clearProbe();setPanel('cards');}}/>}
+  {asking&&<CardQuestion key={asking.key} card={asking.card} variant={asking.variant} question={asking.question} total={DECK.length} foundCount={foundCount} onShare={()=>shareCard(asking.card,asking.variant)} onAnswer={answerCard} onClose={()=>setAsking(null)} onShowCards={()=>{setAsking(null);clearProbe();setPanel('cards');}}/>}
   {viewing&&<CardViewer key={viewing.card.id} card={viewing.card} variant={viewing.variant} shared={!!viewing.shared} total={DECK.length} foundAt={cards?.collected[viewing.variant?variantKey(viewing.card.id,viewing.variant):viewing.card.id]??null}
-   onClose={()=>setViewing(null)} onHunt={()=>{setClueFor(viewing.card.id);setViewing(null);clearProbe();setPanel('cards');}}/>}
+   onClose={()=>setViewing(null)} onShare={()=>shareCard(viewing.card,viewing.variant)} onHunt={()=>{setClueFor(viewing.card.id);setViewing(null);clearProbe();setPanel('cards');}}/>}
   <Loader ready={ready} progress={progress} textureReady={globeReady} downloaded={globalAir.status!=='loading'} failed={globalAir.status==='error'}/>
  </main>;
 }
