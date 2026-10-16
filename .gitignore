@@ -3,3 +3,4 @@ node_modules/
 dist/
 # Data is published with the site and refreshed by the deploy workflow; npm run data:pull fetches it.
 public/data/
+.superpowers/
