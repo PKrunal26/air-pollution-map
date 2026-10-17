@@ -1,15 +1,27 @@
 import React,{useEffect,useState} from 'react';
-import {prepareStory,shareStory} from './share';
+import {prepareStory,shareMessage,shareStory,shareText,collectedCount} from './share';
 
-const NOTES={downloaded:'Saved to your downloads.',failed:'Could not make the image. Try again later.'};
+const NOTES={
+ copied:'Copied. Paste it into a message.',
+ downloaded:'Story image saved to your downloads.',
+ failed:'Could not share. Try again later.',
+ imageFailed:'Could not make the story image. Try again later.',
+};
 
-// Share: the story image is prepared when the button appears, so a tap goes straight to the share sheet.
-export default function ShareButton({card,variant=null}){
- const [file,setFile]=useState(null),[note,setNote]=useState('');
- useEffect(()=>{let live=true;prepareStory(card,variant).then(f=>{if(!live)return;f?setFile(f):setNote(NOTES.failed);});return()=>{live=false;};},[card,variant]);
- const share=async()=>{setNote('');const result=await shareStory(file,card);setNote(NOTES[result]??'');};
+// Share sends a text message with the score and the card's link. The story image is prepared when the buttons appear,
+// so a tap goes straight to the share sheet (iOS only opens it from a tap that does not wait).
+export default function ShareButton({card,variant=null,deck,collected,earned=null}){
+ const [file,setFile]=useState(null),[note,setNote]=useState(''),have=collectedCount(deck,collected);
+ useEffect(()=>{
+  let live=true;setFile(null);
+  prepareStory({card,variant,deck,collected,earned}).then(f=>{if(!live)return;f?setFile(f):setNote(NOTES.imageFailed);});
+  return()=>{live=false;};
+ },[card,variant,have]);
+ const share=async()=>{setNote('');const result=await shareMessage(shareText({card,variant,deck,collected,earned}),`${card.id}${variant?`-${variant}`:''}`);setNote(NOTES[result]??'');};
+ const story=async()=>{setNote('');const result=await shareStory(file);setNote(NOTES[result]??'');};
  return <>
-  <button type="button" className="is-primary" disabled={!file} onClick={share}>{file||note?'Share':'Preparing image…'}</button>
+  <button type="button" className="is-primary" onClick={share}>Share</button>
+  <button type="button" disabled={!file} onClick={story}>{file||note?'Story image':'Preparing image…'}</button>
   {note&&<p className="card-share-note" role="status">{note}</p>}
  </>;
 }
