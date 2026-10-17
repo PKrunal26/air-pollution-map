@@ -1,7 +1,8 @@
 import {Raycaster,Sphere,Vector2,Vector3} from 'three';
 import {pointToLocation} from './airProbe.js';
 
-export function createGlobeProbe({canvas,container,camera,onProbe,isEnabled}){
+// isEnabled: clicks, taps and Enter can pin a spot. isHover: moving the pointer shows a passing readout (desktop Readout switch).
+export function createGlobeProbe({canvas,container,camera,onProbe,isEnabled,isHover=()=>true}){
  const ray=new Raycaster(),sphere=new Sphere(new Vector3(),1),hit=new Vector3(),ndc=new Vector2();
  const marker=document.createElement('span');
  marker.className='globe-probe';marker.setAttribute('aria-hidden','true');marker.hidden=true;container.appendChild(marker);
@@ -23,7 +24,7 @@ export function createGlobeProbe({canvas,container,camera,onProbe,isEnabled}){
  }
  function move(event){
   if(gesture){if(Math.hypot(event.clientX-gesture.x,event.clientY-gesture.y)>6)gesture.moved=true;return;}
-  if(event.pointerType==='touch'||event.buttons||location?.pinned)return;
+  if(event.pointerType==='touch'||event.buttons||location?.pinned||!isHover())return;
   pointer={x:event.clientX,y:event.clientY};
  }
  function down(event){
@@ -54,7 +55,8 @@ export function createGlobeProbe({canvas,container,camera,onProbe,isEnabled}){
    if(pendingCentre){
     pendingCentre=false;worldPoint=camera.position.clone().normalize();emit({...pointToLocation(worldPoint),pinned:true});
    }
-   if(pointer&&!gesture&&!location?.pinned&&time-lastTime>=.08){lastTime=time;inspect(pointer.x,pointer.y,false);}
+   if(!isHover()&&location&&!location.pinned)emit(null);
+   if(pointer&&!gesture&&!location?.pinned&&isHover()&&time-lastTime>=.08){lastTime=time;inspect(pointer.x,pointer.y,false);}
    if(!worldPoint)return;
    const facing=worldPoint.dot(camera.position.clone().normalize()),screen=worldPoint.clone().project(camera);
    marker.hidden=facing<=1/camera.position.length()+.005||Math.abs(screen.x)>1||Math.abs(screen.y)>1;

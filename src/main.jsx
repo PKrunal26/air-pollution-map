@@ -66,8 +66,9 @@ function App(){
  const [userLocation,setUserLocation]=useState(null),[region,setRegion]=useState(null),[locating,setLocating]=useState(false),[locateError,setLocateError]=useState('');
  const [globeReady,setGlobeReady]=useState(false),[airVisible,setAirVisible]=useState(false),[opened,setOpened]=useState(false),[timedOut,setTimedOut]=useState(false),[progress,setProgress]=useState({loaded:0,total:null});
  const desktop=useMedia('(min-width:701px)');
- // Touch screens have no hover, so the readout is always on (tap to pin) and the toggle is hidden.
- const touch=useMedia('(hover:none)'),readout=!EMBED&&(touch||readoutPref);
+ // Clicking or tapping a place always pins its readout (and any card there); the Readout switch only turns the hover
+ // readout on or off. Touch screens have no hover, so the switch is hidden there. Embeds have neither.
+ const touch=useMedia('(hover:none)'),readout=!EMBED,hover=readout&&(touch||readoutPref);
  // First visit only (not embedded, not when the URL picks layers): ask which pollutants to show.
  const [picking,setPicking]=useState(()=>!EMBED&&!OPTIONS.layers&&!loadOnboarded());
  const finishPicking=React.useCallback(()=>{saveOnboarded();setPicking(false);},[]);
@@ -183,8 +184,9 @@ function App(){
   onAnswer={()=>setAsking({card:cardHit.card,variant:cardHit.variant?.kind??null,key:hitKey,month:monthKey(timeline.manifest.frames[frameIndex].validAt),question:questionFor(cardHit.card,cards,hitKey).question})} onView={()=>setViewing({card:cardHit.card,variant:cardHit.variant?.kind??null})}/>;
  const touched=useRef(false);
  const clearProbe=()=>{setProbe(null);setProbeReset(n=>n+1);};
- const changeReadout=on=>{setReadout(on);saveReadout(on);if(!on)clearProbe();};
- const closeTransient=()=>setPanel(p=>p==='search'?null:p);
+ // The switch is the hover readout only; turning it off drops a passing (unpinned) readout, never a pinned one.
+ const changeReadout=on=>{setReadout(on);saveReadout(on);if(!on&&!probe?.pinned)clearProbe();};
+ const closeTransient=()=>setPanel(p=>p==='search'||p==='cards'?null:p);
  const chooseCity=place=>{touched.current=true;clearProbe();setCity(place);setZoom(1);setFocus(f=>f+1);closeTransient();};
  const overview=()=>{touched.current=true;clearProbe();setCity(null);setZoom(0);setFocus(0);setReset(n=>n+1);closeTransient();};
  // Rotating or zooming the globe must not close the layer panel; only the search popover.
@@ -232,17 +234,18 @@ function App(){
  // Counts taps that keep a readout (not hover, not the viewer's own location).
  // On phones a tapped spot also turns to the centre of the lifted globe, so the card never hides its pin.
  const probeChange=next=>{
-  if(next?.pinned)setCity(null);
+  // A pinned spot shows its readout card, which the Cards panel would cover: pinning closes the panel.
+  if(next?.pinned){setCity(null);if(!next.mine)setPanel(p=>p==='cards'?null:p);}
   if(next?.pinned&&!next.mine&&!next.centred){track('readout/pin');if(!desktop&&!EMBED)setFlyTarget(t=>({key:(t?.key??0)+1,lat:next.lat,lon:next.lon,keepDistance:true,pin:{centred:true}}));}
   setProbe(next);
  };
  return <main className={`atlas-app${EMBED?' is-embed':''}${OPTIONS.bg?' has-bg':''}${panel==='layers'?' layers-open':''}${picking&&ready?' is-picking':''} surface-view-${surface}`} aria-busy={!ready||undefined}>
   <div className="atlas-interface" inert={!ready?true:undefined}>
-   <Globe home={homePoint(userLocation,region)} onProbe={probeChange} readout={readout} probeEnabled={readout&&panel!=='search'} probeReset={probeReset} surface={surface} globalAir={globalAir.data} regionalAir={regionalAir} onDetail={setDetail} paint={paint} weatherData={weather.data} weatherSettings={weatherSettings} city={city} zoom={zoom} focus={focus} reset={reset} viewShift={viewShift} viewLift={viewLift} flyTarget={flyTarget} onCameraRange={cameraRange} onReady={()=>setGlobeReady(true)} onAirVisible={()=>setAirVisible(true)} onCity={chooseCity} onInteraction={interact} homeScale={OPTIONS.zoom} wheelModifier={EMBED} timeline={timeline} userLocation={userLocation} chromeInset={EMBED?0:CHROME_INSET}/>
+   <Globe home={homePoint(userLocation,region)} onProbe={probeChange} readout={readout} probeEnabled={readout&&panel!=='search'} hoverEnabled={hover} probeReset={probeReset} surface={surface} globalAir={globalAir.data} regionalAir={regionalAir} onDetail={setDetail} paint={paint} weatherData={weather.data} weatherSettings={weatherSettings} city={city} zoom={zoom} focus={focus} reset={reset} viewShift={viewShift} viewLift={viewLift} flyTarget={flyTarget} onCameraRange={cameraRange} onReady={()=>setGlobeReady(true)} onAirVisible={()=>setAirVisible(true)} onCity={chooseCity} onInteraction={interact} homeScale={OPTIONS.zoom} wheelModifier={EMBED} timeline={timeline} userLocation={userLocation} chromeInset={EMBED?0:CHROME_INSET}/>
    {!EMBED&&<>
    <header className="minimal-header">
     <button className="atlas-brand" aria-label="Return to overview" onClick={overview}><svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="12" stroke="currentColor" strokeWidth=".8"/><ellipse cx="16" cy="16" rx="6" ry="12" stroke="currentColor" strokeWidth=".8" transform="rotate(35 16 16)"/><path d="M4 16h24" stroke="currentColor" strokeWidth=".8"/></svg><span>Who Owns the Air?</span></button>
-    <nav aria-label="Explore the atlas">{cards&&DECK.length>0&&<button type="button" className="cards-trigger" aria-expanded={panel==='cards'} aria-label={`Cards, ${DECK.filter(c=>c.id in cards.collected).length} of ${DECK.length} collected`} onClick={()=>{clearProbe();setNow(Date.now());setPanel(p=>p==='cards'?null:'cards');}}><Cards size={16} weight="light"/><span>Cards</span><small key={shownCount} className="cards-count">{shownCount}/{DECK.length}</small></button>}<CitySearch open={panel==='search'} onOpenChange={open=>setPanel(open?'search':null)} onChoose={chooseCity} onLocate={locate}/>{!touch&&<ReadoutToggle on={readout} onChange={changeReadout}/>}<a className="about-trigger" href="study.html" aria-label="About the data"><Info size={16} weight="light"/><span>About</span></a></nav>
+    <nav aria-label="Explore the atlas">{cards&&DECK.length>0&&<button type="button" className="cards-trigger" aria-expanded={panel==='cards'} aria-label={`Cards, ${DECK.filter(c=>c.id in cards.collected).length} of ${DECK.length} collected`} onClick={()=>{clearProbe();setNow(Date.now());setPanel(p=>p==='cards'?null:'cards');}}><Cards size={16} weight="light"/><span>Cards</span><small key={shownCount} className="cards-count">{shownCount}/{DECK.length}</small></button>}<CitySearch open={panel==='search'} onOpenChange={open=>setPanel(open?'search':null)} onChoose={chooseCity} onLocate={locate}/>{!touch&&<ReadoutToggle on={hover} onChange={changeReadout}/>}<a className="about-trigger" href="study.html" aria-label="About the data"><Info size={16} weight="light"/><span>About</span></a></nav>
    </header>
    {panel==='cards'&&cards&&<CardsPanel key={clueFor??'cards'} deck={DECK} cards={cards} now={now} total={DECK.length} clueFor={clueFor} onClue={(id,steps)=>setCards(c=>openClue(c,id,steps))} onClose={()=>{setPanel(null);setClueFor(null);}} onOpen={card=>setViewing({card,variant:null})}
     saveLink={()=>`${location.origin}${location.pathname}?deck=${encodeDeck(Object.keys(cards.collected),ORDER)}`}/>}
