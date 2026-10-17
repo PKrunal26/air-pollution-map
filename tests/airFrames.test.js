@@ -72,12 +72,22 @@ test('history manifest: consecutive calendar months, known fields, versioned fil
  line.dispose();
 });
 
+test('history manifest accepts five fields', async () => {
+ const {parseHistoryManifest}=await import('../src/airFrames.js');
+ const months=[Date.UTC(2022,7,1),Date.UTC(2022,8,1)],fields=['pm2_5','dust','nitrogen_dioxide','pm10','carbon_monoxide'];
+ const m={schema:1,kind:'modeled',domain:'cams_global',statistic:'monthly mean',step:'month',encoding:'float16-le, layer-major',grid:{width:900,height:451,step:.4,latStart:-90,lonStart:-180},fieldOrder:fields,
+  frames:[0,1].map(i=>({validAt:months[i],endAt:months[i+1]??Date.UTC(2022,9,1),dataFile:`air-month-0${i}.bin`,compressedFile:`air-month-0${i}.bin.gz`,byteLength:900*451*5*2,sha256:'0'.repeat(64)}))};
+ assert.doesNotThrow(()=>parseHistoryManifest(m));
+});
+
 test('shipped history: complete months from Aug 2022 (one more each month), PM2.5, dust and NO2, verified frames', async () => {
  const {parseHistoryManifest}=await import('../src/airFrames.js');
  const h=parseHistoryManifest(JSON.parse(readFileSync('public/data/air-history.json','utf8')));
  assert.equal(h.frames[0].validAt,Date.UTC(2022,7,1));
  assert.ok(h.frames.length>=50);
- assert.deepEqual(h.fieldOrder,['pm2_5','dust','nitrogen_dioxide']);
+ // PM10 and CO join the original three once the history is rebuilt with them (event cards).
+ assert.deepEqual(h.fieldOrder.slice(0,3),['pm2_5','dust','nitrogen_dioxide']);
+ assert.ok([3,5].includes(h.fieldOrder.length)&&h.fieldOrder.slice(3).every(id=>['pm10','carbon_monoxide'].includes(id)));
  const last=h.frames.at(-1),raw=gunzipSync(readFileSync(`public/data/${last.compressedFile}`));
  const bits=await decodeFrame(last,raw.buffer.slice(raw.byteOffset,raw.byteOffset+raw.byteLength));
  const data=frameDataset(h,h.frames.length-1,bits);

@@ -1,0 +1,45 @@
+[
+ {
+  "id":"test-fire","number":1,"name":"Test peat haze","type":"Peat fire","rarity":"rare","rarityNote":"Test note.",
+  "field":"pm2_5","months":["2026-09"],
+  "footprint":[[108,-4],[118,-4],[118,4],[108,4]],"bufferKm":150,"sourcePoint":[114,-2],
+  "stats":{"peak":{"value":659,"unit":"µg/m³","note":"t"},"whoX":{"value":2.5,"note":"t"},"areaKm2":{"value":2157000,"note":"t"},"reachKm":{"value":2120,"note":"t"}},
+  "scale":90,"region":"Kalimantan and Sumatra",
+  "clues":{"riddle":"r","region":"South-east Asia","country":"Indonesia","month":"September"},
+  "questions":[
+   {"prompt":"q1","options":["a","b","c","d"],"answer":1,"explanation":"e1","source":"s1"},
+   {"prompt":"q2","options":["a","b","c","d"],"answer":2,"explanation":"e2","source":"s2"}
+  ],
+  "back":["p1"],"blamed":"b","actual":"a","sources":["s"],
+  "variants":[{"kind":"co","field":"carbon_monoxide","months":["2026-09"],
+   "stats":{"peak":{"value":9000,"unit":"µg/m³","note":"t"},"whoX":{"value":0.4,"note":"t"},"areaKm2":{"value":900000,"note":"t"},"reachKm":{"value":1500,"note":"t"}},
+   "scale":4000,"question":{"prompt":"qco","options":["a","b","c","d"],"answer":0,"explanation":"eco","source":"sco"}}]
+ },
+ {
+  "id":"test-dateline","number":2,"name":"Test date line","type":"Wildfire","rarity":"common","rarityNote":"Test note.",
+  "field":"pm2_5","months":["2024-07"],
+  "footprint":[[175,-20],[-175,-20],[-175,-10],[175,-10]],"bufferKm":150,"sourcePoint":[180,-15],
+  "stats":{"peak":{"value":50,"unit":"µg/m³","note":"t"},"whoX":{"value":1.1,"note":"t"},"areaKm2":{"value":100000,"note":"t"},"reachKm":{"value":500,"note":"t"}},
+  "scale":40,"region":"Fiji",
+  "clues":{"riddle":"r","region":"Pacific","country":"Fiji","month":"July"},
+  "questions":[
+   {"prompt":"q1","options":["a","b","c","d"],"answer":0,"explanation":"e1","source":"s1"},
+   {"prompt":"q2","options":["a","b","c","d"],"answer":3,"explanation":"e2","source":"s2"}
+  ],
+  "back":["p1"],"blamed":"b","actual":"a","sources":["s"]
+ },
+ {
+  "id":"test-dust","number":3,"name":"Test dust","type":"Dust storm","rarity":"uncommon","rarityNote":"Test note.",
+  "field":"dust","months":["2025-06","2025-07"],
+  "footprint":[[-80,10],[-40,10],[-40,25],[-80,25]],"bufferKm":150,"sourcePoint":[-40,15],
+  "stats":{"peak":{"value":127,"unit":"µg/m³","note":"t"},"whoX":{"value":0.9,"note":"t"},"areaKm2":{"value":7000000,"note":"t"},"reachKm":{"value":7000,"note":"t"}},
+  "scale":40,"region":"Caribbean",
+  "clues":{"riddle":"r","region":"Atlantic","country":"Barbados","month":"June"},
+  "questions":[
+   {"prompt":"q1","options":["a","b","c","d"],"answer":2,"explanation":"e1","source":"s1"},
+   {"prompt":"q2","options":["a","b","c","d"],"answer":1,"explanation":"e2","source":"s2"},
+   {"prompt":"q3","options":["a","b","c","d"],"answer":0,"explanation":"e3","source":"s3"}
+  ],
+  "back":["p1"],"blamed":"b","actual":"a","sources":["s"]
+ }
+]

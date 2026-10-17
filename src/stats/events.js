@@ -3,7 +3,7 @@ import catalog from '../camsFields.json' with {type:'json'};
 import {WEATHER_LAYERS} from '../weather.js';
 
 const LAYER_NAMES=new Map([...catalog.map(l=>[l.id,l.name]),...WEATHER_LAYERS.map(l=>[l.id,l.name])]);
-const TIME={'time/play-forecast':'Played the 48-hour forecast','time/play-history':'Played the monthly history','time/history':'Opened History','time/forecast':'Opened the 48-hour forecast'};
+const TIME={'time/play-forecast':'Played the 48-hour forecast','time/play-history':'Played the monthly history','time/history':'Opened History','time/forecast':'Opened Today (48-hour forecast)'};
 const BUTTON={'location/found':'Found','location/failed-1':'Blocked','location/failed-2':'Unavailable','location/failed-3':'Timed out','location/failed-unsupported':'Not supported'};
 const byCount=(a,b)=>b.count-a.count||a.label.localeCompare(b.label);
 

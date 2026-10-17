@@ -1,0 +1,165 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {emptyState,variantKey,markFound,questionFor,answer,waitLeft,WAIT_MS,loadCollection,saveCollection,mergeCollected} from '../src/cards/collection.js';
+
+const deck=JSON.parse(readFileSync(new URL('./fixtures/cards-deck.json',import.meta.url),'utf8'));
+const fire=deck[0],dust=deck[2];
+const memory=()=>{const m=new Map();return {getItem:k=>m.has(k)?m.get(k):null,setItem:(k,v)=>m.set(k,String(v))};};
+
+test('find then answer right collects',()=>{
+ let s=markFound(emptyState(),'test-fire',1000);
+ assert.equal(s.found['test-fire'],1000);
+ const r=answer(s,'test-fire',fire,fire.questions[0].answer,2000);
+ assert.equal(r.correct,true);assert.equal(r.state.collected['test-fire'],2000);
+});
+test('wrong answer starts one-hour wait and moves to next question',()=>{
+ const s=markFound(emptyState(),'test-fire',0);
+ const r=answer(s,'test-fire',fire,0,5000);
+ assert.equal(r.correct,false);assert.equal(r.state.collected['test-fire'],undefined);
+ assert.equal(WAIT_MS,3600000);
+ assert.equal(waitLeft(r.state,'test-fire',5000),3600000);
+ assert.equal(questionFor(fire,r.state,'test-fire').index,1);
+});
+test('question index wraps around the pool',()=>{
+ let s=emptyState();
+ for(let i=0;i<4;i++)s=answer(s,'test-dust',dust,3,i).state; // option 3 is wrong for every dust question
+ assert.equal(questionFor(dust,s,'test-dust').index,1);
+ assert.equal(questionFor(dust,s,'test-dust').question,dust.questions[1]);
+});
+test('finding a new card clears every wait',()=>{
+ let s=answer(markFound(emptyState(),'test-fire',0),'test-fire',fire,0,0).state;
+ s=markFound(s,'test-dust',10);
+ assert.equal(waitLeft(s,'test-fire',10),0);
+ assert.equal(questionFor(fire,s,'test-fire').index,1,'the next question stays the next one');
+});
+test('re-finding a collected card does not clear waits',()=>{
+ let s=answer(markFound(emptyState(),'test-dust',0),'test-dust',dust,dust.questions[0].answer,0).state;
+ s=answer(markFound(s,'test-fire',0),'test-fire',fire,0,0).state;
+ s=markFound(s,'test-dust',10);
+ assert.equal(waitLeft(s,'test-fire',10),WAIT_MS-10);
+});
+test('wait never exceeds one hour even if clock moves back',()=>{
+ const s=answer(emptyState(),'test-fire',fire,0,10000000).state;
+ assert.equal(waitLeft(s,'test-fire',0),WAIT_MS);
+ assert.equal(waitLeft(s,'test-fire',10000000+WAIT_MS*2),0);
+});
+test('variant uses its own question and key',()=>{
+ const key=variantKey('test-fire','co');
+ assert.equal(key,'test-fire:co');
+ assert.equal(questionFor(fire,emptyState(),key).question,fire.variants[0].question);
+ const r=answer(emptyState(),key,fire,fire.variants[0].question.answer,7);
+ assert.equal(r.correct,true);assert.equal(r.state.collected[key],7);assert.equal(r.state.collected['test-fire'],undefined);
+});
+test('throwing storage keeps working in memory',()=>{
+ const broken={getItem(){throw new Error('denied');},setItem(){throw new Error('denied');}};
+ assert.deepEqual(loadCollection(broken),emptyState());
+ assert.doesNotThrow(()=>saveCollection(markFound(emptyState(),'test-fire',1),broken));
+ assert.deepEqual(loadCollection(undefined),emptyState());
+});
+test('bad JSON gives empty state',()=>{
+ const store=memory();store.setItem('air-atlas.cards','{nope');
+ assert.deepEqual(loadCollection(store),emptyState());
+ store.setItem('air-atlas.cards','{"v":9}');
+ assert.deepEqual(loadCollection(store),emptyState());
+});
+test('save then load round-trips',()=>{
+ const store=memory(),s=answer(markFound(emptyState(),'test-fire',1),'test-fire',fire,0,2).state;
+ saveCollection(s,store);
+ assert.deepEqual(loadCollection(store),s);
+});
+test('mergeCollected keeps existing dates',()=>{
+ const s=answer(emptyState(),'test-fire',fire,fire.questions[0].answer,99).state;
+ const m=mergeCollected(s,['test-fire','test-dust','test-fire:co']);
+ assert.equal(m.collected['test-fire'],99);
+ assert.equal(m.collected['test-dust'],null);
+ assert.equal(m.collected['test-fire:co'],null);
+ assert.equal(s.collected['test-dust'],undefined,'input state is not changed');
+});
+
+test('blocked localStorage getter does not crash load or save',()=>{
+ const had=Object.getOwnPropertyDescriptor(globalThis,'localStorage');
+ Object.defineProperty(globalThis,'localStorage',{configurable:true,get(){throw new Error('SecurityError');}});
+ try{
+  assert.deepEqual(loadCollection(),emptyState());
+  assert.doesNotThrow(()=>saveCollection(emptyState()));
+ }finally{
+  if(had)Object.defineProperty(globalThis,'localStorage',had);else delete globalThis.localStorage;
+ }
+});
+test('saving merges with what another tab saved',()=>{
+ const store=memory();
+ const tabA=answer(emptyState(),'test-fire',fire,fire.questions[0].answer,50).state;
+ saveCollection(tabA,store);
+ const tabB=markFound(emptyState(),'test-dust',60); // older tab, never saw test-fire
+ saveCollection(tabB,store);
+ const saved=loadCollection(store);
+ assert.equal(saved.collected['test-fire'],50,'tab A\'s card survives');
+ assert.equal(saved.found['test-dust'],60);
+});
+
+import {openClue,earnedFor} from '../src/cards/collection.js';
+const right=(s,key,card,q=0)=>answer(s,key,card,(key.includes(':')?card.variants[0].question:card.questions[q]).answer,1);
+
+test('found by exploring: clue never opened, right first time',()=>{
+ const r=right(markFound(emptyState(),'test-fire',0),'test-fire',fire);
+ assert.deepEqual(r.state.earned['test-fire'],{level:'explore',marks:['Found by exploring','First try']});
+});
+test('full: read the riddle, no clue steps, right first time',()=>{
+ const s=openClue(emptyState(),'test-fire',0);
+ assert.deepEqual(right(s,'test-fire',fire).state.earned['test-fire'],{level:'full',marks:['First try','No hints']});
+});
+test('medium: clue steps opened but right first time',()=>{
+ const s=openClue(emptyState(),'test-fire',2);
+ assert.deepEqual(right(s,'test-fire',fire).state.earned['test-fire'],{level:'medium',marks:['First try']});
+});
+test('medium: found blind but missed the first answer keeps the exploring mark',()=>{
+ const s=answer(markFound(emptyState(),'test-fire',0),'test-fire',fire,0,0).state;
+ assert.deepEqual(right(s,'test-fire',fire,1).state.earned['test-fire'],{level:'medium',marks:['Found by exploring']});
+});
+test('quiet: clue steps opened and a wrong answer first',()=>{
+ let s=openClue(emptyState(),'test-fire',1);s=answer(s,'test-fire',fire,0,0).state;
+ assert.deepEqual(right(s,'test-fire',fire,1).state.earned['test-fire'],{level:'quiet',marks:[]});
+});
+test('a CO print is full if right first time, quiet otherwise',()=>{
+ const key=variantKey('test-fire','co');
+ assert.equal(right(emptyState(),key,fire).state.earned[key].level,'full');
+ const s=answer(emptyState(),key,fire,3,0).state;
+ assert.equal(right(s,key,fire).state.earned[key].level,'quiet');
+});
+test('openClue keeps the furthest step and marks the clue seen',()=>{
+ let s=openClue(emptyState(),'test-fire',2);s=openClue(s,'test-fire',1);
+ assert.equal(s.clues['test-fire'],2);assert.equal(s.seen['test-fire'],true);
+ assert.equal(earnedFor(s,'test-fire').level,'medium');
+});
+test('older saved collections load with the new fields empty',()=>{
+ const store=memory();store.setItem('air-atlas.cards',JSON.stringify({v:1,collected:{a:1},found:{},attempts:{}}));
+ const s=loadCollection(store);
+ assert.deepEqual([s.clues,s.seen,s.earned],[{},{},{}]);assert.equal(s.collected.a,1);
+});
+test('merging tabs keeps clue progress and earned records',()=>{
+ const store=memory();
+ saveCollection(right(openClue(emptyState(),'test-dust',2),'test-dust',dust).state,store);
+ saveCollection(openClue(emptyState(),'test-fire',1),store);
+ const s=loadCollection(store);
+ assert.equal(s.clues['test-dust'],2);assert.equal(s.clues['test-fire'],1);assert.equal(s.earned['test-dust'].level,'medium');
+});
+
+import {mergeStates} from '../src/cards/collection.js';
+test('two tabs settle: merging is order-independent and an unchanged save does not write',()=>{
+ const data=new Map();let writes=0;
+ const store={getItem:k=>data.get(k)??null,setItem:(k,v)=>{writes++;data.set(k,v);}};
+ const wrong=(fire.questions[0].answer+1)%4;
+ let a=answer(markFound(emptyState(),'test-fire',1),'test-fire',fire,fire.questions[0].answer,10).state;
+ let b=answer(markFound(emptyState(),'test-dust',2),'test-dust',fire,wrong,20).state;
+ a={...a,attempts:{...a.attempts,'test-dust':{q:3,waitUntil:5}}};
+ saveCollection(a,store);saveCollection(b,store);
+ // Each tab hears the other's write, folds it in and saves, as main.jsx does; after one round nothing is written.
+ for(let round=0;round<3;round++){a=mergeStates(a,loadCollection(store));saveCollection(a,store);b=mergeStates(b,loadCollection(store));saveCollection(b,store);}
+ const settled=writes;
+ a=mergeStates(a,loadCollection(store));saveCollection(a,store);b=mergeStates(b,loadCollection(store));saveCollection(b,store);
+ assert.equal(writes,settled,'no more writes once both tabs hold the same state');
+ assert.deepEqual(mergeStates(a,b),mergeStates(b,a));
+ assert.ok(a.collected['test-fire']&&a.found['test-dust'],'both tabs keep both finds');
+ assert.equal(a.attempts['test-dust'].q,3,'the later try wins in both tabs');
+});

@@ -15,8 +15,8 @@ export function parseEmbedParams(search=''){
  const surface=(params.get('surface')||'').toLowerCase();
  const bg=(params.get('bg')||'').replace(/^#/,'');
  const zoomText=(params.get('zoom')||'').trim(),zoom=zoomText?Number(zoomText):NaN;
- // t=2026-10-09T18:00Z picks a forecast hour (UTC), t=2024-03 a month of the history; matched to a frame once frames
- // load. play=1 starts playback.
+ // t=2026-10-09T18:00Z picks a forecast hour (UTC, the Today bar), t=2024-03 a month of the history (Monthly); matched
+ // to a frame once frames load. play=1 starts playback.
  const timeText=(params.get('t')||'').trim(),month=/^(\d{4})-(\d{2})$/.exec(timeText),time=month?Date.UTC(+month[1],+month[2]-1,1):/^\d{4}-\d{2}-\d{2}T\d{2}(:\d{2})?Z?$/.test(timeText)?Date.parse(timeText.replace(/Z?$/,'').replace(/T(\d{2})$/,'T$1:00')+'Z'):NaN;
  return {
   embed,

@@ -28,7 +28,7 @@
 
 @media(max-width:700px){
  /* bottom dock: time bar and the round layers button share one row above the home indicator */
- .atlas-app{--dock:max(16px,env(safe-area-inset-bottom));--dock-bar:70px;--dock-top:calc(var(--dock) + var(--dock-bar) + 10px)}
+ .atlas-app{--dock:max(16px,env(safe-area-inset-bottom));--dock-bar:70px;--dock-top:calc(var(--dock) + var(--dock-bar) + 40px)}
  .in-app-browser .atlas-app{--dock:72px} /* clears the in-app browser's bottom toolbar (see main.jsx) */
  .side-stack{top:auto;bottom:var(--dock-top);left:16px;right:76px;width:auto;max-height:45dvh;justify-content:flex-end}
  .layers-open .side-stack,.layers-open .minimal-zoom{display:none}
