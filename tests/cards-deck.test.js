@@ -53,12 +53,10 @@ test('inside, right month → found',()=>{
  const hit=at(0,113,'2026-09');
  assert.equal(hit.status,'found');assert.equal(hit.card.id,'test-fire');assert.equal(hit.variant,null);
 });
-test('inside, wrong month two away → none',()=>{
- assert.equal(at(0,113,'2026-11').status,'none');
-});
-test('inside, month one after → near-month',()=>{
- assert.equal(at(0,113,'2026-10').status,'near-month');
- assert.equal(at(0,113,'2026-08').status,'near-month');
+test('the place is enough: any month, or Today, finds the card',()=>{
+ assert.equal(at(0,113,'2026-11').status,'found');
+ assert.equal(at(0,113,'2023-02').status,'found');
+ assert.equal(at(0,113,null).status,'found','Today shows no month');
 });
 test('100 km outside edge → found',()=>{
  assert.equal(at(4+100/KM,113,'2026-09').status,'found');
@@ -101,7 +99,7 @@ test('featuredMonth is optional and must be one of the months',()=>{
  assert.throws(()=>validateDeck(changed(c=>{c.featuredMonth='2026-10';})),/Invalid card/);
 });
 
-test('a real find beats an earlier card\'s one-month-off hint',()=>{
+test('where areas overlap, the card whose month is showing wins',()=>{
  const deck=fixture();deck[1]={...deck[0],id:'later',number:9,months:['2026-10']};
  const hit=cardAt(deck,{lat:0,lon:113,month:'2026-10',layers:new Set(),owned:new Set()});
  assert.equal(hit.status,'found');assert.equal(hit.card.id,'later');
@@ -149,12 +147,19 @@ test('footprint centre stays on the near side of the date line',()=>{
  assert.ok(Math.abs(Math.abs(lon)-180)<1e-9);assert.equal(lat,1);
 });
 
-test('an every-year card is found in that month of later years too',()=>{
+test('real deck: overlapping areas go to the card of the month shown, else the nearest',()=>{
  const deck=validateDeck(read('../src/cards/deck.json'));
- const pick=month=>cardAt(deck,{lat:31.55,lon:74.35,month,layers:new Set(),owned:new Set()});
- assert.equal(pick('2026-11').card?.id,'punjab-pakistan-november','November 2026, after the listed years');
- assert.equal(pick('2026-12').status,'near-month');
- assert.equal(pick('2021-11').status,'none','not before the listed years');
- const once=cardAt(deck,{lat:-2,lon:114,month:'2027-09',layers:new Set(),owned:new Set()});
- assert.equal(once.status,'none','a one-off card stays in its own month');
+ const pick=(lat,lon,month)=>cardAt(deck,{lat,lon,month,layers:new Set(),owned:new Set()}).card?.id;
+ // Northern Cameroon lies in both the Harmattan (January) and Central African fires (December) areas.
+ assert.equal(pick(9,17.5,'2024-12'),'north-savanna-burning');
+ assert.equal(pick(9,17.5,'2025-01'),'harmattan');
+ assert.equal(pick(9,17.5,'2026-11'),pick(9,17.5,null),'otherwise nearest, then deck order, whatever the month');
+ assert.equal(pick(31.55,74.35,'2026-12'),'punjab-pakistan-november','Lahore in any month');
+ assert.equal(pick(-2,114,'2027-09'),'indonesia-2026');
+});
+test('300 km of leeway around every card',()=>{
+ const deck=validateDeck(read('../src/cards/deck.json'));
+ assert.ok(deck.every(c=>c.bufferKm===300));
+ // Athens is inside the Greek footprint; Thessaloniki is about 100 km beyond its northern edge.
+ assert.equal(cardAt(deck,{lat:40.64,lon:22.94,month:null,layers:new Set(),owned:new Set()}).card?.id,'athens-dust-2024');
 });

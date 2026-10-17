@@ -10,7 +10,6 @@ export function FaceDown({card,width=26}){
 
 // The row a pinned readout gains when the spot holds a card (or one is near in time).
 export default function ReadoutCardRow({hit,collected,waitMs,onAnswer,onView}){
- if(hit.status==='near-month')return <p className="card-row-hint">Something happened here in another month.</p>;
  const minutes=Math.max(1,Math.ceil(waitMs/60000)),variant=hit.status==='variant';
  const [title,note]=collected?[variant?'You have this print':'You have this card','']
   :waitMs>0?[variant?'A second print is here':'A card is here',`New question in ${minutes} min, or find another card`]

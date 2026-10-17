@@ -24,7 +24,7 @@ import {guessRegion,homePoint,locateUser,locationMessage,locationPermission} fro
 import {track} from './analytics';
 import './styles/shell.css';
 import DECK_JSON from './cards/deck.json';
-import {validateDeck,cardAt,monthKey,footprintCentre} from './cards/deck';
+import {validateDeck,cardAt,monthKey,footprintCentre,inCardMonths} from './cards/deck';
 import {loadCollection,saveCollection,markFound,questionFor,answer,waitLeft,variantKey,mergeCollected,mergeStates,openClue,STORAGE_KEY} from './cards/collection';
 import {cardSets,setsCompletedBy} from './cards/sets';
 import ReadoutCardRow from './cards/ReadoutCardRow';
@@ -144,15 +144,17 @@ function App(){
   setMode('history');if(at>=0)line.seek(at);
   const [lon,lat]=footprintCentre(card);flyTo(lat,lon,2.3);
  },[timelines.history]);
- // A pinned spot on a past month may hold a card, a CO print of one, or a hint that a card is a month away.
+ // The month on the Monthly bar (null on Today). Cards are found by place alone; the month only breaks ties.
+ const shownMonth=timeline?.kind==='history'&&frameIndex>=0?monthKey(timeline.manifest.frames[frameIndex].validAt):null;
+ // A pinned spot may hold a card or a CO print of one, at any month or on Today.
  const enabledLayers=Object.keys(paint).filter(id=>paint[id]?.enabled).join(',');
  const ownedIds=cards?Object.keys(cards.collected).filter(k=>!k.includes(':')).join(','):'';
  const cardHit=React.useMemo(()=>{
-  if(!cards||!DECK.length||!probe?.pinned||!readout||(panel&&panel!=='layers')||timeline?.kind!=='history'||frameIndex<0)return null;
-  const hit=cardAt(DECK,{lat:probe.lat,lon:probe.lon,month:monthKey(timeline.manifest.frames[frameIndex].validAt),layers:new Set(enabledLayers.split(',')),owned:new Set(ownedIds.split(','))});
+  if(!cards||!DECK.length||!probe?.pinned||!readout||(panel&&panel!=='layers'))return null;
+  const hit=cardAt(DECK,{lat:probe.lat,lon:probe.lon,month:shownMonth,layers:new Set(enabledLayers.split(',')),owned:new Set(ownedIds.split(','))});
   return hit.status==='none'?null:hit;
- },[probe?.pinned,probe?.lat,probe?.lon,readout,panel,timeline,frameIndex,enabledLayers,ownedIds,!!cards]);
- const hitKey=cardHit&&cardHit.status!=='near-month'?cardKey(cardHit):null;
+ },[probe?.pinned,probe?.lat,probe?.lon,readout,panel,shownMonth,enabledLayers,ownedIds,!!cards]);
+ const hitKey=cardHit?cardKey(cardHit):null;
  useEffect(()=>{
   if(!hitKey)return;
   if(cards&&!(hitKey in cards.found)&&!(hitKey in cards.collected))track(`card-found/${hitKey}`);
@@ -181,7 +183,7 @@ function App(){
  // The header count ticks up when the recap shows, not while the card is still on screen.
  const shownCount=cards?DECK.filter(c=>c.id in cards.collected).length-(asking?.result&&!asking.variant&&!asking.recapped?1:0):0;
  const cardRow=cardHit&&<ReadoutCardRow hit={cardHit} collected={!!hitKey&&hitKey in cards.collected} waitMs={hitWait}
-  onAnswer={()=>setAsking({card:cardHit.card,variant:cardHit.variant?.kind??null,key:hitKey,month:monthKey(timeline.manifest.frames[frameIndex].validAt),question:questionFor(cardHit.card,cards,hitKey).question})} onView={()=>setViewing({card:cardHit.card,variant:cardHit.variant?.kind??null})}/>;
+  onAnswer={()=>setAsking({card:cardHit.card,variant:cardHit.variant?.kind??null,key:hitKey,month:inCardMonths(cardHit.card,shownMonth)?shownMonth:null,question:questionFor(cardHit.card,cards,hitKey).question})} onView={()=>setViewing({card:cardHit.card,variant:cardHit.variant?.kind??null})}/>;
  const touched=useRef(false);
  const clearProbe=()=>{setProbe(null);setProbeReset(n=>n+1);};
  // The switch is the hover readout only; turning it off drops a passing (unpinned) readout, never a pinned one.
