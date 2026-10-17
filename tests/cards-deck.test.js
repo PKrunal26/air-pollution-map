@@ -122,3 +122,25 @@ test('belief marks a wrong option as the common belief',()=>{
  assert.throws(()=>validateDeck(changed(c=>{c.questions[0].belief=c.questions[0].answer;})),/Invalid card/);
  assert.throws(()=>validateDeck(changed(c=>{c.questions[0].belief=4;})),/Invalid card/);
 });
+
+test('where buffers overlap, the nearest footprint wins',()=>{
+ const base=fixture()[0],square=(x0,x1)=>[[x0,0],[x1,0],[x1,4],[x0,4]];
+ const deck=[{...base,id:'west',footprint:square(10,14),variants:[]},{...base,id:'east',footprint:square(14,18),variants:[]}];
+ const pick=lon=>cardAt(deck,{lat:2,lon,month:base.months[0],layers:new Set(),owned:new Set()}).card.id;
+ assert.equal(pick(13.9),'west');assert.equal(pick(14.1),'east');
+ assert.equal(pick(18.5),'east','in the east buffer and the west buffer, east is nearer');
+});
+
+test('real deck: Lahore finds the Pakistani card, Amritsar the Indian one',()=>{
+ const deck=validateDeck(read('../src/cards/deck.json'));
+ const pick=(lat,lon)=>cardAt(deck,{lat,lon,month:'2024-11',layers:new Set(),owned:new Set()}).card?.id;
+ assert.equal(pick(31.55,74.35),'punjab-pakistan-november');
+ assert.equal(pick(31.63,74.87),'north-india-november');
+ assert.equal(pick(28.61,77.21),'north-india-november');
+});
+
+import {footprintCentre} from '../src/cards/deck.js';
+test('footprint centre stays on the near side of the date line',()=>{
+ const [lon,lat]=footprintCentre({footprint:[[178,0],[-178,0],[-178,2],[178,2]]});
+ assert.ok(Math.abs(Math.abs(lon)-180)<1e-9);assert.equal(lat,1);
+});

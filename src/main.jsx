@@ -22,7 +22,7 @@ import {guessRegion,homePoint,locateUser,locationMessage,locationPermission} fro
 import {track} from './analytics';
 import './styles/shell.css';
 import DECK_JSON from './cards/deck.json';
-import {validateDeck,cardAt,monthKey} from './cards/deck';
+import {validateDeck,cardAt,monthKey,footprintCentre} from './cards/deck';
 import {loadCollection,saveCollection,markFound,questionFor,answer,waitLeft,variantKey,mergeCollected,mergeStates,openClue,STORAGE_KEY} from './cards/collection';
 import {cardSets,setsCompletedBy} from './cards/sets';
 import ReadoutCardRow from './cards/ReadoutCardRow';
@@ -69,8 +69,11 @@ function App(){
  // First visit only (not embedded, not when the URL picks layers): ask which pollutants to show.
  const [picking,setPicking]=useState(()=>!EMBED&&!OPTIONS.layers&&!loadOnboarded());
  const finishPicking=React.useCallback(()=>{saveOnboarded();setPicking(false);},[]);
- const [timelines,setTimelines]=useState({forecast:null,history:null}),[mode,setMode]=useState(OPTIONS.history?'history':'forecast'),[frameAir,setFrameAir]=useState(null),[frameEurope,setFrameEurope]=useState(null);
+ const [timelines,setTimelines]=useState({forecast:null,history:null}),[mode,setMode]=useState(OPTIONS.time!=null&&!OPTIONS.history?'forecast':'history'),[frameAir,setFrameAir]=useState(null),[frameEurope,setFrameEurope]=useState(null);
+ // Two stacked time bars: the monthly history (in front by default) and Today, the 48-hour forecast around the snapshot.
+ // Until the history loads, Today's timeline (or none: the snapshot) is shown.
  const timeline=timelines[mode]??timelines.forecast;
+ const changeMode=next=>{timeline?.pause();setMode(next);track(`time/${next}`);};
  const [cards,setCards]=useState(()=>EMBED?null:loadCollection()),[asking,setAsking]=useState(null),[now,setNow]=useState(()=>Date.now());
  const [foundCount,setFoundCount]=useState(null);
  // How many people have collected the card being asked about; hidden when the counter is unavailable.
@@ -89,22 +92,20 @@ function App(){
   const sync=e=>{if(e.key===STORAGE_KEY)setCards(current=>mergeStates(current,loadCollection()));};
   window.addEventListener('storage',sync);return()=>window.removeEventListener('storage',sync);
  },[!!cards]);
- const changeMode=next=>{timeline?.pause();setMode(next);track(`time/${next}`);};
  useEffect(()=>{if(EMBED)return;const controller=new AbortController();fetchWeather(controller.signal).then(data=>setWeather({status:'ready',data})).catch(e=>{if(e.name!=='AbortError')setWeather({status:'error',data:null});});return()=>controller.abort();},[]);
  useEffect(()=>{const controller=new AbortController();fetchEuropeLayers(controller.signal).then(setRegionalAir).catch(e=>{if(e.name!=='AbortError')setRegionalError(true);});return()=>controller.abort();},[]);
  useEffect(()=>{const controller=new AbortController();fetchNativeLayers(controller.signal,(loaded,total)=>setProgress({loaded,total})).then(data=>setGlobalAir({status:'ready',data})).catch(e=>{if(e.name!=='AbortError')setGlobalAir({status:'error',data:null});});return()=>controller.abort();},[]);
- // Forecast frames load after the snapshot is on screen; they never block the first view.
+ // Frames load after the snapshot is on screen; they never block the first view, and either set can be missing.
+ // Each timeline brings its Europe-only frames (same indexes) when they exist.
  useEffect(()=>{
   if(globalAir.status!=='ready')return;
   const controller=new AbortController(),made=[],reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // Forecast (48 h, 3-hourly) and history (monthly means since 2022) load independently; either can be missing.
-  // Each timeline brings its Europe-only frames (same indexes) when they exist.
   const open=(kind,fetcher)=>fetcher(controller.signal).then(async manifest=>{
    const europe=await fetchEuropeManifest(kind,manifest,controller.signal);
    const line=createTimeline(manifest,{reduced,kind,start:kind==='history'?manifest.frames.length-1:manifest.snapshotIndex,europe});made.push(line);
    const at=OPTIONS.time==null||OPTIONS.history!==(kind==='history')?-1:manifest.frames.findIndex(f=>f.validAt===OPTIONS.time);
    if(at>=0)line.seek(at);
-   if(OPTIONS.play&&(kind==='history')===OPTIONS.history)line.play();
+   if(OPTIONS.play&&(kind==='history')===(mode==='history'))line.play();
    setTimelines(current=>({...current,[kind]:line}));
   }).catch(()=>{});
   open('forecast',fetchFrameManifest);open('history',fetchHistoryManifest);
@@ -133,9 +134,9 @@ function App(){
   if(!card||!line||sharedShown.current)return;sharedShown.current=true;
   const at=line.manifest.frames.findIndex(f=>monthKey(f.validAt)===(card.featuredMonth??card.months[0]));
   setMode('history');if(at>=0)line.seek(at);
-  flyTo(card.sourcePoint[1],card.sourcePoint[0],2.3);
+  const [lon,lat]=footprintCentre(card);flyTo(lat,lon,2.3);
  },[timelines.history]);
- // A pinned spot in Monthly mode may hold a card, a CO print of one, or a hint that a card is a month away.
+ // A pinned spot on a past month may hold a card, a CO print of one, or a hint that a card is a month away.
  const enabledLayers=Object.keys(paint).filter(id=>paint[id]?.enabled).join(',');
  const ownedIds=cards?Object.keys(cards.collected).filter(k=>!k.includes(':')).join(','):'';
  const cardHit=React.useMemo(()=>{
@@ -242,7 +243,7 @@ function App(){
    </div>
    <GlobalAirLegend surface={surface} onSurfaceChange={setSurface} panelOpen={panel==='layers'} onPanelChange={open=>{if(open){clearProbe();if(picking)finishPicking();}setPanel(open?'layers':null);}} onFlyTo={flyTo} detail={detail} regional={regionalAir} regionalError={regionalError} state={globalAir} paint={paint} weather={weather} weatherSettings={weatherSettings} onWeatherChange={(id,change)=>{if(change.enabled)track(`weather/${id}`);setWeatherSettings(current=>({...current,[id]:{...current[id],...change}}));}} onChange={updatePaint}/>
    {picking&&ready&&<LayerPicker paint={paint} onChange={updatePaint} onDone={finishPicking}/>}
-   {timeline&&<TimeBar timeline={timeline} mode={timeline.kind} modes={Object.keys(timelines).filter(k=>timelines[k])} onMode={changeMode}/>}
+   {timeline&&<TimeBar timelines={timelines} mode={timeline.kind} onMode={changeMode}/>}
    <div className="minimal-zoom" role="group" aria-label="Globe view"><button aria-label="Reset globe view" onClick={overview}><ArrowCounterClockwise size={17} weight="light"/></button><button className={`locate-button${locating?' is-locating':''}${userLocation?' is-found':''}`} aria-label="Show my location" aria-busy={locating||undefined} onClick={()=>locate()}><GpsFix size={17} weight={userLocation?'regular':'light'}/></button><span/><button aria-label="Zoom in" disabled={range.atMin} onClick={()=>{setZoom(z=>z+1);}}><Plus size={17} weight="light"/></button><button aria-label="Zoom out" disabled={range.atMax} onClick={()=>{setZoom(z=>z-1);}}><Minus size={17} weight="light"/></button></div>
    <p className={`locate-status${locateError?' is-shown':''}`} role="status">{locateError}</p>
    </>}

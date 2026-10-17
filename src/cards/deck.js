@@ -84,10 +84,19 @@ export function validateDeck(deck){
 const monthIndex=m=>{const [y,mo]=m.split('-').map(Number);return y*12+mo-1;};
 const wrap=d=>{const r=((d+180)%360+360)%360-180;return r===-180?180:r;};
 
-// Footprint test in a local flat frame centred on the pin (km): fine at the scale of a buffer of a few hundred km.
-// The outline is first made continuous (no jump at the date line), then moved by whole turns to sit nearest the pin.
-function inside(card,lat,lon){
- const xs=[];card.footprint.forEach(([x],i)=>xs.push(i?xs[i-1]+wrap(x-card.footprint[i-1][0]):x));
+// Unwrapped footprint longitudes: continuous across the date line.
+const unwrapped=card=>{const xs=[];card.footprint.forEach(([x],i)=>xs.push(i?xs[i-1]+wrap(x-card.footprint[i-1][0]):x));return xs;};
+// The footprint's centre (vertex mean), as [lon, lat]: where a shared card's link turns the globe.
+export function footprintCentre(card){
+ const xs=unwrapped(card),lon=wrap(xs.reduce((a,b)=>a+b,0)/xs.length),lat=card.footprint.reduce((a,[,y])=>a+y,0)/xs.length;
+ return [lon,lat];
+}
+
+// Distance (km) from the pin to the footprint: 0 inside, Infinity beyond bufferKm. Measured in a local flat frame centred
+// on the pin: fine at the scale of a buffer of a few hundred km. The outline is first made continuous (no jump at the
+// date line), then moved by whole turns to sit nearest the pin.
+function distance(card,lat,lon){
+ const xs=unwrapped(card);
  const mid=xs.reduce((a,b)=>a+b,0)/xs.length,shift=wrap(mid-lon)-mid;
  const k=Math.cos(lat*Math.PI/180),pts=card.footprint.map(([,y],i)=>[(xs[i]+shift)*k*111.32,(y-lat)*110.57]);
  let within=false,best=Infinity;
@@ -97,14 +106,15 @@ function inside(card,lat,lon){
   const dx=xj-xi,dy=yj-yi,t=Math.max(0,Math.min(1,dx||dy?-(xi*dx+yi*dy)/(dx*dx+dy*dy):0));
   best=Math.min(best,Math.hypot(xi+t*dx,yi+t*dy));
  }
- return within||best<=card.bufferKm;
+ return within?0:best<=card.bufferKm?best:Infinity;
 }
 
 // What a pin finds: a CO variant (CO layer on, base card owned), the card itself, a hint one month off, or nothing.
-// layers: Set of enabled field ids; owned: Set of collected base card ids. First match in deck order wins.
+// layers: Set of enabled field ids; owned: Set of collected base card ids. Where buffers overlap (North India and
+// Pakistani Punjab share a border), the nearest footprint wins; ties keep deck order.
 export function cardAt(deck,{lat,lon,month,layers,owned}){
  // Two passes: a card that is here this month always beats another card's one-month-off hint.
- const at=monthIndex(month),here=deck.filter(card=>inside(card,lat,lon));
+ const at=monthIndex(month),here=deck.map(card=>({card,d:distance(card,lat,lon)})).filter(h=>h.d<Infinity).sort((a,b)=>a.d-b.d).map(h=>h.card);
  for(const card of here){
   const variant=(card.variants??[]).find(v=>v.months.includes(month)&&layers.has(v.field)&&owned.has(card.id));
   if(variant)return {status:'variant',card,variant};

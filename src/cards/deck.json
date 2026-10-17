@@ -49,18 +49,18 @@
    "peak": {
     "value": 138.1,
     "unit": "µg/m³",
-    "note": "Highest 2023-06 monthly-mean pm2_5 cell in the footprint (+150 km), CAMS via Open-Meteo."
+    "note": "Highest 2023-06 monthly-mean pm2_5 cell in the footprint, CAMS via Open-Meteo."
    },
    "whoX": {
-    "value": 1.35,
+    "value": 1.4,
     "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
    },
    "areaKm2": {
-    "value": 3144000,
+    "value": 2404000,
     "note": "Footprint cells at or above twice their own median over the record."
    },
    "reachKm": {
-    "value": 1385,
+    "value": 1225,
     "note": "Greatest distance from the source point to such a cell."
    }
   },
@@ -180,18 +180,18 @@
    "peak": {
     "value": 659.0,
     "unit": "µg/m³",
-    "note": "Highest 2026-09 monthly-mean pm2_5 cell in the footprint (+150 km), CAMS via Open-Meteo."
+    "note": "Highest 2026-09 monthly-mean pm2_5 cell in the footprint, CAMS via Open-Meteo."
    },
    "whoX": {
-    "value": 2.9,
+    "value": 3.58,
     "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
    },
    "areaKm2": {
-    "value": 1625000,
+    "value": 1134000,
     "note": "Footprint cells at or above twice their own median over the record."
    },
    "reachKm": {
-    "value": 1965,
+    "value": 1748,
     "note": "Greatest distance from the source point to such a cell."
    }
   },
@@ -251,9 +251,9 @@
   ]
  },
  {
-  "id": "igp-november",
+  "id": "north-india-november",
   "number": 3,
-  "name": "North Indian and Pakistani smog",
+  "name": "North Indian smog",
   "type": "Crop burning",
   "rarity": "common",
   "rarityNote": "Every November; 2024 was the worst of the four in the record.",
@@ -266,81 +266,129 @@
   ],
   "footprint": [
    [
-    71,
-    29
+    72.5,
+    28.6
    ],
    [
-    73,
-    33
+    73.38,
+    29.93
    ],
    [
-    76,
-    32.5
+    73.81,
+    30.09
    ],
    [
-    78,
-    30.5
+    73.9,
+    30.43
    ],
    [
-    84,
-    27.5
+    74.63,
+    31.04
    ],
    [
-    88,
-    26
+    74.55,
+    31.82
    ],
    [
-    88,
-    24
+    75.33,
+    32.22
    ],
    [
-    84,
-    24.5
+    74.65,
+    32.6
    ],
    [
-    78,
-    26.5
+    76.4,
+    32.6
    ],
    [
-    74,
-    28
+    78.0,
+    30.6
+   ],
+   [
+    80.3,
+    29.53
+   ],
+   [
+    80.07,
+    28.83
+   ],
+   [
+    81.76,
+    27.91
+   ],
+   [
+    83.29,
+    27.37
+   ],
+   [
+    84.61,
+    27.3
+   ],
+   [
+    85.19,
+    26.77
+   ],
+   [
+    86.7,
+    26.43
+   ],
+   [
+    88.4,
+    26.4
+   ],
+   [
+    88.4,
+    24.0
+   ],
+   [
+    84.0,
+    24.4
+   ],
+   [
+    75.5,
+    27.2
+   ],
+   [
+    73.5,
+    27.6
    ]
   ],
   "bufferKm": 150,
   "sourcePoint": [
-   75,
-   30.5
+   75.8,
+   30.4
   ],
   "stats": {
    "peak": {
-    "value": 136.8,
+    "value": 126.7,
     "unit": "µg/m³",
-    "note": "Highest 2024-11 monthly-mean pm2_5 cell in the footprint (+150 km), CAMS via Open-Meteo."
+    "note": "Highest 2024-11 monthly-mean pm2_5 cell in the footprint, CAMS via Open-Meteo."
    },
    "whoX": {
-    "value": 4.79,
+    "value": 5.94,
     "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
    },
    "areaKm2": {
-    "value": 589000,
+    "value": 272000,
     "note": "Footprint cells at or above twice their own median over the record."
    },
    "reachKm": {
-    "value": 1581,
+    "value": 1215,
     "note": "Greatest distance from the source point to such a cell."
    }
   },
   "scale": 200,
-  "region": "Punjab, Haryana and the Gangetic plain",
+  "region": "Punjab, Haryana, Delhi and the Gangetic plain",
   "art": {
-   "lon0": 69,
-   "lon1": 87,
-   "latCenter": 27
+   "lon0": 70,
+   "lon1": 88,
+   "latCenter": 27.5
   },
   "clues": {
    "riddle": "After the rice harvest, the plain fills with smoke and cold air holds it down.",
    "region": "South Asia",
-   "country": "India and Pakistan",
+   "country": "India",
    "month": "November"
   },
   "questions": [
@@ -353,34 +401,34 @@
      "Forest fires in the Himalaya"
     ],
     "answer": 1,
-    "explanation": "Farm fires in Punjab and Haryana add a large share on peak days, by Delhi's Decision Support System over a third on some days. The rest is the region's own pollution: traffic, industry, dust and smoke from cooking with wood and dung, which by one estimate makes up nearly 30% of India's outdoor PM2.5. Cold, still air holds it all near the ground.",
-    "source": "CSE, citing Delhi DSS daily estimates: https://www.cseindia.org/cse-in-news?page=339; HEI, State of Global Air 2025, p. 17 (citing Chatterjee et al. 2023)",
+    "explanation": "Farm fires in Punjab and Haryana add a large share on peak days: Delhi's Decision Support System put it at 22% on 12 November 2024. The rest is the region's own pollution: traffic, industry, dust and smoke from cooking with wood and dung. Cold, still air holds it all near the ground.",
+    "source": "Delhi DSS via Outlook Business, November 2024: https://www.outlookbusiness.com/planet/climate/delhi-toxic-smog-crop-burning-surge-air-quality; HEI, State of Global Air 2025, p. 17",
     "wrongNote": "Fireworks spike the air for a night or two around Diwali; this haze lasts the whole month.",
     "belief": 0
    },
    {
-    "prompt": "Where is the November haze densest in this record?",
+    "prompt": "In November 2024, where was this haze densest on the Indian side?",
     "options": [
      "Over central Delhi",
-     "Over Punjab in Pakistan",
+     "Over western Bihar, in the eastern Gangetic plain",
      "Over the Thar desert",
-     "Over Kolkata"
+     "Over Mumbai"
     ],
     "answer": 1,
-    "explanation": "In the November 2024 monthly mean the highest cell sits in Pakistani Punjab; the haze covers both sides of the border.",
-    "source": "CAMS monthly mean PM2.5, November 2024, as shown in this atlas",
-    "wrongNote": "The densest haze is not where most people assume.",
+    "explanation": "In the November 2024 monthly mean the highest cell in this card's area sits in western Bihar, about 700 km east of Delhi. The haze covers the whole plain, not just the capital.",
+    "source": "CAMS monthly mean as shown in this atlas, PM2.5, November 2024",
+    "wrongNote": "Delhi gets the headlines, but the haze spans the whole plain.",
     "belief": 0
    }
   ],
   "back": [
-   "After the rice harvest, farmers in Punjab and Haryana, and in Pakistani Punjab, burn the leftover stubble.",
+   "After the rice harvest, farmers in Punjab and Haryana burn the leftover stubble.",
    "Cold, still November air traps that smoke over the plain with the region's traffic, industry, dust and cooking smoke."
   ],
   "blamed": "Diwali fireworks.",
   "actual": "Fireworks add a night or two; the month-long smog is crop smoke and local pollution held down by winter air.",
   "sources": [
-   "CSE, Delhi DSS estimates",
+   "Delhi DSS, Nov 2024",
    "HEI, State of Global Air 2025",
    "Govardhan et al., GMD 2024"
   ],
@@ -389,5 +437,1713 @@
    "text": "Cleaner cooking fuel cuts smoke at the source: India's LPG scheme (PMUY) reached over 100 million homes by 2023.",
    "source": "HEI, State of Global Air 2025, p. 17"
   }
+ },
+ {
+  "id": "punjab-pakistan-november",
+  "number": 4,
+  "name": "Pakistani Punjab smog",
+  "type": "Crop burning",
+  "rarity": "common",
+  "rarityNote": "Every November; 2024 was the worst of the four in the record, when Lahore's air index passed 1,000.",
+  "field": "pm2_5",
+  "months": [
+   "2022-11",
+   "2023-11",
+   "2024-11",
+   "2025-11"
+  ],
+  "footprint": [
+   [
+    74.66,
+    32.52
+   ],
+   [
+    75.33,
+    32.28
+   ],
+   [
+    74.55,
+    31.82
+   ],
+   [
+    74.63,
+    31.04
+   ],
+   [
+    73.9,
+    30.43
+   ],
+   [
+    73.81,
+    30.09
+   ],
+   [
+    73.38,
+    29.93
+   ],
+   [
+    72.9,
+    29.03
+   ],
+   [
+    72.34,
+    28.75
+   ],
+   [
+    71.88,
+    28.0
+   ],
+   [
+    69.6,
+    28.0
+   ],
+   [
+    71.5,
+    32.6
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   73.5,
+   31.0
+  ],
+  "stats": {
+   "peak": {
+    "value": 136.8,
+    "unit": "µg/m³",
+    "note": "Highest 2024-11 monthly-mean pm2_5 cell in the footprint, CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 6.52,
+    "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
+   },
+   "areaKm2": {
+    "value": 118000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 445,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 200,
+  "region": "Lahore, Faisalabad and the Punjab plain",
+  "art": {
+   "lon0": 67.5,
+   "lon1": 77.5,
+   "latCenter": 30.5
+  },
+  "clues": {
+   "riddle": "When the cold comes, a city of gardens disappears into grey air.",
+   "region": "South Asia",
+   "country": "Pakistan",
+   "month": "November"
+  },
+  "questions": [
+   {
+    "prompt": "What makes most of Lahore's November smog?",
+    "options": [
+     "Smoke blown in from far away",
+     "Local traffic, industry, brick kilns and crop burning, trapped by cold still air",
+     "Dust from the Thar desert",
+     "Forest fires in the mountains"
+    ],
+    "answer": 1,
+    "explanation": "Studies of Lahore's air point to sources close by. A 2025 national emissions study puts the city's share at 35% transport, 28% heavy industry and 17% brick kilns, and crop burning across the Punjab plain adds smoke in November. Cold, still winter air keeps it all near the ground.",
+    "source": "Pakistan Air Quality Initiative study via Dawn, December 2025: https://www.dawn.com/news/amp/1960268",
+    "wrongNote": "Wind can carry smoke across the plain, but most of this smog is made close by.",
+    "belief": 0
+   },
+   {
+    "prompt": "In November 2024, where was this haze densest?",
+    "options": [
+     "Over central Lahore",
+     "Near Faisalabad, west of Lahore",
+     "Over the Cholistan desert",
+     "Over Islamabad"
+    ],
+    "answer": 1,
+    "explanation": "In the November 2024 monthly mean the highest cell sits near Faisalabad, about 110 km west of Lahore. The smog covers the whole plain, not just the big city.",
+    "source": "CAMS monthly mean as shown in this atlas, PM2.5, November 2024",
+    "wrongNote": "The big city gets the headlines, but the haze spans the plain.",
+    "belief": 0
+   }
+  ],
+  "back": [
+   "After the rice harvest, farmers across the Punjab plain burn the stubble, while brick kilns, traffic and industry run all winter.",
+   "In November 2024 cold, still air held the smoke down until Lahore closed its schools and parks."
+  ],
+  "blamed": "Smoke from somewhere else.",
+  "actual": "Most of it is made on the plain itself and held down by winter air.",
+  "sources": [
+   "PAQI via Dawn, Dec 2025",
+   "Bloomberg, 14 Nov 2024"
+  ],
+  "featuredMonth": "2024-11"
+ },
+ {
+  "id": "south-america-2024",
+  "number": 5,
+  "name": "South American fire smoke",
+  "type": "Wildfire",
+  "rarity": "rare",
+  "rarityNote": "Bolivia's worst fire year on record; September 2024 is more than 3× the average of the other Septembers in the record.",
+  "field": "pm2_5",
+  "months": [
+   "2024-09"
+  ],
+  "footprint": [
+   [
+    -74,
+    -6
+   ],
+   [
+    -64,
+    -4.5
+   ],
+   [
+    -55,
+    -5.5
+   ],
+   [
+    -50,
+    -9
+   ],
+   [
+    -51,
+    -17
+   ],
+   [
+    -55,
+    -22
+   ],
+   [
+    -58,
+    -27
+   ],
+   [
+    -63,
+    -27
+   ],
+   [
+    -66,
+    -21
+   ],
+   [
+    -69,
+    -16
+   ],
+   [
+    -73,
+    -11
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   -62.4,
+   -15.6
+  ],
+  "stats": {
+   "peak": {
+    "value": 526.0,
+    "unit": "µg/m³",
+    "note": "Highest 2024-09 monthly-mean pm2_5 cell in the footprint, CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 4.04,
+    "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
+   },
+   "areaKm2": {
+    "value": 4250000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 1655,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 130,
+  "region": "Bolivia and the southern Amazon",
+  "art": {
+   "lon0": -76,
+   "lon1": -46,
+   "latCenter": -15
+  },
+  "clues": {
+   "riddle": "In a record drought, forest cleared with fire burns out of control and a continent turns brown.",
+   "region": "South America",
+   "country": "Bolivia and Brazil",
+   "month": "September"
+  },
+  "questions": [
+   {
+    "prompt": "What lit most of these fires?",
+    "options": [
+     "Lightning in the drought",
+     "People clearing forest and pasture with fire, in a record drought",
+     "Volcanoes in the Andes",
+     "Fires spreading from Argentina"
+    ],
+    "answer": 1,
+    "explanation": "Farmers and ranchers clear land with fire every dry season. In 2024 a record drought let those fires spread: in Bolivia they burned over 10 million hectares, mostly in Santa Cruz and Beni, and the government declared a national disaster on 30 September.",
+    "source": "Reuters via Fiji Times, 2024: https://www.fijitimes.com.fj/bolivia-wildfires-burn-record-area-scorching-homes-and-farms/; IFRC final report MDRBO017",
+    "wrongNote": "These fires are set by people; the drought let them spread.",
+    "belief": 0
+   },
+   {
+    "prompt": "How far did the smoke reach?",
+    "options": [
+     "Only over the burning forest",
+     "As far as São Paulo, nearly 2,000 km away",
+     "Across the Pacific to Australia",
+     "North to Mexico"
+    ],
+    "answer": 1,
+    "explanation": "Smoke spread over Brasília and São Paulo in August and early September, grounding flights and closing schools.",
+    "source": "NASA Earth Observatory, Smoke fills South American skies, 2024: https://science.nasa.gov/earth/earth-observatory/smoke-fills-south-american-skies-153295/",
+    "wrongNote": "The smoke travelled far beyond the fires.",
+    "belief": 0
+   }
+  ],
+  "back": [
+   "Fires set to clear forest and pasture ran out of control in a record drought across eastern Bolivia and the southern Brazilian Amazon.",
+   "By September their smoke covered much of the continent, as far as São Paulo."
+  ],
+  "blamed": "Wildfires lit by lightning.",
+  "actual": "People set the fires; a record drought let them spread.",
+  "sources": [
+   "NASA Earth Observatory, Sep 2024",
+   "Reuters, 2024",
+   "IFRC, 2025"
+  ],
+  "featuredMonth": "2024-09"
+ },
+ {
+  "id": "canada-2025",
+  "number": 6,
+  "name": "Manitoba and Saskatchewan fires",
+  "type": "Wildfire",
+  "rarity": "uncommon",
+  "rarityNote": "Big Canadian fire seasons come every few years; in this card's area June 2025 is the highest June in the record, ahead of 2023.",
+  "field": "pm2_5",
+  "months": [
+   "2025-06"
+  ],
+  "footprint": [
+   [
+    -110,
+    53
+   ],
+   [
+    -109,
+    58.5
+   ],
+   [
+    -102,
+    60
+   ],
+   [
+    -94,
+    59
+   ],
+   [
+    -88,
+    56
+   ],
+   [
+    -87,
+    52
+   ],
+   [
+    -92,
+    49
+   ],
+   [
+    -100,
+    49
+   ],
+   [
+    -106,
+    50
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   -101.5,
+   55.2
+  ],
+  "stats": {
+   "peak": {
+    "value": 69.6,
+    "unit": "µg/m³",
+    "note": "Highest 2025-06 monthly-mean pm2_5 cell in the footprint, CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 1.38,
+    "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
+   },
+   "areaKm2": {
+    "value": 1427000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 1006,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 40,
+  "region": "Manitoba, Saskatchewan and the northern US plains",
+  "art": {
+   "lon0": -114,
+   "lon1": -84,
+   "latCenter": 54.5
+  },
+  "clues": {
+   "riddle": "A mining town on a provincial border empties as the forest burns toward it.",
+   "region": "North America",
+   "country": "Canada",
+   "month": "June"
+  },
+  "questions": [
+   {
+    "prompt": "Where did the smoke over North Dakota and Minnesota come from in early June 2025?",
+    "options": [
+     "Fires in the US West",
+     "Fires in Manitoba and Saskatchewan, carried south",
+     "Farm burning on the plains",
+     "Factories in Winnipeg"
+    ],
+    "answer": 1,
+    "explanation": "More than 25,000 people were evacuated in three provinces as fires burned across Manitoba and Saskatchewan. Their smoke drifted south, and on 1 June the air in North Dakota and parts of Minnesota reached unhealthy levels.",
+    "source": "AP via PBS NewsHour, 1 June 2025: https://www.pbs.org/newshour/world/thousands-evacuate-as-canadian-wildfires-spread-impacting-air-quality-in-some-u-s-states",
+    "wrongNote": "This smoke started north of the border.",
+    "belief": 0
+   },
+   {
+    "prompt": "Which town of more than 5,000 people was evacuated as a fire crossed from Saskatchewan into Manitoba?",
+    "options": [
+     "Winnipeg",
+     "Flin Flon",
+     "Regina",
+     "Thunder Bay"
+    ],
+    "answer": 1,
+    "explanation": "The fire started near Creighton, Saskatchewan, and crossed into Manitoba; more than 5,000 people left Flin Flon, about 645 km north-west of Winnipeg.",
+    "source": "AP via PBS NewsHour, 1 June 2025: https://www.pbs.org/newshour/world/thousands-evacuate-as-canadian-wildfires-spread-impacting-air-quality-in-some-u-s-states",
+    "wrongNote": "It was a smaller mining town further north."
+   }
+  ],
+  "back": [
+   "Fires in the boreal forest of Manitoba and Saskatchewan forced more than 25,000 people from their homes in late May and early June.",
+   "Their smoke drifted south over the northern US plains."
+  ],
+  "blamed": "Fires in the United States.",
+  "actual": "The smoke came from Canadian forest fires to the north.",
+  "sources": [
+   "AP via PBS, 1 June 2025"
+  ],
+  "featuredMonth": "2025-06"
+ },
+ {
+  "id": "yakutia-2024",
+  "number": 7,
+  "name": "Siberian taiga fires",
+  "type": "Wildfire",
+  "rarity": "uncommon",
+  "rarityNote": "Big Siberian fire summers come every few years; July 2024 is more than 4× any other July in the record.",
+  "field": "pm2_5",
+  "months": [
+   "2024-07"
+  ],
+  "footprint": [
+   [
+    108,
+    53
+   ],
+   [
+    110,
+    58
+   ],
+   [
+    114,
+    62
+   ],
+   [
+    120,
+    65
+   ],
+   [
+    128,
+    68
+   ],
+   [
+    136,
+    68
+   ],
+   [
+    138,
+    63
+   ],
+   [
+    132,
+    58
+   ],
+   [
+    124,
+    55
+   ],
+   [
+    117,
+    52
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   117,
+   56
+  ],
+  "stats": {
+   "peak": {
+    "value": 310.2,
+    "unit": "µg/m³",
+    "note": "Highest 2024-07 monthly-mean pm2_5 cell in the footprint, CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 2.77,
+    "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
+   },
+   "areaKm2": {
+    "value": 1710000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 1648,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 120,
+  "region": "Zabaykalsky and Yakutia, Russia",
+  "art": {
+   "lon0": 104,
+   "lon1": 142,
+   "latCenter": 61
+  },
+  "clues": {
+   "riddle": "Far from any city, the larch forest burns all summer and the smoke drifts over empty land.",
+   "region": "North Asia",
+   "country": "Russia",
+   "month": "July"
+  },
+  "questions": [
+   {
+    "prompt": "What started most of these fires, according to officials?",
+    "options": [
+     "Lightning",
+     "People: careless use of fire and illegal grass burning",
+     "Gas flares",
+     "Volcanoes in Kamchatka"
+    ],
+    "answer": 1,
+    "explanation": "Officials blamed most fires on human negligence, including the popular and illegal practice of burning dry grass; heat and dry weather let them spread. By early July more than 100 fires covered about 350,000 hectares in Yakutia alone.",
+    "source": "Interfax, 2 July 2024: https://interfax.com/newsroom/top-stories/103903/; Reuters via SRN News, July 2024",
+    "wrongNote": "Lightning starts some, but officials blamed people for most.",
+    "belief": 0
+   },
+   {
+    "prompt": "In July 2024, where was this smoke densest?",
+    "options": [
+     "Over Moscow",
+     "North-east of Lake Baikal, in Zabaykalsky",
+     "Over Kamchatka",
+     "Over Mongolia"
+    ],
+    "answer": 1,
+    "explanation": "In the July 2024 monthly mean the highest cell sits in northern Zabaykalsky, north-east of Lake Baikal, where a state of emergency was also in force.",
+    "source": "CAMS monthly mean as shown in this atlas, PM2.5, July 2024; Reuters via SRN News, July 2024",
+    "wrongNote": "Look east of Lake Baikal."
+   }
+  ],
+  "back": [
+   "In July 2024 more than 100 fires burned in the larch forest of Yakutia, and states of emergency were declared there and in Zabaykalsky.",
+   "Smoke over the taiga was more than four times any other July in this record."
+  ],
+  "blamed": "Lightning.",
+  "actual": "Officials blamed most fires on people burning grass and careless use of fire.",
+  "sources": [
+   "Interfax, July 2024",
+   "Reuters, July 2024"
+  ],
+  "featuredMonth": "2024-07"
+ },
+ {
+  "id": "athens-dust-2024",
+  "number": 8,
+  "name": "Saharan dust over Greece",
+  "type": "Dust storm",
+  "rarity": "uncommon",
+  "rarityNote": "Greece's worst dust episode since 2018; April 2024 is about twice any other April in the record.",
+  "field": "dust",
+  "months": [
+   "2024-04"
+  ],
+  "footprint": [
+   [
+    19.5,
+    36.5
+   ],
+   [
+    20,
+    39.8
+   ],
+   [
+    22.5,
+    41.2
+   ],
+   [
+    26.5,
+    41.2
+   ],
+   [
+    28.2,
+    38
+   ],
+   [
+    27,
+    35
+   ],
+   [
+    24,
+    34.6
+   ],
+   [
+    21.5,
+    35.2
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   21.5,
+   31
+  ],
+  "stats": {
+   "peak": {
+    "value": 28.9,
+    "unit": "µg/m³",
+    "note": "Highest 2024-04 monthly-mean dust cell in the footprint, CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 0.62,
+    "note": "Footprint-mean pm10 ÷ WHO 2021 24-hour guideline 45 µg/m³."
+   },
+   "areaKm2": {
+    "value": 417000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 1175,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 150,
+  "region": "Greece, Crete and the Aegean",
+  "art": {
+   "lon0": 17,
+   "lon1": 30,
+   "latCenter": 36.5
+  },
+  "clues": {
+   "riddle": "Southern winds turn an ancient city's sky orange for an evening.",
+   "region": "Europe",
+   "country": "Greece",
+   "month": "April"
+  },
+  "questions": [
+   {
+    "prompt": "Why did the sky over Athens turn orange on 23 April 2024?",
+    "options": [
+     "Smoke from forest fires",
+     "Dust carried from North Africa on southerly winds",
+     "Pollution from ships",
+     "Ash from Mount Etna"
+    ],
+    "answer": 1,
+    "explanation": "Low pressure over the Mediterranean drove southerly winds that carried Saharan dust from Libya across the sea. Officials called it one of the worst such episodes since 2018.",
+    "source": "AP via KSAT, 23 April 2024: https://www.ksat.com/news/weird-news/2024/04/23/martian-skies-over-athens-greeces-capital-turns-an-orange-hue-with-dust-clouds-from-north-africa/; BBC via RNZ, April 2024",
+    "wrongNote": "Orange skies in Greece usually mean fire; this time it was desert dust.",
+    "belief": 0
+   },
+   {
+    "prompt": "Athens turned orange, so why is this card's × WHO below 1?",
+    "options": [
+     "The dust was harmless",
+     "The worst dust lasted a few days, and a monthly mean spreads it over the month",
+     "WHO has no guideline for dust",
+     "The dust never reached the ground"
+    ],
+    "answer": 1,
+    "explanation": "A monthly mean averages a few dusty days with many clean ones. The month as a whole stays under WHO's daily PM10 guideline, though single days were far above it.",
+    "source": "WHO 2021 air quality guidelines; CAMS monthly mean as shown in this atlas, PM10, April 2024",
+    "wrongNote": "Think about how long the episode lasted."
+   }
+  ],
+  "back": [
+   "On 23 April 2024 southerly winds carried Saharan dust from Libya across the Mediterranean, and the sky over Athens turned orange.",
+   "Next morning the Acropolis was hidden from view."
+  ],
+  "blamed": "Wildfire smoke.",
+  "actual": "It was desert dust, carried across the sea from Libya.",
+  "sources": [
+   "AP, 23 Apr 2024",
+   "BBC, 24 Apr 2024"
+  ],
+  "featuredMonth": "2024-04"
+ },
+ {
+  "id": "iberia-2025",
+  "number": 9,
+  "name": "Spanish and Portuguese fires",
+  "type": "Wildfire",
+  "rarity": "uncommon",
+  "rarityNote": "Spain's worst fire season since 1994; August 2025 is about twice any other August in the record.",
+  "field": "pm2_5",
+  "months": [
+   "2025-08"
+  ],
+  "footprint": [
+   [
+    -9.2,
+    40.2
+   ],
+   [
+    -9.2,
+    43.6
+   ],
+   [
+    -6.5,
+    43.6
+   ],
+   [
+    -4.3,
+    42.9
+   ],
+   [
+    -4.8,
+    41.2
+   ],
+   [
+    -6.8,
+    39.8
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   -6.8,
+   42.4
+  ],
+  "stats": {
+   "peak": {
+    "value": 52.7,
+    "unit": "µg/m³",
+    "note": "Highest 2025-08 monthly-mean pm2_5 cell in the footprint, CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 1.3,
+    "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
+   },
+   "areaKm2": {
+    "value": 108000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 285,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 70,
+  "region": "Galicia, León, Zamora and northern Portugal",
+  "art": {
+   "lon0": -11,
+   "lon1": -1,
+   "latCenter": 41.5
+  },
+  "clues": {
+   "riddle": "In a heatwave, the hills between Galicia and León burn faster than crews can reach them.",
+   "region": "Europe",
+   "country": "Spain and Portugal",
+   "month": "August"
+  },
+  "questions": [
+   {
+    "prompt": "What let these fires grow so large?",
+    "options": [
+     "A heatwave with low humidity and strong winds, and fires started by people",
+     "Lightning storms alone",
+     "Fires spreading from France",
+     "Burning at landfills"
+    ],
+    "answer": 0,
+    "explanation": "Heat, low humidity and strong wind drove the fires, and many were started by people: police arrested 31 people and investigated 92 more. The Larouco fire in Ourense became the largest in Galicia's recorded history.",
+    "source": "The Local, 18 August 2025: https://www.thelocal.es/20250818/spains-2025-wildfires-confirmed-as-most-destructive-in-countrys-history; Euronews, 21 August 2025",
+    "wrongNote": "Lightning starts some fires, but these spread because of heat, wind and people.",
+    "belief": 1
+   },
+   {
+    "prompt": "How much land had burned in Spain by late August 2025?",
+    "options": [
+     "About 4,000 hectares",
+     "About 40,000 hectares",
+     "About 380,000 hectares",
+     "About 4 million hectares"
+    ],
+    "answer": 2,
+    "explanation": "By 21 August EFFIS satellite data showed about 382,000 hectares burned in Spain in 2025, the most since 1994 and about nine times 2024's total.",
+    "source": "EFFIS via Euronews, 21 August 2025: https://www.euronews.com/green/2025/08/21/spains-sees-worst-wildfire-season-since-1994-with-382000-hectares-burned-so-far-in-2025",
+    "wrongNote": "It was the worst season in three decades."
+   }
+  ],
+  "back": [
+   "In mid-August 2025 a heatwave fed dozens of fires across Galicia, Castilla y León and northern Portugal.",
+   "Spain had its worst season since 1994; Portugal had its largest single fire on record."
+  ],
+  "blamed": "Lightning.",
+  "actual": "Heat and wind spread fires, many of them started by people.",
+  "sources": [
+   "EFFIS via Euronews, Aug 2025",
+   "AFP, Aug 2025"
+  ],
+  "featuredMonth": "2025-08"
+ },
+ {
+  "id": "harmattan",
+  "number": 10,
+  "name": "Harmattan dust",
+  "type": "Dust storm",
+  "rarity": "common",
+  "rarityNote": "Every dry season (December to March); January 2024 was the dustiest January in the record.",
+  "field": "dust",
+  "months": [
+   "2023-01",
+   "2024-01",
+   "2025-01",
+   "2026-01"
+  ],
+  "footprint": [
+   [
+    -6,
+    6
+   ],
+   [
+    -8,
+    10.5
+   ],
+   [
+    -5,
+    14.5
+   ],
+   [
+    3,
+    17
+   ],
+   [
+    12,
+    17.5
+   ],
+   [
+    18.5,
+    17.5
+   ],
+   [
+    19,
+    15
+   ],
+   [
+    18,
+    11
+   ],
+   [
+    13,
+    7.5
+   ],
+   [
+    8,
+    5
+   ],
+   [
+    1,
+    5.5
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   17.9,
+   16.8
+  ],
+  "stats": {
+   "peak": {
+    "value": 7016.0,
+    "unit": "µg/m³",
+    "note": "Highest 2024-01 monthly-mean dust cell in the footprint, CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 5.35,
+    "note": "Footprint-mean pm10 ÷ WHO 2021 24-hour guideline 45 µg/m³."
+   },
+   "areaKm2": {
+    "value": 2271000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 2871,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 1500,
+  "region": "Niger, Nigeria, Chad and the Sahel",
+  "art": {
+   "lon0": -10,
+   "lon1": 22,
+   "latCenter": 11
+  },
+  "clues": {
+   "riddle": "A dry wind from the desert hides the sun over West African cities for weeks.",
+   "region": "West Africa",
+   "country": "Nigeria",
+   "month": "January"
+  },
+  "questions": [
+   {
+    "prompt": "Where does most of this dust come from?",
+    "options": [
+     "Smoke from cooking fires",
+     "The Bodélé Depression, a dry lake bed in Chad",
+     "The Atlantic coast",
+     "Building sites in Lagos"
+    ],
+    "answer": 1,
+    "explanation": "The Bodélé Depression in northern Chad, a dried-up lake bed, is one of the largest dust sources on Earth: nearby mountains funnel strong winds across it, and the Harmattan carries the dust south-west over the Sahel and Nigeria.",
+    "source": "NASA Earth Observatory, Choking on Saharan dust: https://science.nasa.gov/earth/earth-observatory/choking-on-saharan-dust-144970/; Schwanghart and Schütt, Geomorphology 2008",
+    "wrongNote": "This haze is mostly desert dust, not smoke.",
+    "belief": 0
+   },
+   {
+    "prompt": "Why do West African airports see delays in the Harmattan season?",
+    "options": [
+     "Strikes",
+     "Dust cuts visibility below what planes need",
+     "Heavy rain",
+     "Fuel shortages"
+    ],
+    "answer": 1,
+    "explanation": "Many West African airports need 800 to 1,200 m of visibility; in Harmattan dust it can fall below 500 m for days, causing delays, diversions and cancellations.",
+    "source": "Ajayi, West African dust, AfricanSWIFT: https://africanswift.org/wp-content/uploads/sites/84/2020/01/VOAjayi_WestAfricanDust.pdf",
+    "wrongNote": "Think about what pilots need to see."
+   }
+  ],
+  "back": [
+   "From December to March the Harmattan blows from the Sahara toward the Gulf of Guinea, carrying dust from the Bodélé Depression in Chad.",
+   "In January 2024 the dust over northern Nigeria was the densest in this record."
+  ],
+  "blamed": "Smoke and city pollution.",
+  "actual": "It is mostly desert dust, carried from Chad on the dry-season wind.",
+  "sources": [
+   "NASA Earth Observatory",
+   "Schwanghart and Schütt, 2008"
+  ],
+  "featuredMonth": "2024-01"
+ },
+ {
+  "id": "north-savanna-burning",
+  "number": 11,
+  "name": "Central African savanna fires",
+  "type": "Savanna burning",
+  "rarity": "common",
+  "rarityNote": "Every dry season (November to February).",
+  "field": "pm2_5",
+  "months": [
+   "2022-12",
+   "2023-12",
+   "2024-12",
+   "2025-12"
+  ],
+  "footprint": [
+   [
+    16,
+    4
+   ],
+   [
+    15.5,
+    9.5
+   ],
+   [
+    20,
+    11
+   ],
+   [
+    25,
+    10.5
+   ],
+   [
+    30,
+    10
+   ],
+   [
+    33.5,
+    8
+   ],
+   [
+    33,
+    4.5
+   ],
+   [
+    28,
+    3.5
+   ],
+   [
+    22,
+    3.5
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   23,
+   7
+  ],
+  "stats": {
+   "peak": {
+    "value": 61.9,
+    "unit": "µg/m³",
+    "note": "Highest 2024-12 monthly-mean pm2_5 cell in the footprint, CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 1.73,
+    "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
+   },
+   "areaKm2": {
+    "value": 319000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 1132,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 40,
+  "region": "Central African Republic, South Sudan and northern DR Congo",
+  "art": {
+   "lon0": 12,
+   "lon1": 36,
+   "latCenter": 7
+  },
+  "clues": {
+   "riddle": "North of the equator the dry season comes, and the grass is burned to make way for new growth.",
+   "region": "Central Africa",
+   "country": "Central African Republic",
+   "month": "December"
+  },
+  "questions": [
+   {
+    "prompt": "Why does this savanna burn every December?",
+    "options": [
+     "Lightning storms",
+     "People burn grass to clear fields and renew pasture",
+     "Oil field flares",
+     "Volcanoes"
+    ],
+    "answer": 1,
+    "explanation": "In Africa's savannas people set fires for months each dry season, mostly to clear land and manage pasture and cropland. Burning in northern sub-Saharan Africa accounts for about a fifth to a quarter of the world's carbon emissions from fires.",
+    "source": "NASA Earth Observatory, Fires in Angola: https://science.nasa.gov/earth/earth-observatory/fires-in-angola-18655/; Ichoku et al., Environmental Research Letters 2016",
+    "wrongNote": "Very few of these fires are natural.",
+    "belief": 0
+   },
+   {
+    "prompt": "When does the savanna south of the equator burn?",
+    "options": [
+     "In the same months",
+     "From about May to October, its own dry season",
+     "Only every few years",
+     "In March"
+    ],
+    "answer": 1,
+    "explanation": "The fire belt follows the dry season: north of the equator it burns from about November to February, south of it from about May to October.",
+    "source": "NASA Earth Observatory, Fires in Angola: https://science.nasa.gov/earth/earth-observatory/fires-in-angola-18655/",
+    "wrongNote": "The dry season flips across the equator."
+   }
+  ],
+  "back": [
+   "North of the equator the dry season runs from November to February, and people burn the savanna grass to clear fields and renew pasture.",
+   "Africa has about 70% of the world's burned area."
+  ],
+  "blamed": "Wildfires started by lightning.",
+  "actual": "People set most of these fires to manage land.",
+  "sources": [
+   "NASA Earth Observatory",
+   "Ichoku et al., 2016",
+   "ESA Climate Change Initiative"
+  ],
+  "featuredMonth": "2024-12"
+ },
+ {
+  "id": "saharan-dust-caribbean",
+  "number": 12,
+  "name": "Saharan dust over the Caribbean",
+  "type": "Dust storm",
+  "rarity": "common",
+  "rarityNote": "Every summer (June to August); June 2025 was the dustiest June in the record.",
+  "field": "dust",
+  "months": [
+   "2023-06",
+   "2024-06",
+   "2025-06",
+   "2026-06"
+  ],
+  "footprint": [
+   [
+    -61,
+    10.5
+   ],
+   [
+    -59.5,
+    14
+   ],
+   [
+    -61.5,
+    18.5
+   ],
+   [
+    -66,
+    19
+   ],
+   [
+    -72,
+    20.5
+   ],
+   [
+    -80,
+    23.5
+   ],
+   [
+    -87,
+    22
+   ],
+   [
+    -88,
+    17
+   ],
+   [
+    -83,
+    13
+   ],
+   [
+    -77,
+    9
+   ],
+   [
+    -70,
+    11.5
+   ],
+   [
+    -64,
+    10.5
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   -5,
+   20
+  ],
+  "stats": {
+   "peak": {
+    "value": 34.0,
+    "unit": "µg/m³",
+    "note": "Highest 2025-06 monthly-mean dust cell in the footprint, CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 0.7,
+    "note": "Footprint-mean pm10 ÷ WHO 2021 24-hour guideline 45 µg/m³."
+   },
+   "areaKm2": {
+    "value": 3097000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 8629,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 30,
+  "region": "The Antilles, Hispaniola and the Gulf of Mexico",
+  "art": {
+   "lon0": -90,
+   "lon1": -58,
+   "latCenter": 16
+  },
+  "clues": {
+   "riddle": "A desert's dust crosses an ocean and turns island sunsets hazy.",
+   "region": "Caribbean",
+   "country": "Haiti and the Dominican Republic",
+   "month": "June"
+  },
+  "questions": [
+   {
+    "prompt": "Where does this June haze over the Caribbean come from?",
+    "options": [
+     "Smoke and pollution from the islands' cities",
+     "Dust from the Sahara, carried across the Atlantic",
+     "Ash from Caribbean volcanoes",
+     "Sea spray"
+    ],
+    "answer": 1,
+    "explanation": "Dry, dusty air forms over the Sahara and crosses the Atlantic every three to five days from late spring to early autumn, peaking from late June to mid-August, in a layer about 3 km thick.",
+    "source": "NOAA via NBC Washington, June 2020: https://www.nbcwashington.com/news/national-international/sahara-dust-blankets-caribbean-air-quality-hazardous/2340444/",
+    "wrongNote": "This haze is not made in the Caribbean.",
+    "belief": 0
+   },
+   {
+    "prompt": "How much Saharan dust falls on the Amazon each year?",
+    "options": [
+     "About 28 tonnes",
+     "About 28,000 tonnes",
+     "About 28 million tonnes",
+     "About 28 billion tonnes"
+    ],
+    "answer": 2,
+    "explanation": "NASA's CALIPSO satellite traced about 182 million tonnes of dust leaving the Sahara each year; 27.7 million tonnes fall on the Amazon basin, bringing phosphorus that the rainforest's soils lose to rain.",
+    "source": "NASA, February 2015 (Yu et al., Geophysical Research Letters 2015): https://svs.gsfc.nasa.gov/4273/",
+    "wrongNote": "Much more than you might think."
+   }
+  ],
+  "back": [
+   "Every summer, dust from the Sahara rides the trade winds across the Atlantic in a dry layer about 3 km thick.",
+   "It hazes the sky from the Antilles to the Gulf of Mexico, thousands of kilometres from where it rose."
+  ],
+  "blamed": "Local pollution.",
+  "actual": "The dust is carried across the Atlantic from the Sahara.",
+  "sources": [
+   "NOAA",
+   "NASA, Yu et al. 2015"
+  ],
+  "featuredMonth": "2025-06"
+ },
+ {
+  "id": "south-savanna-burning",
+  "number": 13,
+  "name": "Angolan and Congolese savanna fires",
+  "type": "Savanna burning",
+  "rarity": "common",
+  "rarityNote": "Every dry season (May to October); July 2026 was the smokiest July in the record.",
+  "field": "pm2_5",
+  "months": [
+   "2023-07",
+   "2024-07",
+   "2025-07",
+   "2026-07"
+  ],
+  "footprint": [
+   [
+    14,
+    -5
+   ],
+   [
+    14.5,
+    -12.5
+   ],
+   [
+    18,
+    -15
+   ],
+   [
+    24,
+    -15
+   ],
+   [
+    29,
+    -13
+   ],
+   [
+    30,
+    -8
+   ],
+   [
+    28,
+    -3
+   ],
+   [
+    22,
+    -2.5
+   ],
+   [
+    17,
+    -3
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   21.6,
+   -6.4
+  ],
+  "stats": {
+   "peak": {
+    "value": 85.7,
+    "unit": "µg/m³",
+    "note": "Highest 2026-07 monthly-mean pm2_5 cell in the footprint, CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 2.46,
+    "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
+   },
+   "areaKm2": {
+    "value": 1757000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 1062,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 60,
+  "region": "Angola, southern DR Congo and Zambia",
+  "art": {
+   "lon0": 10,
+   "lon1": 33,
+   "latCenter": -8
+  },
+  "clues": {
+   "riddle": "South of the equator, the dry season sets thousands of small fires across the grass.",
+   "region": "Central Africa",
+   "country": "Angola and DR Congo",
+   "month": "July"
+  },
+  "questions": [
+   {
+    "prompt": "What are most of these fires?",
+    "options": [
+     "Huge forest fires",
+     "Many small fires set to clear land and manage pasture and crops",
+     "Oil well fires",
+     "Lightning fires"
+    ],
+    "answer": 1,
+    "explanation": "On 22 August 2019 Angola showed more fire detections than anywhere else on Earth, but NASA noted their low intensity: mostly small farm fires, not large forest fires. People set them for months each year to clear land and manage pasture and cropland.",
+    "source": "NASA Earth Observatory, Fires in Angola: https://science.nasa.gov/earth/earth-observatory/fires-in-angola-18655/; NASA, August 2019",
+    "wrongNote": "Count the fires, but look at their size.",
+    "belief": 0
+   },
+   {
+    "prompt": "In which month does Angola's burning season usually start?",
+    "options": [
+     "January",
+     "May",
+     "October",
+     "December"
+    ],
+    "answer": 1,
+    "explanation": "Burning often begins in May, spreads through the middle of the year and tapers off in September or October.",
+    "source": "NASA Earth Observatory, Fires in Angola: https://science.nasa.gov/earth/earth-observatory/fires-in-angola-18655/",
+    "wrongNote": "It starts as the rains end."
+   }
+  ],
+  "back": [
+   "South of the equator the dry season runs from May to October, and people burn grass and fields across Angola, Zambia and southern Congo.",
+   "Each fire is small, but thousands burn at once."
+  ],
+  "blamed": "Forest fires.",
+  "actual": "Mostly small fires set to manage farmland and pasture.",
+  "sources": [
+   "NASA Earth Observatory, 2007 and 2019"
+  ],
+  "featuredMonth": "2026-07"
+ },
+ {
+  "id": "mainland-sea-burning",
+  "number": 14,
+  "name": "Mainland Southeast Asian burning season",
+  "type": "Crop burning",
+  "rarity": "common",
+  "rarityNote": "Every March and April.",
+  "field": "pm2_5",
+  "months": [
+   "2023-03",
+   "2024-03",
+   "2025-03",
+   "2026-03"
+  ],
+  "footprint": [
+   [
+    97,
+    16
+   ],
+   [
+    97,
+    22.5
+   ],
+   [
+    100,
+    24
+   ],
+   [
+    104,
+    22.5
+   ],
+   [
+    106,
+    19
+   ],
+   [
+    105,
+    15.5
+   ],
+   [
+    102,
+    14.5
+   ],
+   [
+    99,
+    14.5
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   101,
+   19
+  ],
+  "stats": {
+   "peak": {
+    "value": 66.8,
+    "unit": "µg/m³",
+    "note": "Highest 2025-03 monthly-mean pm2_5 cell in the footprint, CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 2.65,
+    "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
+   },
+   "areaKm2": {
+    "value": 781000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 566,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 55,
+  "region": "Northern Thailand, Laos and Myanmar's Shan State",
+  "art": {
+   "lon0": 94,
+   "lon1": 108,
+   "latCenter": 19
+  },
+  "clues": {
+   "riddle": "Before the rains, hill fields are burned and a northern Thai city tops the world's pollution charts.",
+   "region": "South-east Asia",
+   "country": "Laos and Thailand",
+   "month": "March"
+  },
+  "questions": [
+   {
+    "prompt": "What drives much of this haze?",
+    "options": [
+     "Bangkok's traffic",
+     "Burning maize stubble and forest, across three countries",
+     "Volcanoes in Indonesia",
+     "Coal plants in China"
+    ],
+    "answer": 1,
+    "explanation": "Farmers burn maize stubble before planting, and forest fires add more. A Chiang Mai University study found the burned share of maize fields across northern Thailand, northern Laos and Shan State rose from 15% in 2015 to 24% in 2019.",
+    "source": "RFA, September 2023: https://www.rfa.org/english/news/environment/maize-pollution-09122023061657.html; Charoenpanyanet, Chiang Mai University",
+    "wrongNote": "City traffic adds some, but this haze comes from the fields.",
+    "belief": 0
+   },
+   {
+    "prompt": "In April 2023, which city did IQAir rank the world's most polluted major city?",
+    "options": [
+     "Delhi",
+     "Chiang Mai",
+     "Lahore",
+     "Beijing"
+    ],
+    "answer": 1,
+    "explanation": "In April 2023 Chiang Mai topped IQAir's ranking, with PM2.5 more than 66 times the WHO annual guideline.",
+    "source": "IQAir, Seasonal crop burning pollutes Thailand's skies: https://www.iqair.com/th-en/newsroom/seasonal-crop-burning-pollutes-thailands-skies",
+    "wrongNote": "It was not one of the usual names."
+   }
+  ],
+  "back": [
+   "From January to April, farmers in northern Thailand, Laos and Myanmar's Shan State burn maize stubble and forest edges before the rains.",
+   "Much of that maize feeds Thailand's livestock."
+  ],
+  "blamed": "Bangkok's traffic.",
+  "actual": "The smoke comes from burning fields and forest in the hills of three countries.",
+  "sources": [
+   "RFA, 2023",
+   "Greenpeace, 2023",
+   "IQAir, 2023"
+  ],
+  "featuredMonth": "2025-03"
+ },
+ {
+  "id": "mexico-burning",
+  "number": 15,
+  "name": "Mexican burning season",
+  "type": "Crop burning",
+  "rarity": "common",
+  "rarityNote": "Every April and May; 2024 was Mexico's worst fire year since records began in 1998.",
+  "field": "pm2_5",
+  "months": [
+   "2023-05",
+   "2024-05",
+   "2025-05",
+   "2026-05"
+  ],
+  "footprint": [
+   [
+    -100,
+    18
+   ],
+   [
+    -99,
+    21.5
+   ],
+   [
+    -96,
+    22
+   ],
+   [
+    -94,
+    19
+   ],
+   [
+    -90.5,
+    19
+   ],
+   [
+    -88,
+    17
+   ],
+   [
+    -88.5,
+    14
+   ],
+   [
+    -92,
+    14
+   ],
+   [
+    -95,
+    15.5
+   ],
+   [
+    -98,
+    16
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   -93.2,
+   17.6
+  ],
+  "stats": {
+   "peak": {
+    "value": 50.8,
+    "unit": "µg/m³",
+    "note": "Highest 2024-05 monthly-mean pm2_5 cell in the footprint, CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 1.56,
+    "note": "Footprint-mean pm2_5 ÷ WHO 2021 24-hour guideline 15 µg/m³."
+   },
+   "areaKm2": {
+    "value": 417000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 723,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 38,
+  "region": "Chiapas, Oaxaca, Tabasco and Guatemala",
+  "art": {
+   "lon0": -102,
+   "lon1": -86,
+   "latCenter": 18
+  },
+  "clues": {
+   "riddle": "Fields are cleared with fire before the rains, and in a hot dry year the flames reach the forest.",
+   "region": "Central America",
+   "country": "Mexico",
+   "month": "May"
+  },
+  "questions": [
+   {
+    "prompt": "What started many of Mexico's spring 2024 forest fires?",
+    "options": [
+     "Lightning",
+     "Farm burning that got out of control",
+     "Volcanic eruptions",
+     "Fireworks"
+    ],
+    "answer": 1,
+    "explanation": "Nearly all of Mexico's forest fires are started by people. From January to May 2024, 34.7% came from farm burning that got out of control; 2024 burned more than 1.6 million hectares, the most since records began in 1998.",
+    "source": "Sader via The Food Tech, 2024: https://thefoodtech.com/industria-alimentaria-hoy/quemas-agricolas-no-controladas-provocan-un-tercio-de-los-incendios-forestales-en-mexico; CONAFOR, 2024",
+    "wrongNote": "Lightning starts very few of these fires.",
+    "belief": 0
+   },
+   {
+    "prompt": "When does Mexico's fire season usually peak?",
+    "options": [
+     "December",
+     "Mid-March to May",
+     "July and August",
+     "October"
+    ],
+    "answer": 1,
+    "explanation": "Fire season ramps up in February and peaks from mid-March through May, before the rains.",
+    "source": "NASA Earth Observatory, Fire in southern Mexico, 2024: https://science.nasa.gov/earth/earth-observatory/fire-in-southern-mexico-152628/",
+    "wrongNote": "It comes before the rains."
+   }
+  ],
+  "back": [
+   "Before the rains, farmers clear fields with fire across southern Mexico and Central America.",
+   "In the hot, dry spring of 2024 many burns escaped into forest; Mexico had its largest burned area since records began in 1998."
+  ],
+  "blamed": "Lightning.",
+  "actual": "Nearly all are started by people, about a third by farm burns that escape.",
+  "sources": [
+   "CONAFOR, 2024",
+   "Sader, 2024",
+   "NASA Earth Observatory"
+  ],
+  "featuredMonth": "2024-05"
+ },
+ {
+  "id": "gobi-dust",
+  "number": 16,
+  "name": "Gobi spring dust",
+  "type": "Dust storm",
+  "rarity": "common",
+  "rarityNote": "Every spring; April 2025 was the dustiest April in the record.",
+  "field": "dust",
+  "months": [
+   "2023-04",
+   "2024-04",
+   "2025-04",
+   "2026-04"
+  ],
+  "footprint": [
+   [
+    100,
+    38
+   ],
+   [
+    100,
+    44.5
+   ],
+   [
+    106,
+    46
+   ],
+   [
+    113,
+    45.5
+   ],
+   [
+    118,
+    42
+   ],
+   [
+    118,
+    39
+   ],
+   [
+    115,
+    35.5
+   ],
+   [
+    109,
+    34
+   ],
+   [
+    104,
+    35
+   ]
+  ],
+  "bufferKm": 150,
+  "sourcePoint": [
+   101,
+   42.4
+  ],
+  "stats": {
+   "peak": {
+    "value": 2638.0,
+    "unit": "µg/m³",
+    "note": "Highest 2025-04 monthly-mean dust cell in the footprint, CAMS via Open-Meteo."
+   },
+   "whoX": {
+    "value": 4.51,
+    "note": "Footprint-mean pm10 ÷ WHO 2021 24-hour guideline 45 µg/m³."
+   },
+   "areaKm2": {
+    "value": 1560000,
+    "note": "Footprint cells at or above twice their own median over the record."
+   },
+   "reachKm": {
+    "value": 1458,
+    "note": "Greatest distance from the source point to such a cell."
+   }
+  },
+  "scale": 1000,
+  "region": "Inner Mongolia, Gansu and northern China",
+  "art": {
+   "lon0": 96,
+   "lon1": 122,
+   "latCenter": 40
+  },
+  "clues": {
+   "riddle": "Spring storms lift a desert into the air and turn a capital's sky yellow.",
+   "region": "East Asia",
+   "country": "China and Mongolia",
+   "month": "April"
+  },
+  "questions": [
+   {
+    "prompt": "What lifts most of this dust?",
+    "options": [
+     "Construction in Beijing",
+     "Spring storms over the Gobi Desert in Mongolia and Inner Mongolia",
+     "Sand from beaches",
+     "Coal mines"
+    ],
+    "answer": 1,
+    "explanation": "Mongolian cyclones, storms that form east of the Altai mountains, drive about a third to a half of the Gobi's dust emissions and most of its worst dust storms. In spring 2023 Mongolia supplied about 42% of the dust over China.",
+    "source": "Mu and Fiedler, Kiel University, 2025: https://macau.uni-kiel.de/receive/macau_mods_00005691; Advances in Atmospheric Sciences via PreventionWeb, 2023",
+    "wrongNote": "Cities add their own dust, but these storms start in the desert.",
+    "belief": 0
+   },
+   {
+    "prompt": "In April 2025, where was this dust densest?",
+    "options": [
+     "Over Beijing",
+     "Over western Inner Mongolia, near the Mongolian border",
+     "Over Shanghai",
+     "Over Korea"
+    ],
+    "answer": 1,
+    "explanation": "In the April 2025 monthly mean the highest cell sits in western Inner Mongolia, about 1,300 km west of Beijing, close to where the dust is lifted.",
+    "source": "CAMS monthly mean as shown in this atlas, dust, April 2025",
+    "wrongNote": "Look near where the dust is lifted.",
+    "belief": 0
+   }
+  ],
+  "back": [
+   "In spring, cold fronts and cyclones sweep across the Gobi and lift dust from bare, dry ground in Mongolia and Inner Mongolia.",
+   "Overgrazing and drought leave more ground bare: about three quarters of Mongolia's land is degraded."
+  ],
+  "blamed": "Factories and traffic.",
+  "actual": "Desert dust lifted by spring storms.",
+  "sources": [
+   "Mu and Fiedler, 2025",
+   "Reuters, May 2023"
+  ],
+  "featuredMonth": "2025-04"
  }
 ]

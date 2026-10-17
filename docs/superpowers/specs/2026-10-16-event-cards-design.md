@@ -50,9 +50,10 @@ Wildfire, Peat fire, Crop burning, Savanna burning, Dust storm. Accident, transi
 
 ### Finding a card
 
-- Only in the time bar's Monthly mode. Hourly mode never shows cards.
+- Only when the Monthly bar is in front. Today (the hourly forecast) never shows cards.
 - A pin counts when it lies inside the card's footprint, in one of the card's months.
 - Footprint: a hand-drawn polygon around the event, widened by `bufferKm` (default 150 km) on every side. Distance is measured on the sphere; the date line is handled.
+- Where two footprints' buffers overlap (North India and Pakistani Punjab share a border and both are November cards), the nearest footprint wins: a pin inside one polygon always finds that card. Cards that follow a national border use the border itself as their shared edge, and no card's text blames the other country.
 - Months: every month the footprint is elevated (for example September and October), not just the peak.
 - A pin in the right place but one month off shows a quiet line in the readout: "Something happened here in another month."
 - The card's layer does not need to be on (except for CO variants).
@@ -92,12 +93,12 @@ Wildfire, Peat fire, Crop burning, Savanna burning, Dust storm. Accident, transi
 
 | Stat | Definition |
 |---|---|
-| Peak | Highest monthly-mean cell in the footprint, in the card's own layer (µg/m³). |
+| Peak | Highest monthly-mean cell in the footprint polygon (not the pin buffer, which can reach a neighbouring card), in the card's own layer (µg/m³). |
 | × WHO | Footprint-average monthly mean ÷ the WHO 2021 24-hour guideline: PM2.5 ÷ 15 µg/m³ for fire types, PM10 ÷ 45 µg/m³ for dust, CO ÷ 4 mg/m³ for CO variants. A monthly mean is the average of daily means, so this reads "on an average day, N× the WHO daily guideline". |
 | Area | Total area of footprint cells at or above twice their own usual level. Usual is each cell's median over all months in the record. |
 | Reach | Greatest distance from the source point to an elevated cell (km). |
 
-Values are measured once by hand from the published monthly data and written into the deck with a one-line method note. Past months never change.
+Values are measured once by hand from the published monthly data, on the footprint polygon itself, and written into the deck with a one-line method note. Past months never change. Until PM10 is in the published history, the dust cards' × WHO comes from PM10 monthly means computed the same way from the archive for their featured months; rerun `card-tools.py stats` after the rebuild to confirm. A short episode (Athens, April 2024) can sit below 1× as a monthly mean; its card says why.
 
 ### Art
 
@@ -252,11 +253,10 @@ Add `pm10` and `carbon_monoxide` to the monthly history.
 
 ## Still to do before build
 
-- Draw each card's footprint polygon and re-measure its four stats on it (current numbers come from rough boxes).
+- Footprints, stats, art and sourced text are done for the 16-card deck (17 Oct 2026). The West African December card was moved east to the Central African Republic and South Sudan: in West Africa the December PM2.5 peak was Harmattan dust, not smoke.
 - Check rarity claims:
   - Is Indonesia 2026 larger than 2015 and 2019?
-  - Was Spain 2025 its worst season in decades?
-- Write clues, questions, explanations, back text and sources for every card. All current text is draft.
+  - Spain 2025: EFFIS via Euronews says the worst season since 1994.
 - Choose which fire cards get CO variants, once CO is in the history.
 - Check that GoatCounter's public counter can be enabled.
 - Decide whether the hand-run art tool is kept in `scripts/` or outside the repo.

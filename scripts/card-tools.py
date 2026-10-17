@@ -62,14 +62,15 @@ def wrap(d):
     return (d + 180) % 360 - 180
 
 
-def footprint_mask(card):
-    """Cells inside the footprint or within bufferKm of its edge (same flat-frame method as src/cards/deck.js)."""
+def footprint_mask(card, buffer_km=0):
+    """Cells inside the footprint, or within buffer_km of its edge (same flat-frame method as src/cards/deck.js).
+    Stats use the footprint itself: bufferKm is leeway for pins, and would reach into a neighbouring card (Delhi, Lahore)."""
     pts = card['footprint']
     xs = [pts[0][0]]
     for i in range(1, len(pts)):
         xs.append(xs[-1] + wrap(pts[i][0] - pts[i - 1][0]))
     mid = sum(xs) / len(xs)
-    pad = card['bufferKm'] / 100 + 1
+    pad = buffer_km / 100 + 1
     lat_lo, lat_hi = min(p[1] for p in pts) - pad, max(p[1] for p in pts) + pad
     mask = np.zeros((H_, W_), bool)
     for yi in np.where((LAT >= lat_lo) & (LAT <= lat_hi))[0]:
@@ -89,7 +90,7 @@ def footprint_mask(card):
                 dx, dy = x2 - x1, y2 - y1
                 t = 0 if dx == dy == 0 else max(0, min(1, -(x1 * dx + y1 * dy) / (dx * dx + dy * dy)))
                 best = min(best, math.hypot(x1 + t * dx, y1 + t * dy))
-            mask[yi, xi] = inside or best <= card['bufferKm']
+            mask[yi, xi] = inside or best <= buffer_km
     return mask
 
 
@@ -128,7 +129,7 @@ def stats(card_id, co):
         'areaKm2': int(round(float(np.nansum(CELL_KM2[elevated])), -3)),
         'reachKm': int(round(float(dist[elevated].max()) if elevated.any() else 0)),
         'notes': {
-            'peak': f'Highest {month} monthly-mean {field} cell in the footprint (+{base["bufferKm"]} km), CAMS via Open-Meteo.',
+            'peak': f'Highest {month} monthly-mean {field} cell in the footprint, CAMS via Open-Meteo.',
             'whoX': (f'Footprint-mean {wf} ÷ WHO 2021 24-hour guideline {WHO[wf]:g} µg/m³.' if who is not None
                      else f'{wf} is not in the monthly history yet.'),
             'areaKm2': 'Footprint cells at or above twice their own median over the record.',

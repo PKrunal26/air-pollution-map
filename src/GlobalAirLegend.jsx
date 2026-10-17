@@ -27,7 +27,7 @@ function LayerRow({layer,setting,available,onChange,expanded,onExpand,weather=fa
    <label className="paint-strength"><span>Display intensity</span><output>{setting.strength}%</output><input type="range" min="0" max="100" step="5" value={setting.strength} aria-label={`${layer.name} display strength`} onChange={e=>onChange(layer.id,{strength:Number(e.target.value)})}/></label>
    {layer.id==='aerosol_optical_depth'&&<p className="layer-range">Whole atmospheric column at 550 nm.</p>}
    {layer.id==='pm10'&&<p className="layer-range">Includes fine particles; do not add to PM₂.₅.</p>}
-   {layer.id==='sun'&&<p className="layer-range">How dark night gets. Follows the time bar; off in Monthly, which has no time of day.</p>}
+   {layer.id==='sun'&&<p className="layer-range">How dark night gets. Follows the Today bar; off in Monthly, which has no time of day.</p>}
    {layer.id==='dust'&&<p className="layer-range">Overlaps particulate matter.</p>}
    {weather&&layer.id!=='wind'&&<div className={`weather-key key-${layer.id}`}/>}
   </div>}
