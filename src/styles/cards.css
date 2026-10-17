@@ -96,8 +96,11 @@ button.event-card:active:not(:disabled){transform:none}
 .cards-head h2{font-size:16px;font-weight:600;margin-right:auto}
 .cards-head span{font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums}
 .cards-scroll{flex:1;min-height:0;overflow:auto;padding:0 18px 12px}
-.cards-progress{display:flex;gap:12px;margin-bottom:10px}
-.cards-progress div{flex:1}
+.cards-progress{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px 12px;margin-bottom:10px}
+.cards-progress div{min-width:0}
+.cards-progress b{background:var(--text-muted)}
+.cards-progress .is-done b{background:#e3c76a;box-shadow:0 0 8px #e3c76a99}
+.cards-progress .is-done p{color:var(--text)}
 .cards-progress p{display:flex;justify-content:space-between;margin:0;font-size:10.5px;color:var(--text-muted);font-variant-numeric:tabular-nums}
 .cards-progress i{display:block;height:3px;border-radius:2px;background:#e1e7d51a;margin-top:3px;overflow:hidden}
 .cards-progress b{display:block;height:100%}
@@ -130,38 +133,53 @@ button.event-card:active:not(:disabled){transform:none}
 .cards-foot button{flex:none;font-size:11.5px;padding:6px 12px;border-radius:99px;border:1px solid #e1e7d54a}
 .card-share-note{flex-basis:100%;margin:2px 0 0;font-size:11.5px;color:var(--text-muted)}
 
-/* Collecting a card: charge, flip with overshoot, halftone burst, light sweep. Rarer cards get more of each. */
-.reveal{position:relative;width:var(--w);height:var(--h);perspective:1200px}
-.reveal-flip{position:relative;width:100%;height:100%;animation:reveal-charge .5s var(--motion) both}
-.reveal-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;animation:reveal-turn .8s .45s cubic-bezier(.2,1.35,.45,1) both}
-.reveal-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:calc(var(--w) * .06)}
-.reveal-front{transform:rotateY(0deg);overflow:hidden}
-.reveal-back{transform:rotateY(180deg)}
-.reveal-back .card-facedown{box-shadow:0 0 0 0 var(--rarity);animation:reveal-glow .5s var(--motion) both}
-@keyframes reveal-charge{0%{transform:scale(.94)}70%{transform:scale(1.06)}100%{transform:scale(1)}}
-@keyframes reveal-glow{from{box-shadow:0 0 0 0 transparent}to{box-shadow:0 0 34px 6px color-mix(in srgb,var(--rarity) 55%,transparent)}}
-@keyframes reveal-turn{from{transform:rotateY(180deg)}to{transform:rotateY(0deg)}}
-.reveal-burst{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none}
-.reveal-burst i{position:absolute;left:calc(var(--s) / -2);top:calc(var(--s) / -2);width:var(--s);height:var(--s);border-radius:50%;background:var(--rarity);opacity:0;animation:reveal-dot .9s var(--d) cubic-bezier(.15,.8,.25,1) both}
-@keyframes reveal-dot{0%{opacity:0;transform:rotate(var(--a)) translateX(40px) scale(.2)}1%{opacity:1}35%{opacity:1}100%{opacity:0;transform:rotate(var(--a)) translateX(var(--r)) scale(1)}}
-.reveal-shine{position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 35%,#ffffff55 48%,#ffffff22 52%,transparent 65%);transform:translateX(-120%);animation:reveal-shine .75s 1.15s ease-in-out both}
-.reveal.is-rare .reveal-shine{background:linear-gradient(105deg,transparent 35%,#ffe9a088 48%,#ffffff33 52%,transparent 65%);animation:reveal-shine .75s 1.15s ease-in-out 2 both}
-@keyframes reveal-shine{to{transform:translateX(120%)}}
-.reveal.is-rare .reveal-flip{animation-duration:.65s}
-/* The words arrive after the card. */
-@media (min-width:701px){.card-question.is-collected{overflow:visible}}
-.card-question.is-collected .card-question-body>*{animation:reveal-text .5s var(--motion) both}
-.card-question.is-collected .card-question-body>*:nth-child(1){animation-delay:1.05s}
-.card-question.is-collected .card-question-body>*:nth-child(2){animation-delay:1.15s}
-.card-question.is-collected .card-question-body>*:nth-child(3){animation-delay:1.25s}
-.card-question.is-collected .card-question-body>*:nth-child(n+4){animation-delay:1.4s}
-@keyframes reveal-text{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 /* The header count ticks up. */
 .cards-count{display:inline-block;animation:count-pop .6s var(--motion) both}
 @keyframes count-pop{0%{transform:scale(1)}40%{transform:scale(1.5);color:var(--text)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.cards-count{animation:none}}
+
+/* Collecting a card. The answer locks, then the card takes the screen (sized by how it was earned), then the recap. */
+.card-question-options .is-right{border-color:#8fbf7a;background:#8fbf7a1a}
+.card-question-options .is-right em{color:#8fbf7a}
+.card-question-options .is-belief{opacity:.55}
+.card-question-options .is-belief s{text-decoration-color:#d9785f;text-decoration-thickness:2px}
+.card-question-backdrop.is-hero{background:#050706e8;cursor:pointer}
+.card-question-backdrop.is-hero .card-question{opacity:0}
+.hero{position:fixed;left:0;top:0;width:300px;height:600px;transform-origin:0 0;perspective:1600px;z-index:2;pointer-events:none}
+.hero-card{position:absolute;inset:0;transform-style:preserve-3d}
+.hero-face{position:absolute;inset:0;border-radius:18px;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.hero-back{transform:rotateY(180deg)}
+.hero-back .card-facedown{border-radius:18px}
+.hero-shine{position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,#ffffff55 48%,#ffffff22 52%,transparent 65%);transform:translateX(-130%);pointer-events:none}
+.hero-burst{position:absolute;left:50%;top:50%;width:0;height:0}
+.hero-burst i{position:absolute;border-radius:50%;background:var(--rarity);opacity:0}
+.hero-stamp{position:absolute;right:-22px;top:56px;padding:6px 12px;border:3px solid var(--rarity);border-radius:8px;color:var(--rarity);background:#0a0d0cee;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;opacity:0}
+.hero-wave{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;background:radial-gradient(circle,var(--rarity) 1.6px,transparent 2.1px) 0 0/14px 14px}
+.hero-tap{position:fixed;left:0;right:0;bottom:max(28px,env(safe-area-inset-bottom));margin:0;text-align:center;font-size:13px;color:var(--text-muted);z-index:3;animation:reveal-text .5s 2.4s both}
+.card-question.is-recap{animation:reveal-text .35s both}
+.card-question.is-recap .card-question-body>*{animation:reveal-text .45s var(--motion) both}
+.card-question.is-recap .card-question-body>*:nth-child(2){animation-delay:.08s}
+.card-question.is-recap .card-question-body>*:nth-child(3){animation-delay:.16s}
+.card-question.is-recap .card-question-body>*:nth-child(4){animation-delay:.24s}
+.card-question.is-recap .card-question-body>*:nth-child(n+5){animation-delay:.32s}
+.collect-belief{margin:0 0 8px;font-size:12px;color:var(--text-muted)}
+.collect-belief s{text-decoration-color:#d9785f;text-decoration-thickness:2px;color:#cdd6bf}
+.collect-steps{list-style:none;margin:12px 0 8px;padding:0;display:flex;flex-direction:column;gap:5px;animation:none!important}
+.collect-steps li{display:flex;gap:8px;align-items:center;font-size:12.5px;animation:collect-step .3s calc(.45s + var(--i) * .14s) var(--motion) both}
+.collect-steps i{width:16px;height:16px;border-radius:50%;background:var(--rarity);display:grid;place-items:center;font-style:normal;font-size:10px;color:#0a0d0c;font-weight:700}
+@keyframes collect-step{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.collect-marks{display:flex;flex-wrap:wrap;gap:6px;margin:0;animation:none!important}
+.collect-marks span{font-size:11.5px;padding:4px 10px;border-radius:99px;border:1px solid var(--rarity);color:var(--rarity);animation:collect-mark .42s calc(1.1s + var(--i) * .16s) cubic-bezier(.2,1.6,.4,1) both}
+@keyframes collect-mark{from{opacity:0;transform:scale(1.6)}to{opacity:1;transform:none}}
+.collect-set{margin-top:12px;animation-delay:1.4s!important}
+.collect-set p{display:flex;justify-content:space-between;margin:0 0 4px;font-size:11.5px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.collect-set i{display:block;height:4px;border-radius:2px;background:#e1e7d51a;overflow:hidden}
+.collect-set b{display:block;height:100%;background:var(--rarity);animation:collect-fill .6s 1.7s var(--motion) both}
+@keyframes collect-fill{from{width:var(--from)}to{width:var(--to)}}
+.collect-set .collect-done{margin-top:8px;font-size:12.5px;font-weight:600;color:var(--rarity);animation:reveal-text .4s 2.3s both}
+@keyframes reveal-text{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){
- .reveal-flip,.reveal-inner,.reveal-back .card-facedown,.reveal-shine,.cards-count{animation:none}
- .reveal-burst{display:none}
- .card-question.is-collected .card-question-body>*{animation:reveal-fade .3s both}
+ .card-question.is-recap,.card-question.is-recap .card-question-body>*,.collect-steps li,.collect-marks span,.collect-set b,.collect-done,.hero-tap{animation:reveal-fade .3s both!important}
+ .collect-set b{width:var(--to)}
  @keyframes reveal-fade{from{opacity:0}to{opacity:1}}
 }

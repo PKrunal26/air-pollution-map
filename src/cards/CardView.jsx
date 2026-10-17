@@ -29,7 +29,7 @@ function Front({card,variant}){
  </div>;
 }
 
-function Back({card,variant,foundAt,total}){
+function Back({card,variant,foundAt,earned,total}){
  const face=cardFace(card,variant),found=foundLabel(foundAt);
  return <div className="card-face card-back">
   <div className="card-strip"><img src={artUrl(card,variant)} alt="" draggable="false"/></div>
@@ -40,18 +40,18 @@ function Back({card,variant,foundAt,total}){
    <div className="card-blamed"><p>Often blamed</p><p>{card.blamed} {card.actual}</p></div>
    {card.helps&&<div className="card-blamed"><p>What helps</p><p>{card.helps.text}</p></div>}
    <p className="card-sources">Full dot at {face.scale.toLocaleString('en-US')} µg/m³; × WHO compares the average day with WHO's 24-hour guideline. Sources: {card.sources.join('; ')}.</p>
-   <p className="card-foot"><span>{pad(card.number)} / {pad(total)}</span>{found&&<span>{found}</span>}</p>
+   <p className="card-foot"><span>{pad(card.number)} / {pad(total)}{earned?.marks.length?` · ${earned.marks.join(' · ')}`:''}</span>{found&&<span>{found}</span>}</p>
   </div>
  </div>;
 }
 
 // A card at 300 × 600, scaled by `size`. Below full size it is a thumbnail: front only, no flip.
-export default function CardView({card,variant=null,flipped=false,onFlip,foundAt=null,total,size=1}){
+export default function CardView({card,variant=null,flipped=false,onFlip,foundAt=null,earned=null,total,size=1}){
  const thumb=size<1,colour=RARITY_COLOURS[card.rarity];
  const style={'--card-scale':size,'--rarity':colour};
  const inner=<div className="card-scaler"><div className={`card-inner${flipped&&!thumb?' is-flipped':''}`}>
   <Front card={card} variant={variant}/>
-  {!thumb&&<Back card={card} variant={variant} foundAt={foundAt} total={total}/>}
+  {!thumb&&<Back card={card} variant={variant} foundAt={foundAt} earned={earned} total={total}/>}
   <span className="card-ring"/>
  </div></div>;
  if(thumb)return <div className="event-card is-thumb" style={style}>{inner}</div>;

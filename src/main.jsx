@@ -23,7 +23,8 @@ import {track} from './analytics';
 import './styles/shell.css';
 import DECK_JSON from './cards/deck.json';
 import {validateDeck,cardAt,monthKey} from './cards/deck';
-import {loadCollection,saveCollection,markFound,questionFor,answer,waitLeft,variantKey,mergeCollected,mergeStates,STORAGE_KEY} from './cards/collection';
+import {loadCollection,saveCollection,markFound,questionFor,answer,waitLeft,variantKey,mergeCollected,mergeStates,openClue,STORAGE_KEY} from './cards/collection';
+import {cardSets,setsCompletedBy} from './cards/sets';
 import ReadoutCardRow from './cards/ReadoutCardRow';
 import CardQuestion from './cards/CardQuestion';
 import CardsPanel from './cards/CardsPanel';
@@ -157,10 +158,19 @@ function App(){
  const answerCard=choice=>{
   const {card,key}=asking,result=answer(cards,key,card,choice,Date.now());
   setCards(result.state);setNow(Date.now());track(`card-${result.correct?'collected':'wrong'}/${key}`);
+  if(result.correct){
+   // What the recap shows: how it was earned, and how far its set (its type, or the whole deck) has come.
+   const before=new Set(Object.keys(cards.collected).filter(k=>!k.includes(':'))),variant=key.includes(':');
+   const set=cardSets(DECK).find(s=>s.id!=='all'&&s.ids.includes(card.id))??cardSets(DECK).find(s=>s.id==='all');
+   const had=set.ids.filter(id=>before.has(id)).length;
+   setAsking(a=>a&&{...a,result:{earned:result.state.earned[key],set:variant?null:{name:set.name,total:set.ids.length,before:had,after:had+1},setsDone:variant?[]:setsCompletedBy(DECK,before,card.id)}});
+  }
   return result.correct;
  };
+ // The header count ticks up when the recap shows, not while the card is still on screen.
+ const shownCount=cards?DECK.filter(c=>c.id in cards.collected).length-(asking?.result&&!asking.variant&&!asking.recapped?1:0):0;
  const cardRow=cardHit&&<ReadoutCardRow hit={cardHit} collected={!!hitKey&&hitKey in cards.collected} waitMs={hitWait}
-  onAnswer={()=>setAsking({card:cardHit.card,variant:cardHit.variant?.kind??null,key:hitKey,question:questionFor(cardHit.card,cards,hitKey).question})} onView={()=>setViewing({card:cardHit.card,variant:cardHit.variant?.kind??null})}/>;
+  onAnswer={()=>setAsking({card:cardHit.card,variant:cardHit.variant?.kind??null,key:hitKey,month:monthKey(timeline.manifest.frames[frameIndex].validAt),question:questionFor(cardHit.card,cards,hitKey).question})} onView={()=>setViewing({card:cardHit.card,variant:cardHit.variant?.kind??null})}/>;
  const touched=useRef(false);
  const clearProbe=()=>{setProbe(null);setProbeReset(n=>n+1);};
  const changeReadout=on=>{setReadout(on);saveReadout(on);if(!on)clearProbe();};
@@ -222,9 +232,9 @@ function App(){
    {!EMBED&&<>
    <header className="minimal-header">
     <button className="atlas-brand" aria-label="Return to overview" onClick={overview}><svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="12" stroke="currentColor" strokeWidth=".8"/><ellipse cx="16" cy="16" rx="6" ry="12" stroke="currentColor" strokeWidth=".8" transform="rotate(35 16 16)"/><path d="M4 16h24" stroke="currentColor" strokeWidth=".8"/></svg><span>Who Owns the Air?</span></button>
-    <nav aria-label="Explore the atlas">{cards&&DECK.length>0&&<button type="button" className="cards-trigger" aria-expanded={panel==='cards'} aria-label={`Cards, ${DECK.filter(c=>c.id in cards.collected).length} of ${DECK.length} collected`} onClick={()=>{clearProbe();setNow(Date.now());setPanel(p=>p==='cards'?null:'cards');}}><Cards size={16} weight="light"/><span>Cards</span><small key={DECK.filter(c=>c.id in cards.collected).length} className="cards-count">{DECK.filter(c=>c.id in cards.collected).length}/{DECK.length}</small></button>}<CitySearch open={panel==='search'} onOpenChange={open=>setPanel(open?'search':null)} onChoose={chooseCity} onLocate={locate}/>{!touch&&<ReadoutToggle on={readout} onChange={changeReadout}/>}<a className="about-trigger" href="study.html" aria-label="About the data"><Info size={16} weight="light"/><span>About</span></a></nav>
+    <nav aria-label="Explore the atlas">{cards&&DECK.length>0&&<button type="button" className="cards-trigger" aria-expanded={panel==='cards'} aria-label={`Cards, ${DECK.filter(c=>c.id in cards.collected).length} of ${DECK.length} collected`} onClick={()=>{clearProbe();setNow(Date.now());setPanel(p=>p==='cards'?null:'cards');}}><Cards size={16} weight="light"/><span>Cards</span><small key={shownCount} className="cards-count">{shownCount}/{DECK.length}</small></button>}<CitySearch open={panel==='search'} onOpenChange={open=>setPanel(open?'search':null)} onChoose={chooseCity} onLocate={locate}/>{!touch&&<ReadoutToggle on={readout} onChange={changeReadout}/>}<a className="about-trigger" href="study.html" aria-label="About the data"><Info size={16} weight="light"/><span>About</span></a></nav>
    </header>
-   {panel==='cards'&&cards&&<CardsPanel key={clueFor??'cards'} deck={DECK} cards={cards} now={now} total={DECK.length} clueFor={clueFor} onClose={()=>{setPanel(null);setClueFor(null);}} onOpen={card=>setViewing({card,variant:null})}
+   {panel==='cards'&&cards&&<CardsPanel key={clueFor??'cards'} deck={DECK} cards={cards} now={now} total={DECK.length} clueFor={clueFor} onClue={(id,steps)=>setCards(c=>openClue(c,id,steps))} onClose={()=>{setPanel(null);setClueFor(null);}} onOpen={card=>setViewing({card,variant:null})}
     saveLink={()=>`${location.origin}${location.pathname}?deck=${encodeDeck(Object.keys(cards.collected),ORDER)}`}/>}
    <div ref={stack} className="side-stack">
     {cityCard&&<AirComposition location={{lat:city.lat,lon:city.lon,pinned:true,name:city.name,country:city.country}} global={frameIndex>=0?{status:frameAir?'ready':'loading',data:frameAir}:globalAir} regional={frameIndex>=0?frameEurope:regionalAir} paint={paint} onClose={()=>setCity(null)}/>}
@@ -237,8 +247,8 @@ function App(){
    <p className={`locate-status${locateError?' is-shown':''}`} role="status">{locateError}</p>
    </>}
   </div>
-  {asking&&<CardQuestion key={asking.key} card={asking.card} variant={asking.variant} question={asking.question} total={DECK.length} foundCount={foundCount} collectedCount={DECK.filter(c=>c.id in cards.collected).length} onAnswer={answerCard} onClose={()=>setAsking(null)} onShowCards={()=>{setAsking(null);clearProbe();setPanel('cards');}}/>}
-  {viewing&&<CardViewer key={viewing.card.id} card={viewing.card} variant={viewing.variant} shared={!!viewing.shared} total={DECK.length} foundAt={cards?.collected[viewing.variant?variantKey(viewing.card.id,viewing.variant):viewing.card.id]??null}
+  {asking&&<CardQuestion key={asking.key} card={asking.card} variant={asking.variant} question={asking.question} total={DECK.length} month={asking.month} result={asking.result} foundCount={foundCount} onRecap={()=>setAsking(a=>a&&{...a,recapped:true})} onAnswer={answerCard} onClose={()=>setAsking(null)} onShowCards={()=>{setAsking(null);clearProbe();setPanel('cards');}}/>}
+  {viewing&&<CardViewer key={viewing.card.id} card={viewing.card} variant={viewing.variant} shared={!!viewing.shared} total={DECK.length} foundAt={cards?.collected[viewing.variant?variantKey(viewing.card.id,viewing.variant):viewing.card.id]??null} earned={cards?.earned[viewing.variant?variantKey(viewing.card.id,viewing.variant):viewing.card.id]??null}
    onClose={()=>setViewing(null)} onHunt={()=>{setClueFor(viewing.card.id);setViewing(null);clearProbe();setPanel('cards');}}/>}
   <Loader ready={ready} progress={progress} textureReady={globeReady} downloaded={globalAir.status!=='loading'} failed={globalAir.status==='error'}/>
  </main>;

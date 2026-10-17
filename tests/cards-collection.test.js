@@ -97,3 +97,50 @@ test('saving merges with what another tab saved',()=>{
  assert.equal(saved.collected['test-fire'],50,'tab A\'s card survives');
  assert.equal(saved.found['test-dust'],60);
 });
+
+import {openClue,earnedFor} from '../src/cards/collection.js';
+const right=(s,key,card,q=0)=>answer(s,key,card,(key.includes(':')?card.variants[0].question:card.questions[q]).answer,1);
+
+test('found by exploring: clue never opened, right first time',()=>{
+ const r=right(markFound(emptyState(),'test-fire',0),'test-fire',fire);
+ assert.deepEqual(r.state.earned['test-fire'],{level:'explore',marks:['Found by exploring','First try']});
+});
+test('full: read the riddle, no clue steps, right first time',()=>{
+ const s=openClue(emptyState(),'test-fire',0);
+ assert.deepEqual(right(s,'test-fire',fire).state.earned['test-fire'],{level:'full',marks:['First try','No hints']});
+});
+test('medium: clue steps opened but right first time',()=>{
+ const s=openClue(emptyState(),'test-fire',2);
+ assert.deepEqual(right(s,'test-fire',fire).state.earned['test-fire'],{level:'medium',marks:['First try']});
+});
+test('medium: found blind but missed the first answer keeps the exploring mark',()=>{
+ const s=answer(markFound(emptyState(),'test-fire',0),'test-fire',fire,0,0).state;
+ assert.deepEqual(right(s,'test-fire',fire,1).state.earned['test-fire'],{level:'medium',marks:['Found by exploring']});
+});
+test('quiet: clue steps opened and a wrong answer first',()=>{
+ let s=openClue(emptyState(),'test-fire',1);s=answer(s,'test-fire',fire,0,0).state;
+ assert.deepEqual(right(s,'test-fire',fire,1).state.earned['test-fire'],{level:'quiet',marks:[]});
+});
+test('a CO print is full if right first time, quiet otherwise',()=>{
+ const key=variantKey('test-fire','co');
+ assert.equal(right(emptyState(),key,fire).state.earned[key].level,'full');
+ const s=answer(emptyState(),key,fire,3,0).state;
+ assert.equal(right(s,key,fire).state.earned[key].level,'quiet');
+});
+test('openClue keeps the furthest step and marks the clue seen',()=>{
+ let s=openClue(emptyState(),'test-fire',2);s=openClue(s,'test-fire',1);
+ assert.equal(s.clues['test-fire'],2);assert.equal(s.seen['test-fire'],true);
+ assert.equal(earnedFor(s,'test-fire').level,'medium');
+});
+test('older saved collections load with the new fields empty',()=>{
+ const store=memory();store.setItem('air-atlas.cards',JSON.stringify({v:1,collected:{a:1},found:{},attempts:{}}));
+ const s=loadCollection(store);
+ assert.deepEqual([s.clues,s.seen,s.earned],[{},{},{}]);assert.equal(s.collected.a,1);
+});
+test('merging tabs keeps clue progress and earned records',()=>{
+ const store=memory();
+ saveCollection(right(openClue(emptyState(),'test-dust',2),'test-dust',dust).state,store);
+ saveCollection(openClue(emptyState(),'test-fire',1),store);
+ const s=loadCollection(store);
+ assert.equal(s.clues['test-dust'],2);assert.equal(s.clues['test-fire'],1);assert.equal(s.earned['test-dust'].level,'medium');
+});

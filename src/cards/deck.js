@@ -25,6 +25,8 @@ function questionProblem(q){
  if(!isText(q.source))return 'question without source';
  // Optional one line shown after a wrong answer: corrects the common belief without giving the answer away.
  if(q.wrongNote!==undefined&&!isText(q.wrongNote))return 'empty wrongNote';
+ // Optional: the wrong option most people believe; struck out when the player gets it right.
+ if(q.belief!==undefined&&!(Number.isInteger(q.belief)&&q.belief>=0&&q.belief<=3&&q.belief!==q.answer))return 'belief must be a wrong option';
  return null;
 }
 function statsProblem(s){

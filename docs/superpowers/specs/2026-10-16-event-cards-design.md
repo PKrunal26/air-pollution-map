@@ -142,7 +142,7 @@ Mockups from the session are in `.superpowers/brainstorm/` (not committed).
 - "Cards 3/15" sits in the header next to Find a place. On phones it is an icon with the count.
 - It opens a panel from the top right, one panel at a time like search and the layers panel. On phones the panel becomes a full-width sheet.
 - Panel contents, top to bottom:
-  - progress bars per rarity
+  - progress bars per set (each type with two or more cards, plus the full deck)
   - type filters (All, Wildfire, Peat, Crop, Savanna, Dust)
   - a three-column grid of every slot
   - Save link
@@ -156,9 +156,34 @@ Mockups from the session are in `.superpowers/brainstorm/` (not committed).
 
 1. A pin inside a footprint adds a row to the readout: a face-down card, "A card is here", and Answer.
 2. Answer dims the globe and opens the face-down card beside its question.
-3. Right: the card charges up face-down, flips with a slight overshoot, rings of halftone dots burst out (1 ring for Every year, 2 for Every few years, 3 for Once in decades) and a light sweeps across it (twice, in gold, for Once in decades); the words arrive after the card and the header count pops. Reduced motion: a plain fade. One paragraph says why the answer is right. Buttons: Share (primary), See your cards, Keep exploring.
+3. Right: see "Collecting a card" below.
 4. Wrong: the pick is marked, the misconception is corrected, and "A different question opens in 1 hour, or as soon as you find another card".
 5. During the wait, the readout row says "New question in 47 min, or find another card", and Answer is disabled.
+
+### Collecting a card
+
+The moment should feel earned, so its size follows how the player earned the card, not luck. Grounded in self-determination theory (competence drives enjoyment, Ryan, Rigby and Przybylski 2006), rewards that inform rather than pay (overjustification effect), knowledge as the reward (Outer Wilds), and celebration proportional to effort. No pack opening or random rewards.
+
+**Levels** (rarity only sets the colour):
+
+| Level | When | Celebration |
+|---|---|---|
+| Exploring | Found without ever opening the card's clue, and right first time | Longer charge, 3 rings of dots, a halftone wave across the screen, double shine, "Found by exploring" stamp |
+| Full | Right first time, no clue steps (Region, Country, Month) opened | Charge, 2 rings, shine |
+| Medium | One of the two (also: found blind but not first time, which keeps the "Found by exploring" mark) | 1 ring, shine |
+| Quiet | Neither | The card turns over, no burst |
+
+Reading the riddle is the hunt and never counts as a hint. A CO print has no clue steps of its own: Full if right first time, Quiet otherwise.
+
+**Sequence:**
+1. In the question, the chosen answer locks (green, "Your answer") and the common-belief option, when the question marks one (`belief`), is struck out.
+2. The dialog falls away and the face-down card flies to fill the screen (on a phone about 84% of the width), flips, and celebrates at its level. "Tap to continue" appears; tap, Enter or Escape continues.
+3. The card shrinks back into the dialog's card slot and the recap plays: the one-line correction, your find step by step ("Read the clue" or "Found it without the clue", "Found it in <country>", "Picked <Month YYYY>", "Knew the cause"), the marks you earned ("Found by exploring", "First try", "No hints"), then the header count ticks up and the card's set bar fills. Completing a set shows "<Type> set complete" with the bar glowing. Buttons: Share, See your cards, Keep exploring.
+4. The back of the card keeps the record: "Found <date> · first try · no hints" or "Found by exploring".
+
+Reduced motion: no flight or burst; the card and recap fade in.
+
+**Sets:** one per type that has at least two cards, plus the full deck. A set is complete when every card in it is collected (CO prints are not needed).
 
 ### Share image
 
@@ -176,7 +201,7 @@ Mockups from the session are in `.superpowers/brainstorm/` (not committed).
   - `id`, `number`, `name`, `type`, `rarity`, `rarityNote`
   - `field`, `months[]`, `footprint` (polygon), `bufferKm`, `sourcePoint`
   - `stats{peak, whoX, areaKm2, reachKm}`, each with a method note
-  - `scale`, `clues{riddle, region, country, month}`, `questions[]` (prompt, options, answer, explanation, source)
+  - `scale`, `clues{riddle, region, country, month}`, `questions[]` (prompt, options, answer, explanation, source, optional `wrongNote`, optional `belief`: index of the common-belief option)
   - `back`, `blamed`, `actual`, `sources[]`, `art`
   - `variants[]` (`co`: field, months, stats, question, art)
 - `public/cards/<id>.webp` and `public/cards/<id>-co.webp` are the art files.

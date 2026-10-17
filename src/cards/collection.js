@@ -5,7 +5,9 @@
 export const WAIT_MS=3600000;
 export const STORAGE_KEY='air-atlas.cards';
 
-export const emptyState=()=>({v:1,collected:{},found:{},attempts:{}});
+// clues: furthest clue step opened per card (1 region, 2 country, 3 month); seen: the clue view was opened at all;
+// earned: how each card was won ({level, marks}), kept for the back of the card.
+export const emptyState=()=>({v:1,collected:{},found:{},attempts:{},clues:{},seen:{},earned:{}});
 export const variantKey=(id,kind)=>`${id}:${kind}`;
 const kindOf=key=>key.includes(':')?key.slice(key.indexOf(':')+1):null;
 
@@ -23,9 +25,28 @@ export function questionFor(card,state,key){
  return {question:card.questions[index],index};
 }
 
+// Opening a card's clue (steps 0: the riddle only) marks it seen; the furthest step is kept.
+export function openClue(state,id,steps){
+ return {...state,seen:{...state.seen,[id]:true},clues:{...state.clues,[id]:Math.max(state.clues[id]??0,steps)}};
+}
+
+// How a card is being won, which sets the size of the moment (not its rarity). Reading the riddle is the hunt, not a
+// hint; clue steps are. A CO print has no clue steps of its own: full if right first time, quiet otherwise.
+export function earnedFor(state,key){
+ const firstTry=!state.attempts[key];
+ if(kindOf(key))return firstTry?{level:'full',marks:['First try']}:{level:'quiet',marks:[]};
+ const seen=!!state.seen[key],hints=(state.clues[key]??0)>0;
+ if(!seen&&firstTry)return {level:'explore',marks:['Found by exploring','First try']};
+ if(firstTry&&!hints)return {level:'full',marks:['First try','No hints']};
+ if(firstTry)return {level:'medium',marks:['First try']};
+ if(!seen)return {level:'medium',marks:['Found by exploring']};
+ if(!hints)return {level:'medium',marks:['No hints']};
+ return {level:'quiet',marks:[]};
+}
+
 export function answer(state,key,card,choice,now){
  const correct=choice===questionFor(card,state,key).question.answer;
- if(correct)return {correct,state:{...state,collected:{...state.collected,[key]:now}}};
+ if(correct)return {correct,state:{...state,collected:{...state.collected,[key]:now},earned:{...state.earned,[key]:earnedFor(state,key)}}};
  const q=(state.attempts[key]?.q??0)+1;
  return {correct,state:{...state,attempts:{...state.attempts,[key]:{q,waitUntil:now+WAIT_MS}}}};
 }
@@ -46,7 +67,8 @@ const resolve=storage=>storage===undefined?globalThis.localStorage:storage;
 export function loadCollection(storage){
  try{
   const s=JSON.parse(resolve(storage)?.getItem(STORAGE_KEY)??'null');
-  return s?.v===1&&isMap(s.collected)&&isMap(s.found)&&isMap(s.attempts)?s:emptyState();
+  if(!(s?.v===1&&isMap(s.collected)&&isMap(s.found)&&isMap(s.attempts)))return emptyState();
+  return {...s,clues:isMap(s.clues)?s.clues:{},seen:isMap(s.seen)?s.seen:{},earned:isMap(s.earned)?s.earned:{}};
  }catch{return emptyState();}
 }
 
@@ -58,7 +80,9 @@ function union(a,b){
  for(const [k,v] of Object.entries(b))out[k]=k in out?earliest(out[k],v):v;
  return out;
 }
-export const mergeStates=(mine,other)=>({v:1,collected:union(mine.collected,other.collected),found:union(mine.found,other.found),attempts:{...other.attempts,...mine.attempts}});
+const furthest=(a,b)=>{const out={...a};for(const [k,v] of Object.entries(b))out[k]=Math.max(out[k]??0,v);return out;};
+export const mergeStates=(mine,other)=>({v:1,collected:union(mine.collected,other.collected),found:union(mine.found,other.found),
+ attempts:{...other.attempts,...mine.attempts},clues:furthest(mine.clues??{},other.clues??{}),seen:{...other.seen,...mine.seen},earned:{...other.earned,...mine.earned}});
 
 export function saveCollection(state,storage){
  try{

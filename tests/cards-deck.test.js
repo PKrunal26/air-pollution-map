@@ -116,3 +116,9 @@ test('helps is optional but needs text and a source',()=>{
 test('back text stays within what the card back can hold',()=>{
  assert.throws(()=>validateDeck(changed(c=>{c.back=['x'.repeat(601)];})),/Invalid card/);
 });
+
+test('belief marks a wrong option as the common belief',()=>{
+ assert.doesNotThrow(()=>validateDeck(changed(c=>{c.questions[0].belief=0;})));
+ assert.throws(()=>validateDeck(changed(c=>{c.questions[0].belief=c.questions[0].answer;})),/Invalid card/);
+ assert.throws(()=>validateDeck(changed(c=>{c.questions[0].belief=4;})),/Invalid card/);
+});
