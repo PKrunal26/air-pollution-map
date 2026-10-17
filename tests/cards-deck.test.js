@@ -148,3 +148,13 @@ test('footprint centre stays on the near side of the date line',()=>{
  const [lon,lat]=footprintCentre({footprint:[[178,0],[-178,0],[-178,2],[178,2]]});
  assert.ok(Math.abs(Math.abs(lon)-180)<1e-9);assert.equal(lat,1);
 });
+
+test('an every-year card is found in that month of later years too',()=>{
+ const deck=validateDeck(read('../src/cards/deck.json'));
+ const pick=month=>cardAt(deck,{lat:31.55,lon:74.35,month,layers:new Set(),owned:new Set()});
+ assert.equal(pick('2026-11').card?.id,'punjab-pakistan-november','November 2026, after the listed years');
+ assert.equal(pick('2026-12').status,'near-month');
+ assert.equal(pick('2021-11').status,'none','not before the listed years');
+ const once=cardAt(deck,{lat:-2,lon:114,month:'2027-09',layers:new Set(),owned:new Set()});
+ assert.equal(once.status,'none','a one-off card stays in its own month');
+});
