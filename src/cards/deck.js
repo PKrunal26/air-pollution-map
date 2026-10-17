@@ -82,6 +82,7 @@ export function validateDeck(deck){
 }
 
 const monthIndex=m=>{const [y,mo]=m.split('-').map(Number);return y*12+mo-1;};
+const monthOf=i=>`${Math.floor(i/12)}-${String(i%12+1).padStart(2,'0')}`;
 const wrap=d=>{const r=((d+180)%360+360)%360-180;return r===-180?180:r;};
 
 // Unwrapped footprint longitudes: continuous across the date line.
@@ -109,6 +110,11 @@ function distance(card,lat,lon){
  return within?0:best<=card.bufferKm?best:Infinity;
 }
 
+// A card whose months are all the same calendar month ('Every November') also matches that month in later years, as the
+// nightly refresh adds them to the history; others match only their listed months.
+const everyYear=months=>months.length>1&&months.every(m=>m.slice(5)===months[0].slice(5));
+const inMonths=(months,month)=>months.includes(month)||(everyYear(months)&&month.slice(5)===months[0].slice(5)&&month>months.at(-1));
+
 // What a pin finds: a CO variant (CO layer on, base card owned), the card itself, a hint one month off, or nothing.
 // layers: Set of enabled field ids; owned: Set of collected base card ids. Where buffers overlap (North India and
 // Pakistani Punjab share a border), the nearest footprint wins; ties keep deck order.
@@ -116,10 +122,10 @@ export function cardAt(deck,{lat,lon,month,layers,owned}){
  // Two passes: a card that is here this month always beats another card's one-month-off hint.
  const at=monthIndex(month),here=deck.map(card=>({card,d:distance(card,lat,lon)})).filter(h=>h.d<Infinity).sort((a,b)=>a.d-b.d).map(h=>h.card);
  for(const card of here){
-  const variant=(card.variants??[]).find(v=>v.months.includes(month)&&layers.has(v.field)&&owned.has(card.id));
+  const variant=(card.variants??[]).find(v=>inMonths(v.months,month)&&layers.has(v.field)&&owned.has(card.id));
   if(variant)return {status:'variant',card,variant};
-  if(card.months.includes(month))return {status:'found',card,variant:null};
+  if(inMonths(card.months,month))return {status:'found',card,variant:null};
  }
- const near=here.find(card=>card.months.some(m=>Math.abs(monthIndex(m)-at)===1));
+ const near=here.find(card=>card.months.some(m=>Math.abs(monthIndex(m)-at)===1)||(everyYear(card.months)&&[-1,1].some(d=>inMonths(card.months,monthOf(at+d)))));
  return near?{status:'near-month',card:near,variant:null}:{status:'none',card:null,variant:null};
 }

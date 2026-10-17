@@ -98,7 +98,7 @@ Wildfire, Peat fire, Crop burning, Savanna burning, Dust storm. Accident, transi
 | Area | Total area of footprint cells at or above twice their own usual level. Usual is each cell's median over all months in the record. |
 | Reach | Greatest distance from the source point to an elevated cell (km). |
 
-Values are measured once by hand from the published monthly data, on the footprint polygon itself, and written into the deck with a one-line method note. Past months never change. Until PM10 is in the published history, the dust cards' × WHO comes from PM10 monthly means computed the same way from the archive for their featured months; rerun `card-tools.py stats` after the rebuild to confirm. A short episode (Athens, April 2024) can sit below 1× as a monthly mean; its card says why.
+Values are measured once by hand from the published monthly data, on the footprint polygon itself, and written into the deck with a one-line method note. Past months never change. The dust cards' × WHO was first computed by hand from PM10 in the archive; after the history rebuild added PM10 and CO (17 Oct 2026), `card-tools.py stats` gives the same values for all 16 cards. A short episode (Athens, April 2024) can sit below 1× as a monthly mean; its card says why.
 
 ### Art
 
@@ -254,10 +254,8 @@ Add `pm10` and `carbon_monoxide` to the monthly history.
 ## Still to do before build
 
 - Footprints, stats, art and sourced text are done for the 16-card deck (17 Oct 2026). The West African December card was moved east to the Central African Republic and South Sudan: in West Africa the December PM2.5 peak was Harmattan dust, not smoke.
-- Check rarity claims:
-  - Is Indonesia 2026 larger than 2015 and 2019?
-  - Spain 2025: EFFIS via Euronews says the worst season since 1994.
-- Choose which fire cards get CO variants, once CO is in the history.
+- Rarity claims checked (17 Oct 2026): Canada 2023 is the worst season on record (about 18.5 Mha); Spain 2025 the worst since 1994 (EFFIS). Indonesia 2026 has no source showing it larger than 2015, and big haze years recur every few years, so it is Every few years, not Once in decades.
+- CO prints: Indonesian peat haze, South American fire smoke and Siberian taiga fires, where footprint CO was 8.7×, 4.1× and 3.0× its usual level. Elsewhere CO stays under 2.1× usual. Their × WHO is below 1 (0.41, 0.18, 0.12): the CO guideline is 4 mg/m³ a day, and monthly means stay under it even where single hours peak far above.
 - Check that GoatCounter's public counter can be enabled.
 - Decide whether the hand-run art tool is kept in `scripts/` or outside the repo.
 - Phone layouts (panel sheet, question modal) follow the desktop designs; they were not mocked separately.

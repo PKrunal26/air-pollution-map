@@ -1,0 +1,22 @@
+/* What's new: a centred dialog over the dimmed globe. Mobile first: full width less a 16px gutter, buttons sized for
+   thumbs; from 701 px it narrows to a reading width. */
+.release-backdrop{position:fixed;inset:0;z-index:var(--modal);display:grid;place-items:center;padding:16px;background:#05070699;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);animation:fade-in .3s var(--motion) both}
+.release-notes{width:100%;max-height:calc(100dvh - 32px);overflow:auto;padding:22px 20px 18px;border-radius:var(--radius-card);background:var(--glass-bg);border:1px solid var(--glass-border);box-shadow:0 20px 60px #000c;color:var(--text);animation:release-in .45s var(--motion) both}
+.release-notes h2{margin:0;font-size:20px;font-weight:600}
+.release-date{margin:4px 0 0;font-size:12px;color:var(--text-muted)}
+.release-notes ul{margin:18px 0 0;padding:0;list-style:none;display:grid;gap:16px}
+.release-notes li{padding-top:14px;border-top:1px solid var(--glass-border)}
+.release-notes h3{margin:0;font-size:14px;font-weight:600}
+.release-notes li p{margin:5px 0 0;font-size:13.5px;line-height:1.5;color:var(--text-muted)}
+.release-actions{display:flex;gap:8px;margin-top:20px}
+.release-actions button{flex:1;min-height:44px;padding:0 16px;border-radius:99px;border:1px solid #e1e7d54a;font-size:13.5px}
+.release-actions .is-primary{background:var(--text);color:#0b0e0d;border-color:transparent;font-weight:600}
+.release-actions .is-primary:hover:not(:disabled){color:#0b0e0d}
+.release-actions button:focus-visible{outline:2px solid #d5ddc4aa;outline-offset:2px}
+@keyframes release-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+@media(min-width:701px){
+ .release-notes{width:min(440px,100%);padding:26px 26px 22px}
+ .release-actions{justify-content:flex-start}
+ .release-actions button{flex:none;min-height:36px;font-size:12.5px}
+}
+@media(prefers-reduced-motion:reduce){.release-backdrop,.release-notes{animation:none}}

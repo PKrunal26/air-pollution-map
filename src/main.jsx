@@ -18,6 +18,8 @@ import {fetchFrameManifest,fetchHistoryManifest,fetchEuropeManifest,createTimeli
 import TimeBar from './TimeBar';
 import LayerPicker from './LayerPicker';
 import {loadOnboarded,saveOnboarded} from './onboarding';
+import {releaseSeen,saveReleaseSeen,RELEASE} from './releaseNotes';
+import WhatsNew from './WhatsNew';
 import {guessRegion,homePoint,locateUser,locationMessage,locationPermission} from './userLocation';
 import {track} from './analytics';
 import './styles/shell.css';
@@ -69,6 +71,9 @@ function App(){
  // First visit only (not embedded, not when the URL picks layers): ask which pollutants to show.
  const [picking,setPicking]=useState(()=>!EMBED&&!OPTIONS.layers&&!loadOnboarded());
  const finishPicking=React.useCallback(()=>{saveOnboarded();setPicking(false);},[]);
+ // What's new: once per visitor and release (not in embeds), after the first-visit picker and any card dialog.
+ const [release,setRelease]=useState(()=>!EMBED&&!releaseSeen());
+ const closeRelease=next=>{saveReleaseSeen();setRelease(false);track(`release/${RELEASE.id}/${next}`);};
  const [timelines,setTimelines]=useState({forecast:null,history:null}),[mode,setMode]=useState(OPTIONS.history?'history':EMBED||OPTIONS.time!=null?'forecast':'history'),[frameAir,setFrameAir]=useState(null),[frameEurope,setFrameEurope]=useState(null);
  // Two stacked time bars: the monthly history (in front by default) and Today, the 48-hour forecast around the snapshot.
  // Until the history loads, Today's timeline (or none: the snapshot) is shown.
@@ -247,6 +252,7 @@ function App(){
    </div>
    <GlobalAirLegend surface={surface} onSurfaceChange={setSurface} panelOpen={panel==='layers'} onPanelChange={open=>{if(open){clearProbe();if(picking)finishPicking();}setPanel(open?'layers':null);}} onFlyTo={flyTo} detail={detail} regional={regionalAir} regionalError={regionalError} state={globalAir} paint={paint} weather={weather} weatherSettings={weatherSettings} onWeatherChange={(id,change)=>{if(change.enabled)track(`weather/${id}`);setWeatherSettings(current=>({...current,[id]:{...current[id],...change}}));}} onChange={updatePaint}/>
    {picking&&ready&&<LayerPicker paint={paint} onChange={updatePaint} onDone={finishPicking}/>}
+   {release&&ready&&!picking&&!viewing&&!asking&&<WhatsNew onClose={()=>closeRelease('closed')} onCards={cards?()=>{closeRelease('cards');clearProbe();setPanel('cards');}:null}/>}
    {timeline&&<TimeBar timelines={timelines} mode={timeline.kind} onMode={changeMode}/>}
    <div className="minimal-zoom" role="group" aria-label="Globe view"><button aria-label="Reset globe view" onClick={overview}><ArrowCounterClockwise size={17} weight="light"/></button><button className={`locate-button${locating?' is-locating':''}${userLocation?' is-found':''}`} aria-label="Show my location" aria-busy={locating||undefined} onClick={()=>locate()}><GpsFix size={17} weight={userLocation?'regular':'light'}/></button><span/><button aria-label="Zoom in" disabled={range.atMin} onClick={()=>{setZoom(z=>z+1);}}><Plus size={17} weight="light"/></button><button aria-label="Zoom out" disabled={range.atMax} onClick={()=>{setZoom(z=>z-1);}}><Minus size={17} weight="light"/></button></div>
    <p className={`locate-status${locateError?' is-shown':''}`} role="status">{locateError}</p>

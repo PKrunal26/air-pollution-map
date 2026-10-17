@@ -5,7 +5,7 @@
   "name": "Canadian wildfire smoke",
   "type": "Wildfire",
   "rarity": "rare",
-  "rarityNote": "Canada's worst fire season on record; nothing in the 2022–2026 record matches this smoke over the US north-east. Draft: verify.",
+  "rarityNote": "Canada's worst fire season on record: about 18.5 million hectares, at least twice the previous worst year (Environment and Climate Change Canada); nothing in the 2022–2026 record matches this smoke over the US north-east.",
   "field": "pm2_5",
   "months": [
    "2023-06"
@@ -123,8 +123,8 @@
   "number": 2,
   "name": "Indonesian peat haze",
   "type": "Peat fire",
-  "rarity": "rare",
-  "rarityNote": "The highest September in the 2022–2026 record, 2.4× the 2023 haze year. Draft: compare with 2015 and 2019 before calling it rare.",
+  "rarity": "uncommon",
+  "rarityNote": "Big haze years come every few years (2015, 2019, 2023, 2026); September 2026 is the highest September in the 2022–2026 record, 2.4× the 2023 haze year. No source yet shows it larger than 2015.",
   "field": "pm2_5",
   "months": [
    "2026-09"
@@ -248,6 +248,49 @@
    "Malay Mail, 4 September 2026",
    "Business Today, 14 September 2026",
    "Page et al., Nature 2002"
+  ],
+  "variants": [
+   {
+    "kind": "co",
+    "field": "carbon_monoxide",
+    "months": [
+     "2026-09"
+    ],
+    "stats": {
+     "peak": {
+      "value": 15744.0,
+      "unit": "µg/m³",
+      "note": "Highest 2026-09 monthly-mean carbon_monoxide cell in the footprint, CAMS via Open-Meteo."
+     },
+     "whoX": {
+      "value": 0.41,
+      "note": "Footprint-mean carbon_monoxide ÷ WHO 2021 24-hour guideline 4000 µg/m³."
+     },
+     "areaKm2": {
+      "value": 999000,
+      "note": "Footprint cells at or above twice their own median over the record."
+     },
+     "reachKm": {
+      "value": 1704,
+      "note": "Greatest distance from the source point to such a cell."
+     }
+    },
+    "scale": 5000,
+    "question": {
+     "prompt": "Why does burning peat give off so much carbon monoxide?",
+     "options": [
+      "It burns hot and fast, like a forest fire",
+      "It smoulders slowly with little oxygen, so its carbon burns only part way",
+      "Peat is full of oil",
+      "Sea air adds it"
+     ],
+     "answer": 1,
+     "explanation": "Peat fires smoulder underground. Measurements in Central Kalimantan in 2015 found the plumes almost entirely smouldering, with 39% more carbon monoxide than earlier lab estimates. With little oxygen, carbon stops at CO instead of burning through to CO₂.",
+     "source": "Stockwell et al., Atmospheric Chemistry and Physics 2016: https://acp.copernicus.org/articles/16/11711/2016/",
+     "wrongNote": "Flames are not what makes this smoke so rich in CO.",
+     "belief": 0
+    }
+   }
   ]
  },
  {
@@ -716,7 +759,50 @@
    "Reuters, 2024",
    "IFRC, 2025"
   ],
-  "featuredMonth": "2024-09"
+  "featuredMonth": "2024-09",
+  "variants": [
+   {
+    "kind": "co",
+    "field": "carbon_monoxide",
+    "months": [
+     "2024-09"
+    ],
+    "stats": {
+     "peak": {
+      "value": 6780.0,
+      "unit": "µg/m³",
+      "note": "Highest 2024-09 monthly-mean carbon_monoxide cell in the footprint, CAMS via Open-Meteo."
+     },
+     "whoX": {
+      "value": 0.18,
+      "note": "Footprint-mean carbon_monoxide ÷ WHO 2021 24-hour guideline 4000 µg/m³."
+     },
+     "areaKm2": {
+      "value": 4120000,
+      "note": "Footprint cells at or above twice their own median over the record."
+     },
+     "reachKm": {
+      "value": 1655,
+      "note": "Greatest distance from the source point to such a cell."
+     }
+    },
+    "scale": 1300,
+    "question": {
+     "prompt": "Why can satellites follow fire smoke much further by its carbon monoxide than by its haze?",
+     "options": [
+      "Carbon monoxide is coloured",
+      "Carbon monoxide stays in the air for about two months; smoke particles clear in about a week",
+      "Carbon monoxide only comes from fires",
+      "Carbon monoxide glows at night"
+     ],
+     "answer": 1,
+     "explanation": "Fires make large amounts of carbon monoxide, which stays in the air for about two months on average, while the grey particles that make smoke visible fall out in about a week. In September 2024 CO over this area was about 4 times its usual level.",
+     "source": "NASA Earth Observatory, Smoke over the northern United States: https://science.nasa.gov/earth/earth-observatory/smoke-over-the-northern-united-states-7991; CAMS monthly mean CO, September 2024",
+     "wrongNote": "Think about how long each one lasts in the air.",
+     "belief": 2
+    }
+   }
+  ]
  },
  {
   "id": "canada-2025",
@@ -973,7 +1059,49 @@
    "Interfax, July 2024",
    "Reuters, July 2024"
   ],
-  "featuredMonth": "2024-07"
+  "featuredMonth": "2024-07",
+  "variants": [
+   {
+    "kind": "co",
+    "field": "carbon_monoxide",
+    "months": [
+     "2024-07"
+    ],
+    "stats": {
+     "peak": {
+      "value": 2930.0,
+      "unit": "µg/m³",
+      "note": "Highest 2024-07 monthly-mean carbon_monoxide cell in the footprint, CAMS via Open-Meteo."
+     },
+     "whoX": {
+      "value": 0.12,
+      "note": "Footprint-mean carbon_monoxide ÷ WHO 2021 24-hour guideline 4000 µg/m³."
+     },
+     "areaKm2": {
+      "value": 1096000,
+      "note": "Footprint cells at or above twice their own median over the record."
+     },
+     "reachKm": {
+      "value": 1602,
+      "note": "Greatest distance from the source point to such a cell."
+     }
+    },
+    "scale": 1100,
+    "question": {
+     "prompt": "In July 2024, carbon monoxide over this area was about how many times its usual level?",
+     "options": [
+      "About the same",
+      "About 3 times",
+      "About 30 times",
+      "About 300 times"
+     ],
+     "answer": 1,
+     "explanation": "In the July 2024 monthly mean, CO over this area was about 3 times its usual level across the record. It lasts about two months in the air, so the taiga fires' CO spreads far beyond the smoke you can see.",
+     "source": "CAMS monthly mean CO, July 2024, as shown in this atlas; NASA Earth Observatory, Smoke over the northern United States",
+     "wrongNote": "Turn on the CO layer and compare July with other months."
+    }
+   }
+  ]
  },
  {
   "id": "athens-dust-2024",

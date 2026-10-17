@@ -91,7 +91,7 @@ export default function CardQuestion({card,variant,question,total,month,result,f
       const right=stage==='locked'&&i===question.answer,belief=stage==='locked'&&i===question.belief;
       return <button type="button" key={i} disabled={pick!==null} className={right?'is-right':pick===i?'is-picked':belief?'is-belief':undefined} onClick={()=>choose(i)}>
        <span>{LETTERS[i]}</span>{belief?<s>{option}</s>:option}{pick===i&&<em>Your answer</em>}</button>;})}</div>
-     {pick===null?<p className="card-question-meta">One try. If you miss, a different question opens in an hour, or sooner if you find another card.</p>
+     {pick===null?<p className="card-question-meta">{variant?'One try. If you miss, you can try again in an hour, or sooner if you find another card.':'One try. If you miss, a different question opens in an hour, or sooner if you find another card.'}</p>
      :stage==='ask'&&<>
       <p className="card-question-text"><b>Not this time.</b>{question.wrongNote?` ${question.wrongNote}`:''}</p>
       <p className="card-question-meta">{variant?'You can try again in 1 hour, or as soon as you find another card.':'A different question opens in 1 hour, or as soon as you find another card.'}</p>
