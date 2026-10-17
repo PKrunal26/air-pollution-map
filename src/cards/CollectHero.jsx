@@ -21,17 +21,18 @@ function fullBox(){
 function boxOf(el){const r=el.getBoundingClientRect();return {x:r.left,y:r.top,k:r.width/300};}
 const at=b=>`translate(${b.x}px,${b.y}px) scale(${b.k})`;
 
-export default function CollectHero({card,variant,total,level,slot,landing,onReady,onLanded}){
+// start: the box the card flies from (the face-down card before the dialog changed layout); defaults to the slot.
+export default function CollectHero({card,variant,total,level,slot,start=null,landing,onReady,onLanded}){
  const hero=useRef(null),inner=useRef(null),wave=useRef(null),anims=useRef([]);
  const L=LEVELS[level]??LEVELS.quiet;
  const run=(el,frames,opts)=>{const a=el.animate(frames,{fill:'both',easing:ease,...opts});anims.current.push(a);return a;};
  // Out to full screen, then the turn and the celebration.
  useLayoutEffect(()=>{
-  const h=hero.current,from=boxOf(slot.current),to=fullBox();
+  const h=hero.current,from=start??boxOf(slot.current),to=fullBox();
   run(h,[{transform:at(from)},{transform:at(to)}],{duration:650,easing:'cubic-bezier(.2,.9,.3,1)'});
-  const start=650,turnEnd=start+L.turn*.85;
+  const flight=650,turnEnd=flight+L.turn*.85;
   run(inner.current,level==='quiet'?[{transform:'rotateY(180deg)'},{transform:'rotateY(0deg)'}]
-   :[{transform:'rotateY(180deg) scale(1)'},{transform:`rotateY(180deg) scale(${L.charge})`,offset:.3},{transform:'rotateY(-8deg) scale(1)',offset:.82},{transform:'rotateY(0deg) scale(1)'}],{duration:L.turn,delay:start});
+   :[{transform:'rotateY(180deg) scale(1)'},{transform:`rotateY(180deg) scale(${L.charge})`,offset:.3},{transform:'rotateY(-8deg) scale(1)',offset:.82},{transform:'rotateY(0deg) scale(1)'}],{duration:L.turn,delay:flight});
   h.querySelectorAll('.hero-burst i').forEach(d=>run(d,[
    {opacity:0,transform:`rotate(${d.dataset.a}deg) translateX(60px) scale(.2)`},{opacity:1,offset:.02},{opacity:1,offset:.35},
    {opacity:0,transform:`rotate(${d.dataset.a}deg) translateX(${d.dataset.r}px) scale(1)`}],{duration:950,delay:turnEnd-150+Number(d.dataset.ring)*90,easing:'cubic-bezier(.15,.8,.25,1)'}));
