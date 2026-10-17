@@ -148,8 +148,11 @@ def svg(card, month, frame, lon0, lon1, lat_center, width, height, step=0.5):
                           capture_output=True, text=True, check=True).stdout
     step_px = step / (lat1 - lat0) * height
     # Explicit width/height: Firefox cannot draw a viewBox-only SVG onto a canvas (share image).
+    # The land outline is defined once and used twice (fill under the dots, stroke over them); dots share one fill.
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid slice">',
-           f'<rect width="{width}" height="{height}" fill="#0a0d0c"/><path d="{land}" fill="#36433a"/>']
+           f'<defs><path id="land" d="{land}"/></defs><rect width="{width}" height="{height}" fill="#0a0d0c"/><use href="#land" fill="#36433a"/>',
+           f'<g fill="{colour}">']
+    num = lambda v: f'{v:.1f}'.rstrip('0').rstrip('.')  # x and y are never negative here
 
     def sample(la, lo):
         y, x = (la + 90) / 0.4, ((lo + 180) % 360) / 0.4
@@ -166,11 +169,11 @@ def svg(card, month, frame, lon0, lon1, lat_center, width, height, step=0.5):
             if value == value and value > 0:
                 r = 0.56 * math.sqrt(min(value / card['scale'], 1)) * step_px
                 if r > 0.15:
-                    out.append(f'<circle cx="{(lo - lon0) / (lon1 - lon0) * width:.1f}" cy="{(lat1 - la) / (lat1 - lat0) * height:.1f}" r="{r:.2f}" fill="{colour}"/>')
+                    out.append(f'<circle cx="{num((lo - lon0) / (lon1 - lon0) * width)}" cy="{num((lat1 - la) / (lat1 - lat0) * height)}" r="{r:.2f}"/>')
             lo += lstep
         la -= step * math.sqrt(3) / 2
         row += 1
-    out.append(f'<path d="{land}" fill="none" stroke="#e9efdf" stroke-width="0.9" opacity="0.8"/></svg>')
+    out.append('</g><use href="#land" fill="none" stroke="#e9efdf" stroke-width="0.9" opacity="0.8"/></svg>')
     return ''.join(out)
 
 

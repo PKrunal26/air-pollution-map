@@ -34,8 +34,12 @@ test('monthKey',()=>{
  assert.equal(monthKey(Date.UTC(2024,10,1)),'2024-11');
  assert.equal(HISTORY_START,'2022-08');
 });
+// Every card id published so far, in order (live since 17 Oct 2026). Recovery links and found counts depend on them,
+// so this list is copied here rather than read from order.json: removing an id from both files still fails.
+const SHIPPED=["canada-2023", "indonesia-2026", "north-india-november", "punjab-pakistan-november", "south-america-2024", "canada-2025", "yakutia-2024", "athens-dust-2024", "iberia-2025", "harmattan", "north-savanna-burning", "saharan-dust-caribbean", "south-savanna-burning", "mainland-sea-burning", "mexico-burning", "gobi-dust"];
 test('deck only grows',()=>{
  const order=read('../src/cards/order.json'),ids=read('../src/cards/deck.json').map(c=>c.id);
+ assert.deepEqual(order.slice(0,SHIPPED.length),SHIPPED,'published ids are never removed or reordered');
  assert.deepEqual(ids.slice(0,order.length),order,'order.json must be a prefix of the deck ids, in order');
  assert.ok(ids.every(id=>order.includes(id)),'every deck id must be recorded in order.json');
 });

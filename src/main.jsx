@@ -154,8 +154,12 @@ function App(){
  },[hitKey]);
  useEffect(()=>{setNow(Date.now());},[hitKey,panel]);
  const hitWait=hitKey&&cards?waitLeft(cards,hitKey,now):0;
- // The countdown in the readout row ticks while a wait is showing.
- useEffect(()=>{if(!hitWait)return;const timer=setInterval(()=>setNow(Date.now()),30000);return()=>clearInterval(timer);},[hitWait>0]);
+ // The countdown in the readout row ticks while a wait is showing, and Answer comes back the moment the wait ends.
+ useEffect(()=>{
+  if(!hitWait)return;
+  const tick=setInterval(()=>setNow(Date.now()),30000),end=setTimeout(()=>setNow(Date.now()),hitWait+50);
+  return()=>{clearInterval(tick);clearTimeout(end);};
+ },[hitKey,hitWait>0]);
  const answerCard=choice=>{
   const {card,key}=asking,result=answer(cards,key,card,choice,Date.now());
   setCards(result.state);setNow(Date.now());track(`card-${result.correct?'collected':'wrong'}/${key}`);

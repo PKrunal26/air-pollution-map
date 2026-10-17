@@ -21,7 +21,7 @@ function findSteps({card,variant,month,earned}){
 // onAnswer(choice) applies the answer and returns whether it was right; `result` ({earned, set, setsDone}) follows from it.
 export default function CardQuestion({card,variant,question,total,month,result,foundCount,onAnswer,onClose,onShowCards,onRecap}){
  const [pick,setPick]=useState(null),[stage,setStage]=useState('ask'),[landing,setLanding]=useState(false),[landed,setLanded]=useState(false);
- const box=useRef(null),slot=useRef(null),stageRef=useRef(stage),timer=useRef(0);stageRef.current=stage;
+ const box=useRef(null),slot=useRef(null),stageRef=useRef(stage),timer=useRef(0),start=useRef(null);stageRef.current=stage;
  useEffect(()=>()=>clearTimeout(timer.current),[]);
  const close=useRef(onClose);close.current=onClose; // the parent passes a new onClose on every render
  useEffect(()=>{
@@ -51,7 +51,10 @@ export default function CardQuestion({card,variant,question,total,month,result,f
   box.current?.focus({preventScroll:true});
   if(!onAnswer(i))return;
   setStage('locked');
-  timer.current=setTimeout(()=>{if(reduced()){setLanded(true);setStage('recap');onRecap?.();}else setStage('hero');},800);
+  timer.current=setTimeout(()=>{
+   // The flight starts from the face-down card the player is looking at, measured before the recap layout replaces it.
+   const r=slot.current?.firstElementChild?.getBoundingClientRect();start.current=r?.width?{x:r.left,y:r.top,k:r.width/300}:null;
+   if(reduced()){setLanded(true);setStage('recap');onRecap?.();}else setStage('hero');},800);
  };
  const landedNow=()=>{setLanded(true);setStage('recap');onRecap?.();};
  const label=`Card ${String(card.number).padStart(2,'0')}${variant?' · CO print':''} · ${RARITY_NAMES[card.rarity]}`;
@@ -97,7 +100,7 @@ export default function CardQuestion({card,variant,question,total,month,result,f
     </>}
    </div>
   </section>
-  {stage==='hero'&&<CollectHero card={card} variant={variant} total={total} level={result?.earned?.level??'quiet'} slot={slot} landing={landing} onReady={()=>{}} onLanded={landedNow}/>}
+  {stage==='hero'&&<CollectHero card={card} variant={variant} total={total} level={result?.earned?.level??'quiet'} slot={slot} start={start.current} landing={landing} onReady={()=>{}} onLanded={landedNow}/>}
   {stage==='hero'&&<p className="hero-tap">Tap to continue</p>}
   {/* The full-screen moment is visual only; this line tells screen readers what happened. */}
   <p className="visually-hidden" role="status">{collecting?`Collected: ${card.name}. Right: ${question.options[question.answer]}.`:''}</p>
