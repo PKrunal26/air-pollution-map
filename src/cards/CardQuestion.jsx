@@ -4,6 +4,7 @@ import {FaceDown} from './ReadoutCardRow';
 import {RARITY_COLOURS,RARITY_LABELS as RARITY_NAMES} from './deck';
 import ShareButton from './ShareButton';
 import CollectHero from './CollectHero';
+import CardViewer from './CardViewer';
 
 const LETTERS='ABCD';
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -18,9 +19,11 @@ function findSteps({card,variant,month,earned}){
 
 // The focused question, one try. A right answer locks in, the card takes the screen (CollectHero), then it settles back
 // into this dialog with the recap: your find, the marks you earned, and how far your collection and its set have come.
+// Tapping the card there opens it full size (its back, and the story image).
 // onAnswer(choice) applies the answer and returns whether it was right; `result` ({earned, set, setsDone}) follows from it.
-export default function CardQuestion({card,variant,question,total,month,result,foundCount,onAnswer,onClose,onShowCards,onRecap}){
- const [pick,setPick]=useState(null),[stage,setStage]=useState('ask'),[landing,setLanding]=useState(false),[landed,setLanded]=useState(false);
+export default function CardQuestion({card,variant,question,total,deck,collected,foundAt=null,month,result,foundCount,onAnswer,onClose,onRecap}){
+ const [pick,setPick]=useState(null),[big,setBig]=useState(false),bigRef=useRef(big);bigRef.current=big;
+ const [stage,setStage]=useState('ask'),[landing,setLanding]=useState(false),[landed,setLanded]=useState(false);
  const box=useRef(null),slot=useRef(null),stageRef=useRef(stage),timer=useRef(0),start=useRef(null);stageRef.current=stage;
  useEffect(()=>()=>clearTimeout(timer.current),[]);
  const close=useRef(onClose);close.current=onClose; // the parent passes a new onClose on every render
@@ -32,6 +35,7 @@ export default function CardQuestion({card,variant,question,total,month,result,f
  // Escape: during the full-screen moment it continues; otherwise it closes.
  useEffect(()=>{
   const key=e=>{
+   if(bigRef.current)return; // the big card handles its own keys
    if(stageRef.current==='hero'){if(e.key==='Escape'||e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();setLanding(true);}return;}
    if(e.key==='Escape'){e.stopPropagation();close.current();}
   };
@@ -62,9 +66,9 @@ export default function CardQuestion({card,variant,question,total,month,result,f
  const phone=typeof innerWidth==='number'&&innerWidth<=700;
  const set=result?.set,done=result?.setsDone??[];
  return <div className={`card-question-backdrop${stage==='hero'?' is-hero':''}`} onClick={e=>{if(stage==='hero'){setLanding(true);return;}if(e.target===e.currentTarget)onClose();}}>
-  <section ref={box} className={`card-question${collecting?' is-collected':''}${stage==='recap'?' is-recap':''}`} role="dialog" aria-modal="true" aria-label={`${label}: question`} tabIndex={-1} onKeyDown={keys} style={{'--rarity':RARITY_COLOURS[card.rarity]}}>
+  <section ref={box} className={`card-question${collecting?' is-collected':''}${stage==='recap'?' is-recap':''}${big?' is-behind':''}`} role="dialog" aria-modal="true" aria-label={`${label}: question`} tabIndex={-1} onKeyDown={keys} style={{'--rarity':RARITY_COLOURS[card.rarity]}}>
    <div className="card-question-card" ref={slot}>{collecting
-    ?<div className="collect-slot" style={{visibility:landed?'visible':'hidden'}}><CardView card={card} variant={variant} total={total} size={phone?.4:.6}/></div>
+    ?<div className="collect-slot" style={landed?undefined:{visibility:'hidden'}}><button type="button" className="collect-open" aria-label={`Open ${card.name} full size`} disabled={stage!=='recap'} onClick={()=>setBig(true)}><CardView card={card} variant={variant} total={total} size={phone?.4:.6}/></button>{stage==='recap'&&<p className="collect-open-hint">Tap to open</p>}</div>
     :<FaceDown card={card} width={138}/>}</div>
    <div className="card-question-body">
     {collecting?<>
@@ -80,8 +84,7 @@ export default function CardQuestion({card,variant,question,total,month,result,f
      </div>}
      {Number.isFinite(foundCount)&&<p className="card-question-meta">{foundCount.toLocaleString('en-US')} {foundCount===1?'person has':'people have'} found this card.</p>}
      <div className="card-question-actions">
-      <ShareButton card={card} variant={variant}/>
-      {onShowCards&&<button type="button" onClick={onShowCards}>See your cards</button>}
+      <ShareButton card={card} variant={variant} deck={deck} collected={collected} earned={result?.earned??null} story={false}/>
       <button type="button" onClick={onClose}>Keep exploring</button>
      </div>
     </>:<>
@@ -102,6 +105,7 @@ export default function CardQuestion({card,variant,question,total,month,result,f
   </section>
   {stage==='hero'&&<CollectHero card={card} variant={variant} total={total} level={result?.earned?.level??'quiet'} slot={slot} start={start.current} landing={landing} onReady={()=>{}} onLanded={landedNow}/>}
   {stage==='hero'&&<p className="hero-tap">Tap to continue</p>}
+  {big&&<CardViewer card={card} variant={variant} total={total} deck={deck} collected={collected} foundAt={foundAt} earned={result?.earned??null} onClose={()=>setBig(false)}/>}
   {/* The full-screen moment is visual only; this line tells screen readers what happened. */}
   <p className="visually-hidden" role="status">{collecting?`Collected: ${card.name}. Right: ${question.options[question.answer]}.`:''}</p>
  </div>;

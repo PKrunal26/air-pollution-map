@@ -180,7 +180,7 @@ Reading the riddle is the hunt and never counts as a hint. A CO print has no clu
 **Sequence:**
 1. In the question, the chosen answer locks (green, "Your answer") and the common-belief option, when the question marks one (`belief`), is struck out.
 2. The dialog falls away and the face-down card flies to fill the screen (on a phone about 84% of the width), flips, and celebrates at its level. "Tap to continue" appears; tap, Enter or Escape continues.
-3. The card shrinks back into the dialog's card slot and the recap plays: the one-line correction, your find step by step ("Read the clue" or "Found it without the clue", "Found it in <country>", "Picked <Month YYYY>", "Knew the cause"), the marks you earned ("Found by exploring", "First try", "No hints"), then the header count ticks up and the card's set bar fills. Completing a set shows "<Type> set complete" with the bar glowing. Buttons: Share, See your cards, Keep exploring.
+3. The card shrinks back into the dialog's card slot and the recap plays: the one-line correction, your find step by step ("Read the clue" or "Found it without the clue", "Found it in <country>", "Picked <Month YYYY>", "Knew the cause"), the marks you earned ("Found by exploring", "First try", "No hints"), then the header count ticks up and the card's set bar fills. Completing a set shows "<Type> set complete" with the bar glowing. Buttons: Share and Keep exploring. Tapping the card ("Tap to open") opens it full size, to flip it and read its back; Story image is there.
 4. The back of the card keeps the record: "Found <date> · first try · no hints" or "Found by exploring".
 
 Reduced motion: no flight or burst; the card and recap fade in.
@@ -189,7 +189,7 @@ Reduced motion: no flight or burst; the card and recap fade in.
 
 ### Sharing
 
-A held card has two buttons. Apps given a file and text together send them as two messages (or, from a desktop share sheet, paste the file's path into the text), so each button sends one thing.
+A held card, opened full size, has two share buttons (the collect recap has only Share). Apps given a file and text together send them as two messages (or, from a desktop share sheet, paste the file's path into the text), so each button sends one thing.
 
 **Share** sends one short text message, through the share sheet or copied to the clipboard where there is none:
 
