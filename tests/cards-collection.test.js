@@ -144,3 +144,22 @@ test('merging tabs keeps clue progress and earned records',()=>{
  const s=loadCollection(store);
  assert.equal(s.clues['test-dust'],2);assert.equal(s.clues['test-fire'],1);assert.equal(s.earned['test-dust'].level,'medium');
 });
+
+import {mergeStates} from '../src/cards/collection.js';
+test('two tabs settle: merging is order-independent and an unchanged save does not write',()=>{
+ const data=new Map();let writes=0;
+ const store={getItem:k=>data.get(k)??null,setItem:(k,v)=>{writes++;data.set(k,v);}};
+ const wrong=(fire.questions[0].answer+1)%4;
+ let a=answer(markFound(emptyState(),'test-fire',1),'test-fire',fire,fire.questions[0].answer,10).state;
+ let b=answer(markFound(emptyState(),'test-dust',2),'test-dust',fire,wrong,20).state;
+ a={...a,attempts:{...a.attempts,'test-dust':{q:3,waitUntil:5}}};
+ saveCollection(a,store);saveCollection(b,store);
+ // Each tab hears the other's write, folds it in and saves, as main.jsx does; after one round nothing is written.
+ for(let round=0;round<3;round++){a=mergeStates(a,loadCollection(store));saveCollection(a,store);b=mergeStates(b,loadCollection(store));saveCollection(b,store);}
+ const settled=writes;
+ a=mergeStates(a,loadCollection(store));saveCollection(a,store);b=mergeStates(b,loadCollection(store));saveCollection(b,store);
+ assert.equal(writes,settled,'no more writes once both tabs hold the same state');
+ assert.deepEqual(mergeStates(a,b),mergeStates(b,a));
+ assert.ok(a.collected['test-fire']&&a.found['test-dust'],'both tabs keep both finds');
+ assert.equal(a.attempts['test-dust'].q,3,'the later try wins in both tabs');
+});

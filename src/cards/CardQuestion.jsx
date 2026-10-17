@@ -21,7 +21,8 @@ function findSteps({card,variant,month,earned}){
 // onAnswer(choice) applies the answer and returns whether it was right; `result` ({earned, set, setsDone}) follows from it.
 export default function CardQuestion({card,variant,question,total,month,result,foundCount,onAnswer,onClose,onShowCards,onRecap}){
  const [pick,setPick]=useState(null),[stage,setStage]=useState('ask'),[landing,setLanding]=useState(false),[landed,setLanded]=useState(false);
- const box=useRef(null),slot=useRef(null),stageRef=useRef(stage);stageRef.current=stage;
+ const box=useRef(null),slot=useRef(null),stageRef=useRef(stage),timer=useRef(0);stageRef.current=stage;
+ useEffect(()=>()=>clearTimeout(timer.current),[]);
  const close=useRef(onClose);close.current=onClose; // the parent passes a new onClose on every render
  useEffect(()=>{
   const opener=document.activeElement;
@@ -46,9 +47,11 @@ export default function CardQuestion({card,variant,question,total,month,result,f
  };
  const choose=i=>{
   if(pick!==null)return;setPick(i);
+  // The options are disabled now: keep focus in the dialog, not on the page behind it.
+  box.current?.focus({preventScroll:true});
   if(!onAnswer(i))return;
   setStage('locked');
-  setTimeout(()=>{if(reduced()){setLanded(true);setStage('recap');onRecap?.();}else setStage('hero');},800);
+  timer.current=setTimeout(()=>{if(reduced()){setLanded(true);setStage('recap');onRecap?.();}else setStage('hero');},800);
  };
  const landedNow=()=>{setLanded(true);setStage('recap');onRecap?.();};
  const label=`Card ${String(card.number).padStart(2,'0')}${variant?' · CO print':''} · ${RARITY_NAMES[card.rarity]}`;
@@ -56,7 +59,7 @@ export default function CardQuestion({card,variant,question,total,month,result,f
  const phone=typeof innerWidth==='number'&&innerWidth<=700;
  const set=result?.set,done=result?.setsDone??[];
  return <div className={`card-question-backdrop${stage==='hero'?' is-hero':''}`} onClick={e=>{if(stage==='hero'){setLanding(true);return;}if(e.target===e.currentTarget)onClose();}}>
-  <section ref={box} className={`card-question${collecting?' is-collected':''}${stage==='recap'?' is-recap':''}`} role="dialog" aria-modal="true" aria-label={`${label}: question`} onKeyDown={keys} style={{'--rarity':RARITY_COLOURS[card.rarity]}}>
+  <section ref={box} className={`card-question${collecting?' is-collected':''}${stage==='recap'?' is-recap':''}`} role="dialog" aria-modal="true" aria-label={`${label}: question`} tabIndex={-1} onKeyDown={keys} style={{'--rarity':RARITY_COLOURS[card.rarity]}}>
    <div className="card-question-card" ref={slot}>{collecting
     ?<div className="collect-slot" style={{visibility:landed?'visible':'hidden'}}><CardView card={card} variant={variant} total={total} size={phone?.4:.6}/></div>
     :<FaceDown card={card} width={138}/>}</div>
@@ -96,5 +99,7 @@ export default function CardQuestion({card,variant,question,total,month,result,f
   </section>
   {stage==='hero'&&<CollectHero card={card} variant={variant} total={total} level={result?.earned?.level??'quiet'} slot={slot} landing={landing} onReady={()=>{}} onLanded={landedNow}/>}
   {stage==='hero'&&<p className="hero-tap">Tap to continue</p>}
+  {/* The full-screen moment is visual only; this line tells screen readers what happened. */}
+  <p className="visually-hidden" role="status">{collecting?`Collected: ${card.name}. Right: ${question.options[question.answer]}.`:''}</p>
  </div>;
 }

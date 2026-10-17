@@ -61,7 +61,7 @@ Weather tests verify complete fields, matching pollution valid time, signed inte
 
 ## Time bar
 
-Two time bars sit at the bottom, stacked like cards: Monthly (the history since 2022, see below) in front, and Today behind it, peeking out above as a tab with its name and the range it covers (Aug 2022 – Sep 2026, or the two days of the forecast). Clicking the card behind brings it to the front (and pauses the other). Each has its own play button and scrubber; play loops through its frames.
+Two time bars sit at the bottom, stacked like cards: Monthly (the history since 2022, see below) in front, and Today behind it, peeking out above as a tab with its name and the range it covers (Aug 2022 – Sep 2026, or the two days of the forecast). Clicking the card behind brings it to the front (and pauses the other). Embeds (`embed=1`) open with Today in front, as before, unless `t=` picks a month. Each has its own play button and scrubber; play loops through its frames.
 
 Today plays 48 hours of the same CAMS global run that produced the snapshot: 17 frames, 3 hours apart, from 3 hours before the snapshot hour to 45 hours after. The snapshot hour is frame 1, and the two match bit for bit. Each frame holds all 15 global fields as float16 (`public/data/air-frame-NN.bin.gz`, about 2.35 MB each, about 40 MB in total). `air-frames.json` records times, sources, per-frame SHA-256 and any cells the provider left missing (they stay missing and draw nothing; they are never set to zero). Frames are fetched only after the first view is on screen, verified, and decoded a few at a time. Until the monthly frames load, Today is the only bar.
 

@@ -69,11 +69,13 @@ function App(){
  // First visit only (not embedded, not when the URL picks layers): ask which pollutants to show.
  const [picking,setPicking]=useState(()=>!EMBED&&!OPTIONS.layers&&!loadOnboarded());
  const finishPicking=React.useCallback(()=>{saveOnboarded();setPicking(false);},[]);
- const [timelines,setTimelines]=useState({forecast:null,history:null}),[mode,setMode]=useState(OPTIONS.time!=null&&!OPTIONS.history?'forecast':'history'),[frameAir,setFrameAir]=useState(null),[frameEurope,setFrameEurope]=useState(null);
+ const [timelines,setTimelines]=useState({forecast:null,history:null}),[mode,setMode]=useState(OPTIONS.history?'history':EMBED||OPTIONS.time!=null?'forecast':'history'),[frameAir,setFrameAir]=useState(null),[frameEurope,setFrameEurope]=useState(null);
  // Two stacked time bars: the monthly history (in front by default) and Today, the 48-hour forecast around the snapshot.
  // Until the history loads, Today's timeline (or none: the snapshot) is shown.
  const timeline=timelines[mode]??timelines.forecast;
  const changeMode=next=>{timeline?.pause();setMode(next);track(`time/${next}`);};
+ // Only the bar in front plays: when the shown timeline changes (a tab click, or the history arriving), the other stops.
+ useEffect(()=>{Object.values(timelines).forEach(line=>{if(line&&line!==timeline&&line.playing)line.pause();});},[timeline,timelines]);
  const [cards,setCards]=useState(()=>EMBED?null:loadCollection()),[asking,setAsking]=useState(null),[now,setNow]=useState(()=>Date.now());
  const [foundCount,setFoundCount]=useState(null);
  // How many people have collected the card being asked about; hidden when the counter is unavailable.
@@ -147,10 +149,8 @@ function App(){
  const hitKey=cardHit&&cardHit.status!=='near-month'?cardKey(cardHit):null;
  useEffect(()=>{
   if(!hitKey)return;
-  setCards(current=>{
-   if(hitKey in current.found||hitKey in current.collected)return current;
-   track(`card-found/${hitKey}`);return markFound(current,hitKey,Date.now());
-  });
+  if(cards&&!(hitKey in cards.found)&&!(hitKey in cards.collected))track(`card-found/${hitKey}`);
+  setCards(current=>hitKey in current.found||hitKey in current.collected?current:markFound(current,hitKey,Date.now()));
  },[hitKey]);
  useEffect(()=>{setNow(Date.now());},[hitKey,panel]);
  const hitWait=hitKey&&cards?waitLeft(cards,hitKey,now):0;

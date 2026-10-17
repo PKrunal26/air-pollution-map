@@ -27,8 +27,8 @@ export default function TimeBar({timelines,mode,onMode}){
  },[timeline]);
  const toggleRef=useRef(toggle);toggleRef.current=toggle;
  useEffect(()=>{
-  // Space plays/pauses unless focus is in a control that uses it.
-  const key=e=>{if(e.key!==' '||e.metaKey||e.ctrlKey||e.altKey)return;const t=e.target;if(t.closest?.('input,textarea,select,button,[contenteditable],[role="switch"]'))return;e.preventDefault();toggleRef.current();};
+  // Space plays/pauses unless focus is in a control that uses it, or a dialog (a card) is open over the globe.
+  const key=e=>{if(e.key!==' '||e.metaKey||e.ctrlKey||e.altKey)return;const t=e.target;if(t.closest?.('input,textarea,select,button,[contenteditable],[role="switch"]')||document.querySelector('[aria-modal="true"]'))return;e.preventDefault();toggleRef.current();};
   window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);
  },[]);
  // Marks at midnight UTC (forecast) or each January (history).

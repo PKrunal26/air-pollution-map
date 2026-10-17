@@ -73,7 +73,8 @@ export function loadCollection(storage){
 }
 
 // Two tabs each hold their own copy: union what was collected and found (earliest date wins, a known date beats
-// none); attempts come from `mine` where it has them.
+// none). Every rule is order-independent (merge(a,b) equals merge(b,a)), so two tabs settle on the same state instead
+// of rewriting each other's save forever: attempts keep the later try, clues the furthest step, earned the same pick.
 const earliest=(a,b)=>a==null?b??null:b==null?a:Math.min(a,b);
 function union(a,b){
  const out={...a};
@@ -81,12 +82,21 @@ function union(a,b){
  return out;
 }
 const furthest=(a,b)=>{const out={...a};for(const [k,v] of Object.entries(b))out[k]=Math.max(out[k]??0,v);return out;};
+const pick=(a,b,better)=>{const out={...a};for(const [k,v] of Object.entries(b))out[k]=k in out?better(out[k],v):v;return out;};
+const laterTry=(a,b)=>(b.q-a.q||b.waitUntil-a.waitUntil)>0?b:a;
+const sameChoice=(a,b)=>JSON.stringify(b)>JSON.stringify(a)?b:a;
 export const mergeStates=(mine,other)=>({v:1,collected:union(mine.collected,other.collected),found:union(mine.found,other.found),
- attempts:{...other.attempts,...mine.attempts},clues:furthest(mine.clues??{},other.clues??{}),seen:{...other.seen,...mine.seen},earned:{...other.earned,...mine.earned}});
+ attempts:pick(mine.attempts,other.attempts,laterTry),clues:furthest(mine.clues??{},other.clues??{}),
+ seen:pick(mine.seen??{},other.seen??{},(a,b)=>a||b),earned:pick(mine.earned??{},other.earned??{},sameChoice)});
+
+// JSON with object keys sorted, so equal states serialise the same whatever order their keys were added in.
+const canonical=v=>JSON.stringify(v,(k,x)=>isMap(x)?Object.fromEntries(Object.keys(x).sort().map(key=>[key,x[key]])):x);
 
 export function saveCollection(state,storage){
  try{
-  const store=resolve(storage);
-  store?.setItem(STORAGE_KEY,JSON.stringify(mergeStates(state,loadCollection(store))));
+  const store=resolve(storage);if(!store)return;
+  // Writes only when something changed: every write fires a storage event in the other tabs, which merge and save.
+  const next=canonical(mergeStates(state,loadCollection(store)));
+  if(store.getItem(STORAGE_KEY)!==next)store.setItem(STORAGE_KEY,next);
  }catch{}
 }

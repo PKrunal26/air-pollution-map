@@ -183,3 +183,7 @@ button.event-card:active:not(:disabled){transform:none}
  .collect-set b{width:var(--to)}
  @keyframes reveal-fade{from{opacity:0}to{opacity:1}}
 }
+
+/* Read by screen readers, not shown. */
+.visually-hidden{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.card-question:focus{outline:none}
