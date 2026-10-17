@@ -264,7 +264,7 @@ function App(){
    </>}
   </div>
   {asking&&<CardQuestion key={asking.key} card={asking.card} variant={asking.variant} question={asking.question} total={DECK.length} month={asking.month} result={asking.result} foundCount={foundCount} onRecap={()=>setAsking(a=>a&&{...a,recapped:true})} onAnswer={answerCard} onClose={()=>setAsking(null)} onShowCards={()=>{setAsking(null);clearProbe();setPanel('cards');}}/>}
-  {viewing&&<CardViewer key={viewing.card.id} card={viewing.card} variant={viewing.variant} shared={!!viewing.shared} total={DECK.length} foundAt={cards?.collected[viewing.variant?variantKey(viewing.card.id,viewing.variant):viewing.card.id]??null} earned={cards?.earned[viewing.variant?variantKey(viewing.card.id,viewing.variant):viewing.card.id]??null}
+  {viewing&&<CardViewer key={viewing.card.id} card={viewing.card} variant={viewing.variant} shared={!!viewing.shared} total={DECK.length} deck={DECK} collected={cards?.collected??{}} foundAt={cards?.collected[viewing.variant?variantKey(viewing.card.id,viewing.variant):viewing.card.id]??null} earned={cards?.earned[viewing.variant?variantKey(viewing.card.id,viewing.variant):viewing.card.id]??null}
    onClose={()=>setViewing(null)} onHunt={()=>{setClueFor(viewing.card.id);setViewing(null);clearProbe();setPanel('cards');}}/>}
   <Loader ready={ready} progress={progress} textureReady={globeReady} downloaded={globalAir.status!=='loading'} failed={globalAir.status==='error'}/>
  </main>;

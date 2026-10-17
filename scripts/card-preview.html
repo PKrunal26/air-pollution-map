@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8"/><title>Card preview</title></head><body>
+<!-- Used by scripts/card-pages.mjs: draws one card's link preview and replaces the page with it as a JPEG data URL. -->
+<script type="module">
+import DECK from '../src/cards/deck.json';
+import {drawPreview,previewLayout,loadCardImages} from '../src/cards/share.js';
+const card=DECK.find(c=>c.id===new URLSearchParams(location.search).get('card'));
+const layout=previewLayout(),canvas=document.createElement('canvas');canvas.width=layout.width;canvas.height=layout.height;
+drawPreview(canvas.getContext('2d'),{card,images:await loadCardImages(card,null,'/')},layout);
+document.body.textContent=`IMG:${canvas.toDataURL('image/jpeg',.86)}:END`;
+</script></body></html>

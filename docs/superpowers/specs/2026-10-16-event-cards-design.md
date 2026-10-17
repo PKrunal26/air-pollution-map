@@ -187,13 +187,30 @@ Reduced motion: no flight or burst; the card and recap fade in.
 
 **Sets:** one per type that has at least two cards, plus the full deck. A set is complete when every card in it is collected (CO prints are not needed).
 
-### Share image
+### Sharing
 
-- 1080 × 1920 PNG, drawn in the browser.
+A held card has two buttons. Apps given a file and text together send them as two messages (or, from a desktop share sheet, paste the file's path into the text), so each button sends one thing.
+
+**Share** sends one short text message, through the share sheet or copied to the clipboard where there is none:
+
+```
+Who Owns the Air? · 5 / 16 cards
+🟨🟩⬛⬛🟦⬛🟩⬛
+⬛⬛⬛🟩⬛⬛⬛⬛
+Canadian wildfire smoke · First try · No hints
+https://pkrunal26.github.io/air-pollution-map/c/canada-2023/
+```
+
+- The count is cards held (CO prints not counted). The grid has one square per card in card-number order, eight to a row: collected cards in their rarity's colour (green every year, blue every few years, yellow once in decades), missing ones dark.
+- The card line adds how it was won (its marks), when there are any. The month and how to play are left to the link's preview (its title and description).
+- The link goes to the card's own page (`public/c/<id>/`), whose preview picture (`public/cards/og/<id>.jpg`, 1200 × 630, the card centred on its blurred wide map, under WhatsApp's 300 KB limit) and title make messaging apps show the card with the message. The page sends visitors on to `?card=<id>`. `npm run cards:pages` writes both (headless Chrome); a test fails when a card has none.
+
+**Story image** shares a 1080 × 1920 PNG alone, for Instagram stories:
+
 - The card sits straight and centred on the globe at the card's month and place, blurred and dimmed.
-- "Find it yourself" and the site address sit under the card.
-- Card and link stay clear of Instagram's top 13 % and bottom 12 %.
-- Sent through the system share sheet where supported; downloaded otherwise.
+- Under it: the collection as a row of dots (filled in the rarity's colour when collected), the count and marks, how to play in two lines, and the site address.
+- Card and caption stay clear of Instagram's top 13 % and bottom 12 %.
+- Phones get the share sheet; computers download the file.
 
 ## Architecture
 
@@ -222,7 +239,7 @@ Plain modules with no UI and no globe code.
   - per-card question index and wait end time
   - the rules: a wrong answer starts a 1-hour wait and moves to the next question; a new find clears every wait
   - the recovery link codec (`?deck=`)
-- `src/cards/share.js` draws the story image on a canvas, opens the share sheet, and falls back to a download.
+- `src/cards/share.js` writes the share message, draws the story image and link previews on a canvas, and opens the share sheet (falling back to the clipboard or a download).
 
 ### Interface
 
@@ -233,7 +250,7 @@ Plain modules with no UI and no globe code.
 
 - The existing pin event calls `cardAt` only while the timeline is in history mode.
 - `?card=` and `?deck=` are parsed next to the existing URL options.
-- Events are sent through `track()`: `card-found/<id>`, `card-collected/<id>`, `card-shared/<id>`, `card-wrong/<id>`.
+- Events are sent through `track()`: `card-found/<id>`, `card-collected/<id>`, `card-shared/<id>`, `card-story/<id>`, `card-wrong/<id>`.
 
 ### Data jobs
 
