@@ -28,7 +28,7 @@ Not in the first version: accounts or sign-in; seeing other people's collections
 - Written by hand. About 15 cards; a new card is added only when an event deserves one.
 - The deck only grows. Cards are never reordered or removed once live, because recovery links refer to cards by position.
 - Candidates, measurements and status live in `docs/cards/deck.xlsx` (Deck sheet; events that do not show in the monthly data are listed under Not visible).
-- No two cards share a place and month, or one pin would find both. Variants are the exception, separated by layer (see CO variants).
+- Cards may overlap in place; the month shown, then distance, decides which one a pin finds (see Finding a card). Variants share their card's place and are separated by layer (see CO variants).
 
 ### Rarity
 
@@ -50,12 +50,13 @@ Wildfire, Peat fire, Crop burning, Savanna burning, Dust storm. Accident, transi
 
 ### Finding a card
 
-- Only when the Monthly bar is in front. Today (the hourly forecast) never shows cards.
-- A pin counts when it lies inside the card's footprint, in one of the card's months.
-- Footprint: a hand-drawn polygon around the event, widened by `bufferKm` (default 150 km) on every side. Distance is measured on the sphere; the date line is handled.
-- Where two footprints' buffers overlap (North India and Pakistani Punjab share a border and both are November cards), the nearest footprint wins: a pin inside one polygon always finds that card. Cards that follow a national border use the border itself as their shared edge, and no card's text blames the other country.
-- Months: every month the footprint is elevated (for example September and October), not just the peak.
-- A pin in the right place but one month off shows a quiet line in the readout: "Something happened here in another month."
+Changed 17 Oct 2026 after visitors found the month rule too hard: the place is enough.
+
+- A pin counts when it lies inside the card's footprint or within `bufferKm` (300 km for every card) of it, at any month on the Monthly bar or on Today.
+- Footprint: a hand-drawn polygon around the event. Distance is measured on the sphere; the date line is handled.
+- Where areas overlap (Harmattan dust in January and Central African fires in December; North India and Pakistani Punjab at the border), the card whose month is showing wins, then the nearest footprint (a pin inside one polygon finds that card), then deck order. Cards that follow a national border use the border itself as their shared edge, and no card's text blames the other country.
+- Months still describe the event (art, stats, clue, shared links); a find on one of the card's months adds "Picked <month>" to the recap.
+- Clicking always pins, whatever the Readout switch (which controls hover only); pinning closes the Cards panel.
 - The card's layer does not need to be on (except for CO variants).
 
 ### The question
@@ -71,7 +72,7 @@ Wildfire, Peat fire, Crop burning, Savanna burning, Dust storm. Accident, transi
 ### CO variants
 
 - Same number as the base card, a second print in the CO layer's ink.
-- Found by pinning the same place and month with the CO layer on, after you own the base card.
+- Found by pinning the same place with the CO layer on, after you own the base card.
 - Only for events where CO stands out. Peat smoulders and gives off far more CO than flaming grass fires: in the hourly snapshot of 15 October 2026, CO over Kalimantan peaked at 32 mg/m³ (about 8× WHO), while Central African savanna fires stayed near 0.65 mg/m³. Expect 3 to 5 variants: peat, boreal and Amazon fires.
 - One CO question of its own, with the same wait rules.
 - Variants do not count toward the 20-card limit.
@@ -213,7 +214,7 @@ Plain modules with no UI and no globe code.
 
 - `src/cards/deck.js`
   - validates the deck
-  - `cardAt(lat, lon, month, layers)` returns `found`, `variant`, `near-month` or `none`
+  - `cardAt(lat, lon, month, layers)` returns `found`, `variant` or `none` (month only breaks ties)
   - point-in-polygon with the buffer on the sphere
 - `src/cards/collection.js` is the only module that touches storage. It holds:
   - collected cards and variants
@@ -247,7 +248,7 @@ Add `pm10` and `carbon_monoxide` to the monthly history.
 ### Tests
 
 - Deck structure: unique ids, append-only order against a frozen list, valid polygons, months inside the history range, every question with one correct answer and a source.
-- `cardAt`: inside, buffer edge, outside, date line, wrong month (near-month), variant needs the CO layer and the base card.
+- `cardAt`: inside, buffer edge, outside, date line, any month or Today, overlaps decided by the month shown, variant needs the CO layer and the base card.
 - Collection: wait start and end, reset on a new find, question rotation, all with a fake clock.
 - Recovery codec: round trip, and links made before newer cards or variants were added.
 

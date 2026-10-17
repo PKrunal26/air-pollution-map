@@ -5,7 +5,7 @@ export const RELEASE={
  id:'2026-10-17',
  date:'17 October 2026',
  items:[
-  {title:'Event cards',text:'Sixteen real pollution events are hidden on the globe, from Canadian wildfire smoke to Saharan dust over the Caribbean. Pin the right place in the right month, answer what caused it, and the card is yours to keep and share.'},
+  {title:'Event cards',text:'Sixteen real pollution events are hidden on the globe, from Canadian wildfire smoke to Saharan dust over the Caribbean. Click near the right place, answer what caused it, and the card is yours to keep and share.'},
   {title:'Monthly averages since 2022',text:'The time bar now holds two timelines: monthly averages since August 2022 in front, and today with the next two days behind it. Tap the one behind to bring it forward; both play.'},
   {title:'PM10 and carbon monoxide in past months',text:'Past months now show PM10 and carbon monoxide, as well as PM2.5, dust and nitrogen dioxide.'},
  ],
