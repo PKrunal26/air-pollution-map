@@ -3,6 +3,8 @@
 export const TYPES=['Wildfire','Peat fire','Crop burning','Savanna burning','Dust storm'];
 export const RARITIES=['common','uncommon','rare'];
 export const RARITY_COLOURS={common:'#8e9a84',uncommon:'#a9bccc',rare:'#e3c76a'};
+// Shown names say how often an event happens, so a yearly event never reads as less important than a rare one.
+export const RARITY_LABELS={common:'Every year',uncommon:'Every few years',rare:'Once in decades'};
 export const VARIANT_KINDS=['co'];
 // The monthly history starts here; a card's months must be inside it.
 export const HISTORY_START='2022-08';
@@ -12,6 +14,8 @@ export const monthKey=validAt=>new Date(validAt).toISOString().slice(0,7);
 const isMonth=m=>typeof m==='string'&&/^\d{4}-(0[1-9]|1[0-2])$/.test(m)&&m>=HISTORY_START;
 const isPoint=p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90;
 const isText=t=>typeof t==='string'&&t.trim().length>0;
+export const BACK_BUDGET=600;
+const backLength=c=>[...c.back,c.blamed,c.actual,c.helps?.text??'',c.sources.join('; ')].join('').length;
 
 function questionProblem(q){
  if(!q||!isText(q.prompt))return 'question without prompt';
@@ -49,6 +53,10 @@ function cardProblem(c){
  if(!Array.isArray(c.back)||!c.back.length||!c.back.every(isText))return 'missing back text';
  if(!isText(c.blamed)||!isText(c.actual))return 'missing often-blamed text';
  if(!Array.isArray(c.sources)||!c.sources.length||!c.sources.every(isText))return 'missing sources';
+ // The 300 × 600 back fits about this much text (paragraphs, often blamed, what helps, sources); more overflows it.
+ if(backLength(c)>BACK_BUDGET)return `back text ${backLength(c)} characters, over ${BACK_BUDGET}`;
+ // Optional: one sourced line on what reduces this pollution, shown on the back.
+ if(c.helps!==undefined&&!(isText(c.helps?.text)&&isText(c.helps?.source)))return 'helps needs text and source';
  for(const v of c.variants??[]){
   if(!VARIANT_KINDS.includes(v?.kind))return `unknown variant ${v?.kind}`;
   if(!isText(v.field)||!Array.isArray(v.months)||!v.months.length||!v.months.every(isMonth))return 'bad variant';

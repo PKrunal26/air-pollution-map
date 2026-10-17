@@ -1,12 +1,11 @@
 // The story image (1080 × 1920): the card, straight and centred on its own wide map, blurred; the address below.
 // Instagram draws its own controls over the top 13% and bottom 12%, so nothing goes there.
-import {RARITY_COLOURS} from './deck.js';
+import {RARITY_COLOURS,RARITY_LABELS as RARITY_NAMES} from './deck.js';
 import {monthLabel,formatStats} from './format.js';
 import {track} from '../analytics.js';
 
 export const SITE='pkrunal26.github.io/air-pollution-map';
 const FONT='-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-const RARITY_NAMES={common:'Common',uncommon:'Uncommon',rare:'Rare'};
 
 export function storyLayout(){
  const width=1080,height=1920,w=600,h=1200,gap=44,captionH=90;

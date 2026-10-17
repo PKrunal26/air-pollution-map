@@ -1,16 +1,16 @@
 import React,{useEffect,useRef,useState} from 'react';
 import CardView from './CardView';
 import {FaceDown} from './ReadoutCardRow';
-import {RARITY_COLOURS} from './deck';
+import {RARITY_COLOURS,RARITY_LABELS as RARITY_NAMES} from './deck';
 import ShareButton from './ShareButton';
+import CardReveal from './CardReveal';
 
-const RARITY_NAMES={common:'Common',uncommon:'Uncommon',rare:'Rare'};
 const LETTERS='ABCD';
 
 // The focused question: the face-down card beside its question, then the outcome. One try per question.
 // onAnswer(choice) applies the answer and returns whether it was right.
-export default function CardQuestion({card,variant,question,total,foundCount,onAnswer,onClose,onShowCards}){
- const [pick,setPick]=useState(null),[right,setRight]=useState(null),[flipped,setFlipped]=useState(false);
+export default function CardQuestion({card,variant,question,total,collectedCount,foundCount,onAnswer,onClose,onShowCards}){
+ const [pick,setPick]=useState(null),[right,setRight]=useState(null);
  const box=useRef(null);
  useEffect(()=>{
   const opener=document.activeElement;
@@ -35,11 +35,11 @@ export default function CardQuestion({card,variant,question,total,foundCount,onA
  const choose=i=>{if(pick!==null)return;setPick(i);setRight(onAnswer(i));};
  const label=`Card ${String(card.number).padStart(2,'0')}${variant?' · CO print':''} · ${RARITY_NAMES[card.rarity]}`;
  return <div className="card-question-backdrop" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-  <section ref={box} className="card-question" role="dialog" aria-modal="true" aria-label={`${label}: question`} onKeyDown={keys} style={{'--rarity':RARITY_COLOURS[card.rarity]}}>
-   <div className="card-question-card">{right?<div className="card-reveal"><CardView card={card} variant={variant} flipped={flipped} onFlip={()=>setFlipped(v=>!v)} total={total} foundAt={Date.now()} size={.46}/></div>:<FaceDown card={card} width={138}/>}</div>
+  <section ref={box} className={`card-question${right?' is-collected':''}`} role="dialog" aria-modal="true" aria-label={`${label}: question`} onKeyDown={keys} style={{'--rarity':RARITY_COLOURS[card.rarity]}}>
+   <div className="card-question-card">{right?<CardReveal card={card} variant={variant} total={total}/>:<FaceDown card={card} width={138}/>}</div>
    <div className="card-question-body">
     {right?<>
-     <p className="card-question-meta">{label} · collected</p>
+     <p className="card-question-meta">{label} · collected · {collectedCount} of {total}</p>
      <h2>Right: {question.options[question.answer]}</h2>
      <p className="card-question-text">{question.explanation}</p>
      {Number.isFinite(foundCount)&&<p className="card-question-meta">{foundCount.toLocaleString('en-US')} {foundCount===1?'person has':'people have'} found this card.</p>}

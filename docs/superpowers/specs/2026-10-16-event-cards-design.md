@@ -34,11 +34,13 @@ Not in the first version: accounts or sign-in; seeing other people's collections
 
 By how often the event happens, never by how much harm it did:
 
-| Rarity | Meaning | Target share | Colour |
-|---|---|---|---|
-| Common | Every year (a season) | about 10 of 20 | grey-green `#8e9a84` |
-| Uncommon | Every few years | about 6 of 20 | silver `#a9bccc` |
-| Rare | Once in decades at this scale | about 4 of 20 | gold `#e3c76a` |
+| Rarity (key) | Shown as | Meaning | Target share | Colour |
+|---|---|---|---|---|
+| common | Every year | A season | about 10 of 20 | grey-green `#8e9a84` |
+| uncommon | Every few years | Some years | about 6 of 20 | silver `#a9bccc` |
+| rare | Once in decades | Once in decades at this scale | about 4 of 20 | gold `#e3c76a` |
+
+The shown names say how often an event happens, never "common" or "rare": most air-pollution deaths happen where pollution is a yearly season (State of Global Air 2025: 90% in low- and middle-income countries), so a yearly card must not read as less important.
 
 The evidence for a rarity is the same calendar month in other years of the record (Deck sheet, "Same month, other years").
 
@@ -112,8 +114,11 @@ The back carries, in order:
 2. Month · region, then the title.
 3. About 70 words on what happened and why.
 4. "Often blamed": the misconception and the correction.
-5. Sources and the card's scale.
-6. "NN / 15" and the date you found it.
+5. Optional "What helps": one sourced line on what reduces this pollution (`helps: {text, source}`).
+6. Sources, the card's scale, and a note that × WHO compares the average day with the 24-hour guideline.
+7. "NN / 15" and the date you found it.
+
+The back holds about 600 characters in all (paragraphs, often blamed, what helps, sources); `validateDeck` enforces it.
 
 No site name.
 
@@ -151,7 +156,7 @@ Mockups from the session are in `.superpowers/brainstorm/` (not committed).
 
 1. A pin inside a footprint adds a row to the readout: a face-down card, "A card is here", and Answer.
 2. Answer dims the globe and opens the face-down card beside its question.
-3. Right: the card flips face-up, with one paragraph on why. Buttons: Share (primary), See your cards, Keep exploring.
+3. Right: the card charges up face-down, flips with a slight overshoot, rings of halftone dots burst out (1 ring for Every year, 2 for Every few years, 3 for Once in decades) and a light sweeps across it (twice, in gold, for Once in decades); the words arrive after the card and the header count pops. Reduced motion: a plain fade. One paragraph says why the answer is right. Buttons: Share (primary), See your cards, Keep exploring.
 4. Wrong: the pick is marked, the misconception is corrected, and "A different question opens in 1 hour, or as soon as you find another card".
 5. During the wait, the readout row says "New question in 47 min, or find another card", and Answer is disabled.
 

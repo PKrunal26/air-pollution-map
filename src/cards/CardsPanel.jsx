@@ -2,10 +2,9 @@ import React,{useState} from 'react';
 import {X} from '@phosphor-icons/react';
 import CardView,{artUrl} from './CardView';
 import {FaceDown} from './ReadoutCardRow';
-import {RARITY_COLOURS} from './deck';
+import {RARITY_COLOURS,RARITY_LABELS as RARITY_NAMES} from './deck';
 import {waitLeft,variantKey} from './collection';
 
-const RARITY_NAMES={common:'Common',uncommon:'Uncommon',rare:'Rare'};
 const FILTERS=[['All',null],['Wildfire','Wildfire'],['Peat','Peat fire'],['Crop','Crop burning'],['Savanna','Savanna burning'],['Dust','Dust storm']];
 const STEPS=[['region','Region'],['country','Country'],['month','Month']];
 const MONTH_LETTERS='JFMAMJJASOND';

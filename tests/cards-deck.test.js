@@ -102,3 +102,17 @@ test('a real find beats an earlier card\'s one-month-off hint',()=>{
  const hit=cardAt(deck,{lat:0,lon:113,month:'2026-10',layers:new Set(),owned:new Set()});
  assert.equal(hit.status,'found');assert.equal(hit.card.id,'later');
 });
+
+import {RARITY_LABELS} from '../src/cards/deck.js';
+test('rarity reads as how often it happens, not as value',()=>{
+ assert.deepEqual(RARITY_LABELS,{common:'Every year',uncommon:'Every few years',rare:'Once in decades'});
+});
+test('helps is optional but needs text and a source',()=>{
+ assert.doesNotThrow(()=>validateDeck(changed(c=>{c.helps={text:'Cleaner cooking fuel cuts this smoke at source.',source:'HEI 2025'};})));
+ assert.throws(()=>validateDeck(changed(c=>{c.helps={text:'No source'};})),/Invalid card/);
+ assert.throws(()=>validateDeck(changed(c=>{c.helps='just text';})),/Invalid card/);
+});
+
+test('back text stays within what the card back can hold',()=>{
+ assert.throws(()=>validateDeck(changed(c=>{c.back=['x'.repeat(601)];})),/Invalid card/);
+});

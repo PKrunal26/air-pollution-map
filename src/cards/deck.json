@@ -349,8 +349,8 @@
      "Forest fires in the Himalaya"
     ],
     "answer": 1,
-    "explanation": "Farm fires in Punjab and Haryana add a large share on peak days, by Delhi's Decision Support System over a third on some days; the rest is the region's own traffic, industry and dust, held near the ground by cold, still air.",
-    "source": "CSE, citing Delhi DSS daily estimates: https://www.cseindia.org/cse-in-news?page=339",
+    "explanation": "Farm fires in Punjab and Haryana add a large share on peak days, by Delhi's Decision Support System over a third on some days. The rest is the region's own pollution: traffic, industry, dust and smoke from cooking with wood and dung, which by one estimate makes up nearly 30% of India's outdoor PM2.5. Cold, still air holds it all near the ground.",
+    "source": "CSE, citing Delhi DSS daily estimates: https://www.cseindia.org/cse-in-news?page=339; HEI, State of Global Air 2025, p. 17 (citing Chatterjee et al. 2023)",
     "wrongNote": "Fireworks spike the air for a night or two around Diwali; this haze lasts the whole month."
    },
    {
@@ -368,15 +368,20 @@
    }
   ],
   "back": [
-   "After the rice harvest, farmers in Punjab and Haryana, and in Pakistani Punjab, burn the leftover stubble to clear their fields.",
-   "Cold, still November air traps that smoke together with the region's traffic, industry and dust across the whole plain."
+   "After the rice harvest, farmers in Punjab and Haryana, and in Pakistani Punjab, burn the leftover stubble.",
+   "Cold, still November air traps that smoke over the plain with the region's traffic, industry, dust and cooking smoke."
   ],
   "blamed": "Diwali fireworks.",
   "actual": "Fireworks add a night or two; the month-long smog is crop smoke and local pollution held down by winter air.",
   "sources": [
    "CSE, Delhi DSS estimates",
-   "Govardhan et al., Geosci. Model Dev. 17, 2617 (2024)"
+   "HEI, State of Global Air 2025",
+   "Govardhan et al., GMD 2024"
   ],
-  "featuredMonth": "2024-11"
+  "featuredMonth": "2024-11",
+  "helps": {
+   "text": "Cleaner cooking fuel cuts smoke at the source: India's LPG scheme (PMUY) reached over 100 million homes by 2023.",
+   "source": "HEI, State of Global Air 2025, p. 17"
+  }
  }
 ]

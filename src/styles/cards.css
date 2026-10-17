@@ -28,17 +28,18 @@ button.event-card:active:not(:disabled){transform:none}
 .card-stats small{font-size:10px;font-weight:400;color:#9aa58c;margin-left:2px}
 .card-stats dt{font-size:10px;color:#9aa58c;margin-top:1px}
 
-.card-strip{position:relative;height:96px;flex:none}
+.card-strip{position:relative;height:72px;flex:none}
 .card-strip img{width:100%;height:100%;object-fit:cover;display:block}
 .card-strip::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,#0a0d0c00 0%,#0a0d0c99 55%,#0a0d0c 100%)}
-.card-back-body{padding:0 20px 30px;display:flex;flex-direction:column;flex:1;min-height:0}
-.card-back .card-title{font-size:18px;margin-bottom:14px;line-height:1.25}
-.card-para{margin:0 0 12px;font-size:12.5px;line-height:1.55;color:#d3dbc6}
-.card-blamed{border-top:1px solid #e1e7d51f;padding-top:12px;margin-top:4px}
-.card-blamed p{margin:0;font-size:12px;line-height:1.5;color:#d3dbc6}
-.card-blamed p:first-child{font-size:10.5px;color:#9aa58c;margin-bottom:4px}
-.card-sources{margin:auto 0 0;padding-top:18px;font-size:10px;color:#7f8a72;line-height:1.5}
-.card-foot{display:flex;justify-content:space-between;margin:12px 0 0;padding-top:12px;border-top:1px solid #e1e7d51f;font-size:10.5px;color:#9aa58c;font-variant-numeric:tabular-nums}
+.card-back-body{padding:0 20px 24px;display:flex;flex-direction:column;flex:1;min-height:0}
+.card-back .card-title{font-size:18px;margin-bottom:10px;line-height:1.25}
+.card-para{margin:0 0 9px;font-size:12px;line-height:1.5;color:#d3dbc6}
+.card-blamed{border-top:1px solid #e1e7d51f;padding-top:9px;margin-top:3px}
+.card-blamed+.card-blamed{margin-top:9px}
+.card-blamed p{margin:0;font-size:11.5px;line-height:1.45;color:#d3dbc6}
+.card-blamed p:first-child{font-size:10.5px;color:#9aa58c;margin-bottom:3px}
+.card-sources{margin:auto 0 0;padding-top:12px;font-size:9.5px;color:#7f8a72;line-height:1.45}
+.card-foot{display:flex;justify-content:space-between;margin:10px 0 0;padding-top:10px;border-top:1px solid #e1e7d51f;font-size:10.5px;color:#9aa58c;font-variant-numeric:tabular-nums}
 
 /* Face-down card: halftone back, number in the middle, rarity colour on the edge. */
 .card-facedown{position:relative;display:inline-grid;place-items:center;flex:none;border-radius:6px;border:1.5px solid var(--rarity);background:#0a0d0c radial-gradient(circle,color-mix(in srgb,var(--rarity) 35%,transparent) 28%,transparent 30%) 0 0/7% 3.5%;box-shadow:0 8px 24px #0008}
@@ -75,9 +76,6 @@ button.event-card:active:not(:disabled){transform:none}
 .card-question-actions button{padding:7px 15px;border-radius:99px;border:1px solid #e1e7d54a;font-size:12.5px}
 .card-question-actions .is-primary{background:var(--text);color:#0b0e0d;border-color:transparent;font-weight:600}
 .card-question-actions .is-primary:hover:not(:disabled){color:#0b0e0d}
-.card-reveal{animation:card-reveal .75s var(--motion) both}
-@keyframes card-reveal{from{transform:perspective(900px) rotateY(90deg)}to{transform:none}}
-@media (prefers-reduced-motion:reduce){.card-reveal{animation:none}}
 @media (max-width:700px){.card-question{flex-direction:column;align-items:center}.card-question-body{width:100%}}
 
 /* A card shown large: one you hold, or a shared one. */
@@ -131,3 +129,39 @@ button.event-card:active:not(:disabled){transform:none}
 .cards-foot p{flex:1;margin:0;font-size:10.5px;line-height:1.4;color:var(--text-muted)}
 .cards-foot button{flex:none;font-size:11.5px;padding:6px 12px;border-radius:99px;border:1px solid #e1e7d54a}
 .card-share-note{flex-basis:100%;margin:2px 0 0;font-size:11.5px;color:var(--text-muted)}
+
+/* Collecting a card: charge, flip with overshoot, halftone burst, light sweep. Rarer cards get more of each. */
+.reveal{position:relative;width:var(--w);height:var(--h);perspective:1200px}
+.reveal-flip{position:relative;width:100%;height:100%;animation:reveal-charge .5s var(--motion) both}
+.reveal-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;animation:reveal-turn .8s .45s cubic-bezier(.2,1.35,.45,1) both}
+.reveal-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:calc(var(--w) * .06)}
+.reveal-front{transform:rotateY(0deg);overflow:hidden}
+.reveal-back{transform:rotateY(180deg)}
+.reveal-back .card-facedown{box-shadow:0 0 0 0 var(--rarity);animation:reveal-glow .5s var(--motion) both}
+@keyframes reveal-charge{0%{transform:scale(.94)}70%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes reveal-glow{from{box-shadow:0 0 0 0 transparent}to{box-shadow:0 0 34px 6px color-mix(in srgb,var(--rarity) 55%,transparent)}}
+@keyframes reveal-turn{from{transform:rotateY(180deg)}to{transform:rotateY(0deg)}}
+.reveal-burst{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none}
+.reveal-burst i{position:absolute;left:calc(var(--s) / -2);top:calc(var(--s) / -2);width:var(--s);height:var(--s);border-radius:50%;background:var(--rarity);opacity:0;animation:reveal-dot .9s var(--d) cubic-bezier(.15,.8,.25,1) both}
+@keyframes reveal-dot{0%{opacity:0;transform:rotate(var(--a)) translateX(40px) scale(.2)}1%{opacity:1}35%{opacity:1}100%{opacity:0;transform:rotate(var(--a)) translateX(var(--r)) scale(1)}}
+.reveal-shine{position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 35%,#ffffff55 48%,#ffffff22 52%,transparent 65%);transform:translateX(-120%);animation:reveal-shine .75s 1.15s ease-in-out both}
+.reveal.is-rare .reveal-shine{background:linear-gradient(105deg,transparent 35%,#ffe9a088 48%,#ffffff33 52%,transparent 65%);animation:reveal-shine .75s 1.15s ease-in-out 2 both}
+@keyframes reveal-shine{to{transform:translateX(120%)}}
+.reveal.is-rare .reveal-flip{animation-duration:.65s}
+/* The words arrive after the card. */
+@media (min-width:701px){.card-question.is-collected{overflow:visible}}
+.card-question.is-collected .card-question-body>*{animation:reveal-text .5s var(--motion) both}
+.card-question.is-collected .card-question-body>*:nth-child(1){animation-delay:1.05s}
+.card-question.is-collected .card-question-body>*:nth-child(2){animation-delay:1.15s}
+.card-question.is-collected .card-question-body>*:nth-child(3){animation-delay:1.25s}
+.card-question.is-collected .card-question-body>*:nth-child(n+4){animation-delay:1.4s}
+@keyframes reveal-text{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* The header count ticks up. */
+.cards-count{display:inline-block;animation:count-pop .6s var(--motion) both}
+@keyframes count-pop{0%{transform:scale(1)}40%{transform:scale(1.5);color:var(--text)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){
+ .reveal-flip,.reveal-inner,.reveal-back .card-facedown,.reveal-shine,.cards-count{animation:none}
+ .reveal-burst{display:none}
+ .card-question.is-collected .card-question-body>*{animation:reveal-fade .3s both}
+ @keyframes reveal-fade{from{opacity:0}to{opacity:1}}
+}

@@ -1,11 +1,10 @@
 import React from 'react';
-import {RARITY_COLOURS} from './deck';
+import {RARITY_COLOURS,RARITY_LABELS as RARITY_NAMES} from './deck';
 import {monthLabel,formatStats,foundLabel} from './format';
 import '../styles/cards.css';
 
 const BASE=import.meta.env?.BASE_URL??'./';
 export const artUrl=(card,variant,wide=false)=>`${BASE}cards/${card.id}${variant?`-${variant}`:''}${wide?'-wide':''}.svg`;
-const RARITY_NAMES={common:'Common',uncommon:'Uncommon',rare:'Rare'};
 const pad=n=>String(n).padStart(2,'0');
 
 export function RarityDots({rarity}){
@@ -39,7 +38,8 @@ function Back({card,variant,foundAt,total}){
    <h3 className="card-title">{card.name}</h3>
    {card.back.map((p,i)=><p key={i} className="card-para">{p}</p>)}
    <div className="card-blamed"><p>Often blamed</p><p>{card.blamed} {card.actual}</p></div>
-   <p className="card-sources">Full dot at {face.scale.toLocaleString('en-US')} µg/m³. Sources: {card.sources.join('; ')}.</p>
+   {card.helps&&<div className="card-blamed"><p>What helps</p><p>{card.helps.text}</p></div>}
+   <p className="card-sources">Full dot at {face.scale.toLocaleString('en-US')} µg/m³; × WHO compares the average day with WHO's 24-hour guideline. Sources: {card.sources.join('; ')}.</p>
    <p className="card-foot"><span>{pad(card.number)} / {pad(total)}</span>{found&&<span>{found}</span>}</p>
   </div>
  </div>;
