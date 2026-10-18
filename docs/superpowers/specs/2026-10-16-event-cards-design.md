@@ -57,6 +57,7 @@ Changed 17 Oct 2026 after visitors found the month rule too hard: the place is e
 - Where areas overlap (Harmattan dust in January and Central African fires in December; North India and Pakistani Punjab at the border), the card whose month is showing wins, then the nearest footprint (a pin inside one polygon finds that card), then deck order. Cards that follow a national border use the border itself as their shared edge, and no card's text blames the other country.
 - Months still describe the event (art, stats, clue, shared links); a find on one of the card's months adds "Picked <month>" to the recap.
 - Clicking always pins, whatever the Readout switch (which controls hover only); pinning closes the Cards panel.
+- Hovering a spot that holds a card shows the face-down card in the hover readout, "A card is here · Click to collect it" (no button). Only a pin finds it (marks it found, offers the question).
 - The card's layer does not need to be on (except for CO variants).
 
 ### The question

@@ -16,7 +16,7 @@ function Fields({fields,regional,keyId,who:showWho=true}){
  })}</dl>;
 }
 
-// footer: extra content for a pinned card (the event-card row).
+// footer: extra content (the event-card row); while hovering it replaces the "Click to keep" line, as it says to click.
 export default function AirComposition({location,global,regional,paint,onClose,footer=null}){
  const card=useRef(null),close=useRef(null);
  const [expanded,setExpanded]=useState(false);
@@ -42,10 +42,10 @@ export default function AirComposition({location,global,regional,paint,onClose,f
   {sample?<>
    <div className="composition-scroll"><Fields fields={primary} regional={sample.regional} keyId={keyId} who={!monthly}/>
     {location.pinned&&more.length>0&&<details className="composition-more"><summary>More fields <span>{more.length}</span></summary><Fields fields={more} regional={sample.regional} who={!monthly}/></details>}
-    {!location.pinned&&<p className="composition-pin">Click to keep{more.length>0?' and see all fields':''}</p>}
+    {!location.pinned&&!footer&&<p className="composition-pin">Click to keep{more.length>0?' and see all fields':''}</p>}
    </div>
    {location.pinned&&sample.fields.length>1&&<button className="composition-expand" aria-expanded={expanded} onClick={()=>setExpanded(v=>!v)}>{expanded?'Fewer values':'All values'}<CaretDown size={14} weight="bold"/></button>}
   </>:<p className="composition-empty" role="status">{global.status==='error'?'Air data is unavailable here. Reload to retry.':'Loading air composition…'}</p>}
-  {location.pinned&&footer}
+  {footer}
  </section>;
 }
