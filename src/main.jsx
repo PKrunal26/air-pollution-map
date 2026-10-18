@@ -146,20 +146,21 @@ function App(){
  },[timelines.history]);
  // The month on the Monthly bar (null on Today). Cards are found by place alone; the month only breaks ties.
  const shownMonth=timeline?.kind==='history'&&frameIndex>=0?monthKey(timeline.manifest.frames[frameIndex].validAt):null;
- // A pinned spot may hold a card or a CO print of one, at any month or on Today.
+ // A spot may hold a card or a CO print of one, at any month or on Today. Hovering shows that one is there; pinning
+ // finds it (and offers the question).
  const enabledLayers=Object.keys(paint).filter(id=>paint[id]?.enabled).join(',');
  const ownedIds=cards?Object.keys(cards.collected).filter(k=>!k.includes(':')).join(','):'';
  const cardHit=React.useMemo(()=>{
-  if(!cards||!DECK.length||!probe?.pinned||!readout||(panel&&panel!=='layers'))return null;
+  if(!cards||!DECK.length||!probe||!readout||(panel&&panel!=='layers'))return null;
   const hit=cardAt(DECK,{lat:probe.lat,lon:probe.lon,month:shownMonth,layers:new Set(enabledLayers.split(',')),owned:new Set(ownedIds.split(','))});
   return hit.status==='none'?null:hit;
- },[probe?.pinned,probe?.lat,probe?.lon,readout,panel,shownMonth,enabledLayers,ownedIds,!!cards]);
- const hitKey=cardHit?cardKey(cardHit):null;
+ },[!!probe,probe?.lat,probe?.lon,readout,panel,shownMonth,enabledLayers,ownedIds,!!cards]);
+ const hitKey=cardHit?cardKey(cardHit):null,foundKey=probe?.pinned?hitKey:null;
  useEffect(()=>{
-  if(!hitKey)return;
-  if(cards&&!(hitKey in cards.found)&&!(hitKey in cards.collected))track(`card-found/${hitKey}`);
-  setCards(current=>hitKey in current.found||hitKey in current.collected?current:markFound(current,hitKey,Date.now()));
- },[hitKey]);
+  if(!foundKey)return;
+  if(cards&&!(foundKey in cards.found)&&!(foundKey in cards.collected))track(`card-found/${foundKey}`);
+  setCards(current=>foundKey in current.found||foundKey in current.collected?current:markFound(current,foundKey,Date.now()));
+ },[foundKey]);
  useEffect(()=>{setNow(Date.now());},[hitKey,panel]);
  const hitWait=hitKey&&cards?waitLeft(cards,hitKey,now):0;
  // The countdown in the readout row ticks while a wait is showing, and Answer comes back the moment the wait ends.
@@ -182,7 +183,7 @@ function App(){
  };
  // The header count ticks up when the recap shows, not while the card is still on screen.
  const shownCount=cards?DECK.filter(c=>c.id in cards.collected).length-(asking?.result&&!asking.variant&&!asking.recapped?1:0):0;
- const cardRow=cardHit&&<ReadoutCardRow hit={cardHit} collected={!!hitKey&&hitKey in cards.collected} waitMs={hitWait}
+ const cardRow=cardHit&&<ReadoutCardRow hit={cardHit} hover={!probe.pinned} collected={!!hitKey&&hitKey in cards.collected} waitMs={hitWait}
   onAnswer={()=>setAsking({card:cardHit.card,variant:cardHit.variant?.kind??null,key:hitKey,month:inCardMonths(cardHit.card,shownMonth)?shownMonth:null,question:questionFor(cardHit.card,cards,hitKey).question})} onView={()=>setViewing({card:cardHit.card,variant:cardHit.variant?.kind??null})}/>;
  const touched=useRef(false);
  const clearProbe=()=>{setProbe(null);setProbeReset(n=>n+1);};
